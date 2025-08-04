@@ -22,7 +22,7 @@ const (
 	Release
 )
 
-type version struct {
+type Version struct {
 	major   int
 	minor   int
 	patch   int
@@ -58,11 +58,12 @@ func (s ReleaseStage) String() string {
 	}
 }
 
-func (v version) String() string {
+func (v Version) String() string {
 	return fmt.Sprintf("%d.%d.%d-%s/%s", v.major, v.minor, v.patch, v.channel.String(), v.stage)
 }
 
-var Version = version{
+// TODO: stick this in some metadata file?
+var AppVersion = Version{
 	major:   0,
 	minor:   1,
 	patch:   0,
