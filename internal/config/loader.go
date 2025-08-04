@@ -30,6 +30,9 @@ func Init(homeDir string) error {
 		return fmt.Errorf("ERROR: Cannot unmarshal config file %w", err)
 	}
 
+	// TODO: catch this error?
+	viper.BindEnv("gh_api_token", "GITHUB_API_TOKEN")
+
 	// watch for live reload
 
 	return nil
