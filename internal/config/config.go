@@ -1,6 +1,40 @@
 package config
 
+import (
+	"os"
+	"path/filepath"
+	"runtime"
+
+	"github.com/spf13/viper"
+)
+
 type Config struct {
-	// TODO: DELETE THIS, WE HAVE ENVS NOW
-	GitHubApiTokenPath string `mapstructure:"github_api_token_path"`
+	GitHubApiTokenFallback string `mapstructure:"github_api_token_fallback"`
+
+	// where to store the packages
+	ParmPkgDirPath string `mapstructure:"parm_pkg_dir_path"`
+}
+
+func setConfigDefaults() {
+	viper.BindEnv("github_api_token", "GITHUB_TOKEN", "GH_TOKEN", "PARM_GITHUB_TOKEN")
+
+	viper.SetDefault("github_api_token", "")
+	viper.SetDefault("parm_pkg_dir_path", getDefaultPkgDir())
+}
+
+func getDefaultPkgDir() string {
+	if d, ok := os.LookupEnv("XDG_DATA_HOME"); ok && d != "" {
+		return filepath.Join(d, "parm")
+	}
+	if runtime.GOOS == "darwin" {
+		home, _ := os.UserHomeDir()
+		return filepath.Join(home, "Library", "Application Support", "parm")
+	}
+	if runtime.GOOS == "windows" {
+		if d, ok := os.LookupEnv("APPDATA"); ok && d != "" {
+			return filepath.Join(d, "parm")
+		}
+	}
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".local", "share", "parm")
 }

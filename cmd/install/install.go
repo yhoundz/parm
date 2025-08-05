@@ -4,8 +4,13 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package install
 
 import (
-	"os/exec"
+	// "os/exec"
+	"fmt"
+	"parm/internal/config"
 	"parm/internal/deps"
+
+	// gh "parm/internal/github"
+	"parm/internal/parser"
 
 	"github.com/spf13/cobra"
 )
@@ -19,15 +24,55 @@ var (
 
 // installCmd represents the install command
 var InstallCmd = &cobra.Command{
-	Use:   "install",
+	Use:   "install <owner>/<repo>@[release-tag]",
 	Short: "Installs a new package",
 	Long:  ``,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		return deps.Require("git")
+
+		// check if git is installed and in the PATH
+		if err := deps.Require("git"); err != nil {
+			return err
+		}
+
+		owner, repo, tag, err := parser.ParseRepoReleaseRef(args[0])
+		if err == nil {
+			if tag != "" {
+				if branch != "" || commit != "" || release != "" {
+					return fmt.Errorf("cannot mix @tag with --branch/--commit/--release")
+				}
+				release = tag
+				args[0] = owner + "/" + repo
+			} else {
+				// no tag matched, wait for other args
+			}
+		} else {
+			owner, repo, tag, err := parser.ParseGithubUrlPatternWithRelease(args[0])
+			if err != nil {
+				if tag != "" {
+					// there is a tag,
+					if branch != "" || commit != "" || release != "" {
+						return fmt.Errorf("cannot mix @tag with --branch/--commit/--release")
+					}
+					release = tag
+					args[0] = owner + "/" + repo
+				}
+			} else {
+				// there is an error
+				return fmt.Errorf("Cannot resolve git repository")
+			}
+		}
+
+		return nil
 	},
-	Args: cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		exec.Command("git", "clone", "https://github.com/%q", args[0])
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// pkg := args[0]
+		switch {
+		case branch != "":
+			fmt.Println("WARNING: installing with --branch will automatically download from source.")
+			installPath := config.Cfg.ParmPkgDirPath
+		}
+		return nil
 	},
 }
 
@@ -37,13 +82,4 @@ func init() {
 	InstallCmd.PersistentFlags().StringVarP(&commit, "commit", "c", "", "Install from this git commit SHA")
 	InstallCmd.PersistentFlags().StringVarP(&release, "release", "r", "", "Install binary from this release tag")
 	InstallCmd.MarkFlagsMutuallyExclusive("branch", "commit", "release")
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// installCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// installCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

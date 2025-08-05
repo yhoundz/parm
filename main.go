@@ -6,8 +6,10 @@ package main
 
 import (
 	"parm/cmd"
+	"parm/internal/config"
 )
 
 func main() {
+	config.Init()
 	cmd.Execute()
 }

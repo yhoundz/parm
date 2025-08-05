@@ -2,20 +2,23 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
+	"os"
 	"path/filepath"
+
+	"github.com/spf13/viper"
 )
 
 var Cfg Config
 
-func Init(homeDir string) error {
-	var configDir string = filepath.Join(homeDir, ".config", "parm")
-	var configFilePath string = filepath.Join(configDir, "config.toml")
+func Init() error {
+	// will have to be figured out by the install script
+	homeDir, _ := os.UserConfigDir()
+	var configFilePath string = filepath.Join(homeDir, "parm", "config.toml")
 
-	// TODO: create a default toml config file and have viper read that instead
 	viper.SetConfigFile(configFilePath)
-	viper.SetDefault("github_api_token", "")
+	setConfigDefaults()
 
+	// TODO: figure out this bs
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			if err := viper.SafeWriteConfigAs(configFilePath); err != nil {
@@ -30,10 +33,6 @@ func Init(homeDir string) error {
 		return fmt.Errorf("ERROR: Cannot unmarshal config file %w", err)
 	}
 
-	// TODO: catch this error?
-	viper.BindEnv("gh_api_token", "GITHUB_API_TOKEN")
-
 	// watch for live reload
-
 	return nil
 }
