@@ -4,15 +4,17 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package install
 
 import (
-	// "os/exec"
 	"fmt"
 	"parm/internal/config"
 	"parm/internal/deps"
+	gh "parm/internal/github"
+	"parm/internal/installer"
+	"path/filepath"
 
-	// gh "parm/internal/github"
 	"parm/internal/parser"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var source bool
@@ -29,9 +31,17 @@ var InstallCmd = &cobra.Command{
 	Long:  ``,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 
-		// check if git is installed and in the PATH
-		if err := deps.Require("git"); err != nil {
-			return err
+		// TODO: put this check elsewhere?
+		if source {
+			// if building from source, git is required
+			if err := deps.Require("git"); err != nil {
+				return err
+			}
+		} else {
+			// if downloading the binary, need tar to extract
+			if err := deps.Require("tar"); err != nil {
+				return err
+			}
 		}
 
 		owner, repo, tag, err := parser.ParseRepoReleaseRef(args[0])
@@ -66,13 +76,25 @@ var InstallCmd = &cobra.Command{
 	},
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// pkg := args[0]
-		switch {
-		case branch != "":
-			fmt.Println("WARNING: installing with --branch will automatically download from source.")
-			installPath := config.Cfg.ParmPkgDirPath
+		pkg := args[0]
+
+		fmt.Println("WARNING: installing with --branch will automatically download from source.")
+
+		installPath := config.Cfg.ParmPkgDirPath
+		ctx := cmd.Context()
+		token := viper.GetString("github_api_token")
+		client := gh.NewRepoClient(ctx, token)
+
+		inst := installer.New(client)
+		owner, repo, _ := parser.ParseRepoRef(pkg)
+		opts := installer.InstallOptions{
+			Branch:  branch,
+			Commit:  commit,
+			Release: release,
+			Source:  source,
 		}
-		return nil
+
+		return inst.Install(ctx, filepath.Join(installPath, repo), owner, repo, opts)
 	},
 }
 
