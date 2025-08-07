@@ -5,11 +5,15 @@ Copyright © 2025 A.W. <EMAIL ADDRESS>
 package main
 
 import (
-	"parm/cmd"
+	// "parm/cmd"
+	"fmt"
 	"parm/internal/config"
 )
 
 func main() {
-	config.Init()
-	cmd.Execute()
+	err := config.Init()
+	if err != nil {
+		fmt.Println(err)
+	}
+	// cmd.Execute()
 }

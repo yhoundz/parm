@@ -15,10 +15,12 @@ type Config struct {
 	ParmPkgDirPath string `mapstructure:"parm_pkg_dir_path"`
 }
 
-func setConfigDefaults() {
+func setEnvVars(v *viper.Viper) {
 	viper.BindEnv("github_api_token", "GITHUB_TOKEN", "GH_TOKEN", "PARM_GITHUB_TOKEN")
+}
 
-	viper.SetDefault("github_api_token", "")
+func setConfigDefaults() {
+	viper.SetDefault("github_api_token_fallback", "")
 	viper.SetDefault("parm_pkg_dir_path", getDefaultPkgDir())
 }
 
