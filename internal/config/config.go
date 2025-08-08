@@ -16,12 +16,12 @@ type Config struct {
 }
 
 func setEnvVars(v *viper.Viper) {
-	viper.BindEnv("github_api_token", "GITHUB_TOKEN", "GH_TOKEN", "PARM_GITHUB_TOKEN")
+	v.BindEnv("github_api_token", "GITHUB_TOKEN", "GH_TOKEN", "PARM_GITHUB_TOKEN")
 }
 
-func setConfigDefaults() {
-	viper.SetDefault("github_api_token_fallback", "")
-	viper.SetDefault("parm_pkg_dir_path", getDefaultPkgDir())
+func setConfigDefaults(v *viper.Viper) {
+	v.SetDefault("github_api_token_fallback", "")
+	v.SetDefault("parm_pkg_dir_path", getDefaultPkgDir())
 }
 
 func getDefaultPkgDir() string {
@@ -30,6 +30,7 @@ func getDefaultPkgDir() string {
 	}
 	if runtime.GOOS == "darwin" {
 		home, _ := os.UserHomeDir()
+		// TODO: change this?
 		return filepath.Join(home, "Library", "Application Support", "parm")
 	}
 	if runtime.GOOS == "windows" {

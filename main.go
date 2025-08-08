@@ -5,8 +5,8 @@ Copyright © 2025 A.W. <EMAIL ADDRESS>
 package main
 
 import (
-	// "parm/cmd"
 	"fmt"
+	"parm/cmd"
 	"parm/internal/config"
 )
 
@@ -15,5 +15,5 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	// cmd.Execute()
+	cmd.Execute()
 }

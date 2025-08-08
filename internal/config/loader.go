@@ -16,17 +16,23 @@ func Init() error {
 	if err != nil {
 		return fmt.Errorf("ERROR: cannot find user config dir: %w", err)
 	}
-
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
 	cfgPath := filepath.Join(cfgDir, "parm")
-	viper.AddConfigPath(cfgPath)
 
-	setConfigDefaults()
+	if err := os.MkdirAll(cfgPath, 0o700); err != nil {
+		return fmt.Errorf("ERROR: cannot create config dir: %w", err)
+	}
 
-	if err := viper.ReadInConfig(); err != nil {
+	v := viper.GetViper()
+
+	v.SetConfigName("config")
+	v.SetConfigType("toml")
+	v.AddConfigPath(cfgPath)
+
+	setConfigDefaults(v)
+
+	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			if err := viper.SafeWriteConfig(); err != nil {
+			if err := v.SafeWriteConfig(); err != nil {
 				return fmt.Errorf("ERROR: cannot create config file: %w", err)
 			}
 		} else {
@@ -34,12 +40,10 @@ func Init() error {
 		}
 	}
 
-	if err := viper.Unmarshal(&Cfg); err != nil {
-		return fmt.Errorf("ERROR: Cannot unmarshal config file %w", err)
-	}
+	setEnvVars(v)
 
-	if _, err := os.Stat(cfgPath); err == nil { // file exists
-		_ = viper.WriteConfig() // ignore error; file already writable
+	if err := v.Unmarshal(&Cfg); err != nil {
+		return fmt.Errorf("ERROR: Cannot unmarshal config file %w", err)
 	}
 
 	// watch for live reload ??
