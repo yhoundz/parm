@@ -2,22 +2,12 @@ package gh
 
 import (
 	"context"
-	"net/url"
 
 	"github.com/google/go-github/v74/github"
 	"golang.org/x/oauth2"
 )
 
-// WARNING: ts kind of annoying, might just remove and mock another way
-type RepoClient interface {
-	ListReleases(ctx context.Context, owner, repo string, opt *github.ListOptions) ([]*github.RepositoryRelease, *github.Response, error)
-	GetReleaseByTag(ctx context.Context, owner, repo, tag string) (*github.RepositoryRelease, *github.Response, error)
-	GetBranch(ctx context.Context, owner, repo, branch string, maxRedirects int) (*github.Branch, *github.Response, error)
-	GetCommit(ctx context.Context, owner, repo, sha string, opts *github.ListOptions) (*github.RepositoryCommit, *github.Response, error)
-	GetArchiveLink(ctx context.Context, owner, repo string, format github.ArchiveFormat, opts *github.RepositoryContentGetOptions, maxRedirects int) (*url.URL, *github.Response, error)
-}
-
-func NewRepoClient(ctx context.Context, token string) RepoClient {
+func NewRepoClient(ctx context.Context, token string) *github.RepositoriesService {
 	var cli *github.Client
 	if token == "" {
 		cli = github.NewClient(nil)

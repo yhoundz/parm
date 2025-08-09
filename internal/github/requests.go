@@ -11,7 +11,7 @@ import (
 
 func GetNLatestReleases(
 	ctx context.Context,
-	client RepoClient,
+	client *github.RepositoriesService,
 	owner, repo string,
 	n int) ([]*github.RepositoryRelease, error) {
 	rels, _, err := client.ListReleases(ctx, owner, repo, &github.ListOptions{PerPage: n})
@@ -27,7 +27,7 @@ func GetNLatestReleases(
 
 func ValidateRelease(
 	ctx context.Context,
-	client RepoClient,
+	client *github.RepositoriesService,
 	owner, repo, releaseTag string) (bool, *github.RepositoryRelease, error) {
 
 	repository, _, err := client.GetReleaseByTag(ctx, owner, repo, releaseTag)
@@ -48,7 +48,7 @@ func ValidateRelease(
 
 func ValidateBranch(
 	ctx context.Context,
-	client RepoClient,
+	client *github.RepositoriesService,
 	owner, repo, branch string) (bool, *github.Branch, error) {
 
 	br, _, err := client.GetBranch(ctx, owner, repo, branch, 0)
@@ -67,7 +67,7 @@ func ValidateBranch(
 
 func ValidateCommit(
 	ctx context.Context,
-	client RepoClient,
+	client *github.RepositoriesService,
 	owner, repo, commitSha string) (bool, *github.RepositoryCommit, error) {
 
 	commit, _, err := client.GetCommit(ctx, owner, repo, commitSha, nil)

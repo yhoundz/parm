@@ -18,7 +18,7 @@ import (
 )
 
 type Installer struct {
-	client gh.RepoClient
+	client *github.RepositoriesService
 }
 
 type InstallOptions struct {
@@ -28,7 +28,7 @@ type InstallOptions struct {
 	Source  bool
 }
 
-func New(cli gh.RepoClient) *Installer {
+func New(cli *github.RepositoriesService) *Installer {
 	return &Installer{
 		client: cli,
 	}
@@ -100,7 +100,6 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 		cmd = exec.CommandContext(ctx, "git", "-C", pkgPath, "submodule", "update", "--init", "--depth=1", "--recursive")
 		cmd.Stdout, cmd.Stderr, cmd.Stdin = os.Stdout, os.Stderr, os.Stdin
 		return cmd.Run()
-
 	} else if opts.Release != "" {
 		valid, rel, err := gh.ValidateRelease(ctx, in.client, owner, repo, opts.Release)
 		if err != nil {
@@ -111,12 +110,21 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 		}
 
 		if opts.Source {
-			u, _, err := in.client.GetArchiveLink(ctx, owner, repo, github.Tarball, nil, 0)
+			contentOpts := github.RepositoryContentGetOptions{
+				Ref: `tags/` + rel.GetTagName(),
+			}
+			u, _, err := in.client.GetArchiveLink(ctx, owner, repo, github.Tarball, &contentOpts, 0)
 			if err != nil {
 				return fmt.Errorf("get archive link: %w", err)
 			}
 			dest := filepath.Join(pkgPath, fmt.Sprintf("%s-%s.tar.gz", repo, rel.GetTagName()))
-			return downloadTo(ctx, u.String(), dest)
+			if err := downloadTo(ctx, u.String(), dest); err != nil {
+				return err
+			}
+			if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
+				return err
+			}
+			return nil
 		}
 
 		asset, err := selectReleaseAsset(rel, runtime.GOOS, runtime.GOARCH)
@@ -124,7 +132,17 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 			return err
 		}
 		dest := filepath.Join(pkgPath, asset.GetName())
-		return downloadTo(ctx, asset.GetBrowserDownloadURL(), dest)
+		if err := downloadTo(ctx, asset.GetBrowserDownloadURL(), dest); err != nil {
+			return err
+		}
+
+		name := strings.ToLower(asset.GetName())
+		if strings.HasSuffix(name, ".tar.gz") || strings.HasSuffix(name, ".tgz") {
+			if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	return nil
