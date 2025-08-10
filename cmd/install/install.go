@@ -9,6 +9,7 @@ import (
 	"parm/internal/deps"
 	gh "parm/internal/github"
 	"parm/internal/installer"
+	"parm/internal/utils"
 	"path/filepath"
 
 	"parm/internal/parser"
@@ -97,7 +98,18 @@ var InstallCmd = &cobra.Command{
 
 		fmt.Println(installPath)
 
-		return inst.Install(ctx, filepath.Join(installPath, repo), owner, repo, opts)
+		var versionedPath string = "ver-"
+
+		if branch != "" {
+			versionedPath += utils.SanitizePath(branch)
+		} else if commit != "" {
+			versionedPath += utils.SanitizePath(commit)
+		} else if release != "" {
+			versionedPath += utils.SanitizePath(release)
+		}
+
+		dest := filepath.Join(installPath, repo, versionedPath)
+		return inst.Install(ctx, dest, owner, repo, opts)
 	},
 }
 

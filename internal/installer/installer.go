@@ -118,6 +118,7 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 				return fmt.Errorf("get archive link: %w", err)
 			}
 			dest := filepath.Join(pkgPath, fmt.Sprintf("%s-%s.tar.gz", repo, rel.GetTagName()))
+			// TODO: create version folder
 			if err := downloadTo(ctx, u.String(), dest); err != nil {
 				return err
 			}
@@ -132,6 +133,7 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 			return err
 		}
 		dest := filepath.Join(pkgPath, asset.GetName())
+		// TODO: create version folder
 		if err := downloadTo(ctx, asset.GetBrowserDownloadURL(), dest); err != nil {
 			return err
 		}

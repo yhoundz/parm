@@ -3,12 +3,16 @@ package utils
 import (
 	"archive/tar"
 	"compress/gzip"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"unicode"
 )
 
 func ContainsAny(s string, tokens []string) bool {
@@ -88,4 +92,65 @@ func safeJoin(dir, name string) (string, error) {
 		return "", fmt.Errorf("illegal path in archive: %q", name)
 	}
 	return p, nil
+}
+
+// TODO: put this elsewhere?
+func SanitizePath(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		if r == '/' || r == '\\' || r == 0 {
+			b.WriteRune('-')
+			continue
+		}
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' || r == '.' {
+			b.WriteRune(r)
+		} else {
+			b.WriteRune('-')
+		}
+	}
+
+	name := b.String()
+
+	if runtime.GOOS == "windows" {
+		name = strings.TrimRight(name, ". ")
+		if isWinReserved(name) {
+			name = name + "-"
+		}
+	}
+
+	if name == "" {
+		name = hashPrefix(s, 12)
+	}
+
+	const maxLen = 38
+	if len(name) > maxLen {
+		name = name[:maxLen-13] + "-" + hashPrefix(s, 12)
+	}
+
+	name = filepath.Base(name)
+	if name == "." || name == string(filepath.Separator) {
+		name = hashPrefix(s, 12)
+	}
+
+	return name
+}
+
+func hashPrefix(s string, n int) string {
+	h := sha1.Sum([]byte(s))
+	return hex.EncodeToString(h[:])[:n]
+}
+
+func isWinReserved(name string) bool {
+	n := strings.ToLower(name)
+	switch n {
+	case "con", "prn", "aux", "nul":
+		return true
+	}
+	if strings.HasPrefix(n, "com") && len(n) == 4 && n[3] >= '1' && n[3] <= '9' {
+		return true
+	}
+	if strings.HasPrefix(n, "lpt") && len(n) == 4 && n[3] >= '1' && n[3] <= '9' {
+		return true
+	}
+	return false
 }
