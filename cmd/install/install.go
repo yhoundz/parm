@@ -9,7 +9,6 @@ import (
 	"parm/internal/deps"
 	gh "parm/internal/github"
 	"parm/internal/installer"
-	"parm/internal/utils"
 	"path/filepath"
 
 	"parm/internal/parser"
@@ -100,12 +99,13 @@ var InstallCmd = &cobra.Command{
 
 		var versionedPath string = "ver-"
 
+		// TODO: sanitize
 		if branch != "" {
-			versionedPath += utils.SanitizePath(branch)
+			versionedPath += branch
 		} else if commit != "" {
-			versionedPath += utils.SanitizePath(commit)
+			versionedPath += branch
 		} else if release != "" {
-			versionedPath += utils.SanitizePath(release)
+			versionedPath += branch
 		}
 
 		dest := filepath.Join(installPath, repo, versionedPath)
@@ -119,4 +119,5 @@ func init() {
 	InstallCmd.PersistentFlags().StringVarP(&commit, "commit", "c", "", "Install from this git commit SHA")
 	InstallCmd.PersistentFlags().StringVarP(&release, "release", "r", "", "Install binary from this release tag")
 	InstallCmd.MarkFlagsMutuallyExclusive("branch", "commit", "release")
+	InstallCmd.MarkFlagsMutuallyExclusive("branch", "commit", "source")
 }
