@@ -67,41 +67,61 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 		}
 
 		cloneLink, _ := parser.BuildGitLink(owner, repo)
-		cmd := exec.CommandContext(ctx, "git", "clone",
+
+		var execGitCmd = func(arg ...string) error {
+			cmd := exec.CommandContext(ctx, "git", arg...)
+			cmd.Stdout, cmd.Stderr, cmd.Stdin = os.Stdout, os.Stderr, os.Stdin
+			if err := cmd.Run(); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// clone
+		err = execGitCmd("clone",
 			"--no-checkout", "--filter=blob:none",
 			"--recurse-submodules", "--shallow-submodules",
 			cloneLink, pkgPath)
-		cmd.Stdout, cmd.Stderr, cmd.Stdin = os.Stdout, os.Stderr, os.Stdin
-		if err := cmd.Run(); err != nil {
+		if err != nil {
 			return err
 		}
 
-		// 2) fetch that specific commit (shallow)
-		cmd = exec.CommandContext(ctx, "git", "-C", pkgPath, "fetch", "--depth=1", "origin", opts.Commit)
-		cmd.Stdout, cmd.Stderr, cmd.Stdin = os.Stdout, os.Stderr, os.Stdin
-		if err := cmd.Run(); err != nil {
+		// fetch commit
+		err = execGitCmd("-C", pkgPath, "fetch", "--depth=1", "origin", opts.Commit)
+		if err != nil {
 			return err
 		}
 
-		// 3) checkout the commit (and submodules at that ref)
-		cmd = exec.CommandContext(ctx, "git", "-C", pkgPath, "checkout", "--recurse-submodules", opts.Commit)
-		cmd.Stdout, cmd.Stderr, cmd.Stdin = os.Stdout, os.Stderr, os.Stdin
-		if err := cmd.Run(); err != nil {
+		// checkout commit + subms
+		err = execGitCmd("-C", pkgPath, "checkout", "--recurse-submodules", opts.Commit)
+		if err != nil {
 			return err
 		}
 
-		// 4) ensure submodules materialize shallowly
-		cmd = exec.CommandContext(ctx, "git", "-C", pkgPath, "submodule", "update", "--init", "--depth=1", "--recursive")
-		cmd.Stdout, cmd.Stderr, cmd.Stdin = os.Stdout, os.Stderr, os.Stdin
-		return cmd.Run()
+		// ensure submodules materialize shallowly
+		err = execGitCmd("-C", pkgPath, "submodule", "update", "--init", "--depth=1", "--recursive")
+		if err != nil {
+			return err
+		}
+		return nil
 	} else if opts.Release != "" {
 		// TODO: redo this part so i actually understand what's going on
 		// if source build, download the source code from tarball
 		// if not source, find best-matching binary based on GOOS and GOARCH, and then
 		// get the download link
 		// afterwards, download and extract the tarball to the desired dir.
-		if opts.Source {
+		valid, rel, err := gh.ValidateRelease(ctx, in.client, owner, repo, opts.Release)
+		if err != nil {
+			return fmt.Errorf("ERROR: Cannot resolve release %s on %s/%s", opts.Release, owner, repo)
 		}
+		if !valid {
+			return fmt.Errorf("ERROR: Release %s not valid, %w", opts.Release, err)
+		}
+
+		if opts.Source {
+			return nil
+		}
+		return nil
 	}
 
 	return nil
