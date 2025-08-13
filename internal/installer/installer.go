@@ -1,12 +1,17 @@
 package installer
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	gh "parm/internal/github"
 	"parm/internal/parser"
+	"path/filepath"
 
 	"github.com/google/go-github/v74/github"
 )
@@ -119,10 +124,80 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 		}
 
 		if opts.Source {
+			ref := "tags/" + rel.GetTagName()
+			dl, _, err := in.client.GetArchiveLink(
+				ctx,
+				owner, repo,
+				github.Tarball,
+				&github.RepositoryContentGetOptions{Ref: ref},
+				0,
+			)
+			if err != nil {
+				return fmt.Errorf("ERROR: cannot resolve source for %s/%s, with %w ", owner, repo, err)
+			}
+			dest := filepath.Join(pkgPath, fmt.Sprintf("%s-%s.tar.gz", repo, rel.GetTagName()))
+			err = downloadTo(ctx, dest, dl.String())
+			if err != nil {
+				return err
+			}
 			return nil
 		}
 		return nil
 	}
 
 	return nil
+}
+
+func downloadTo(ctx context.Context, destPath, url string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("GET %s: %s", url, resp.Status)
+	}
+
+	err = os.MkdirAll(filepath.Dir(destPath), 0o755)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create(destPath)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+	_, err = io.Copy(file, resp.Body)
+	return err
+}
+
+func extractTarGz(srcPath, destPath string) error {
+	file, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	gz, err := gzip.NewReader(file)
+	if err != nil {
+		return err
+	}
+	defer gz.Close()
+
+	tr := tar.NewReader(gz)
+	hdr, err := tr.Next()
+	for err != io.EOF {
+		if err != nil {
+			return err
+		}
+
+	}
 }
