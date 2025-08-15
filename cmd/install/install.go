@@ -118,6 +118,7 @@ func init() {
 	InstallCmd.PersistentFlags().StringVarP(&branch, "branch", "b", "", "Install from this git branch")
 	InstallCmd.PersistentFlags().StringVarP(&commit, "commit", "c", "", "Install from this git commit SHA")
 	InstallCmd.PersistentFlags().StringVarP(&release, "release", "r", "", "Install binary from this release tag")
+
 	InstallCmd.MarkFlagsMutuallyExclusive("branch", "commit", "release")
 	InstallCmd.MarkFlagsMutuallyExclusive("branch", "commit", "source")
 }
