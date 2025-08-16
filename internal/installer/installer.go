@@ -11,6 +11,8 @@ import (
 	"parm/internal/parser"
 	"parm/internal/utils"
 	"path/filepath"
+	"slices"
+	"strings"
 
 	"github.com/google/go-github/v74/github"
 )
@@ -179,4 +181,32 @@ func downloadTo(ctx context.Context, destPath, url string) error {
 
 	_, err = io.Copy(file, resp.Body)
 	return err
+}
+
+// infers the proper release asset based on the name of the asset
+func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) (*github.ReleaseAsset, error) {
+	type match struct {
+		asset *github.ReleaseAsset
+		score int
+	}
+
+	gooses := map[string][]string{
+		"windows": {"windows", "win64", "win32", "win"},
+		"darwin":  {"macos", "darwin", "mac", "osx"},
+		"linux":   {"linux"},
+	}
+	goarchs := map[string][]string{
+		"amd64": {"amd64", "x86_64", "x64", "64bit", "64-bit"},
+		"386":   {"386", "x86", "i386", "32bit", "32-bit"},
+		"arm64": {"arm64", "aarch64"},
+		"arm":   {"armv7", "armv6", "armhf", "armv7l"},
+	}
+
+	extPrefUnix := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".AppImage"}
+	extPrefWin := []string{".zip", ".exe", ".bin"}
+
+	scoredMatches := make([]match, len(assets))
+	for i, a := range assets {
+		scoredMatches[i] = match{asset: a, score: 0}
+	}
 }
