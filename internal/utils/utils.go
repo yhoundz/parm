@@ -12,6 +12,15 @@ import (
 	"strings"
 )
 
+func ContainsAny(src string, tokens []string) bool {
+	for _, a := range tokens {
+		if strings.Contains(src, a) {
+			return true
+		}
+	}
+	return false
+}
+
 func ExtractTarGz(srcPath, destPath string) error {
 	file, err := os.Open(srcPath)
 	if err != nil {

@@ -12,7 +12,6 @@ import (
 	"parm/internal/utils"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/google/go-github/v74/github"
 )
@@ -209,4 +208,41 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) (*gi
 	for i, a := range assets {
 		scoredMatches[i] = match{asset: a, score: 0}
 	}
+
+	const goosMatch = 11
+	const goarchMatch = 7
+	const prefMatch = 3
+
+	for _, a := range scoredMatches {
+		name := a.asset.GetName()
+		if utils.ContainsAny(name, gooses[goos]) {
+			a.score += goosMatch
+		}
+		if utils.ContainsAny(name, goarchs[goarch]) {
+			a.score += goarchMatch
+		}
+
+		switch goos {
+		case "windows":
+			if utils.ContainsAny(name, extPrefWin) {
+				a.score += prefMatch
+			}
+		case "darwin", "linux":
+			if utils.ContainsAny(name, extPrefUnix) {
+				a.score += prefMatch
+			}
+		}
+	}
+
+	slices.SortStableFunc(scoredMatches, func(a, b match) int {
+		if a.score < b.score {
+			return 1
+		}
+		if a.score > b.score {
+			return -1
+		}
+		return 0
+	})
+
+	return nil, nil
 }
