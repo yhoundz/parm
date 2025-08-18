@@ -129,6 +129,23 @@ func ExtractZip(srcPath, destPath string) error {
 	return nil
 }
 
+func MoveAllFrom(src, dest string) error {
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return err
+	}
+
+	for _, e := range entries {
+		oldPath := filepath.Join(src, e.Name())
+		newPath := filepath.Join(dest, e.Name())
+
+		if err := os.Rename(oldPath, newPath); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func safeJoin(root, name string) (string, error) {
 	cleaned := filepath.Clean(name)
 	target := filepath.Join(root, cleaned)

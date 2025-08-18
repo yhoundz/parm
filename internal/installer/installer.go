@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"os/exec"
@@ -11,7 +12,9 @@ import (
 	"parm/internal/parser"
 	"parm/internal/utils"
 	"path/filepath"
+	"runtime"
 	"slices"
+	"strings"
 
 	"github.com/google/go-github/v74/github"
 )
@@ -115,6 +118,8 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 		// if not source, find best-matching binary based on GOOS and GOARCH, and then
 		// get the download link
 		// afterwards, download and extract the tarball to the desired dir.
+
+		// TODO: cleanup if something in the install process goes wrong?
 		valid, rel, err := gh.ValidateRelease(ctx, in.client, owner, repo, opts.Release)
 		if err != nil {
 			return fmt.Errorf("ERROR: Cannot resolve release %s on %s/%s", opts.Release, owner, repo)
@@ -145,9 +150,50 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 			}
 			return nil
 		}
+		matches, err := selectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
+		if err != nil {
+			return err
+		}
+		if matches == nil {
+			// TODO: allow users to choose what asset they want installed instead
+			return fmt.Errorf("ERROR: No install matches found")
+		}
+		if len(matches) > 1 {
+			// TODO: allow users to choose what asset they want installed instead
+			return nil
+		}
+
+		ass := matches[0]
+		dest := filepath.Join(pkgPath, ass.GetName()) // download destination
+		if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL()); err != nil {
+			return fmt.Errorf("ERROR: failed to download asset: %w", err)
+		}
+
+		switch {
+		case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
+			if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
+				return fmt.Errorf("ERROR: failed to extract tarball: %w", err)
+			}
+			os.Remove(dest)
+		case strings.HasSuffix(dest, ".zip"):
+			if err := utils.ExtractZip(dest, pkgPath); err != nil {
+				return fmt.Errorf("ERROR: failed to extract zip: %w", err)
+			}
+			os.Remove(dest)
+		default:
+			if runtime.GOOS != "windows" {
+				if err := os.Chmod(dest, 0o755); err != nil {
+					return fmt.Errorf("failed to make binary executable: %w", err)
+				}
+			}
+			if err := utils.MoveAllFrom(dest, pkgPath); err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 
+	// none of the options what now?
 	return nil
 }
 
@@ -183,7 +229,7 @@ func downloadTo(ctx context.Context, destPath, url string) error {
 }
 
 // infers the proper release asset based on the name of the asset
-func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) (*github.ReleaseAsset, error) {
+func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*github.ReleaseAsset, error) {
 	type match struct {
 		asset *github.ReleaseAsset
 		score int
@@ -201,9 +247,12 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) (*gi
 		"arm":   {"armv7", "armv6", "armhf", "armv7l"},
 	}
 
-	extPrefUnix := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".AppImage"}
-	extPrefWin := []string{".zip", ".exe", ".bin"}
+	extPref := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".AppImage"}
+	if goos == "windows" {
+		extPref = []string{".zip", ".exe", ".bin"}
+	}
 
+	// scoring
 	scoredMatches := make([]match, len(assets))
 	for i, a := range assets {
 		scoredMatches[i] = match{asset: a, score: 0}
@@ -211,9 +260,11 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) (*gi
 
 	const goosMatch = 11
 	const goarchMatch = 7
-	const prefMatch = 3
+	const prefMatch = 3 // actually a multiplier for preference match
+	const minScoreMatch = goosMatch + goarchMatch
 
-	for _, a := range scoredMatches {
+	for i := range scoredMatches {
+		a := &scoredMatches[i]
 		name := a.asset.GetName()
 		if utils.ContainsAny(name, gooses[goos]) {
 			a.score += goosMatch
@@ -222,18 +273,16 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) (*gi
 			a.score += goarchMatch
 		}
 
-		switch goos {
-		case "windows":
-			if utils.ContainsAny(name, extPrefWin) {
-				a.score += prefMatch
-			}
-		case "darwin", "linux":
-			if utils.ContainsAny(name, extPrefUnix) {
-				a.score += prefMatch
+		for j, ext := range extPref {
+			var mult float64 = float64(prefMatch) * float64((len(extPref) - j))
+			var multRounded int = int(math.Round(mult))
+			if strings.HasSuffix(name, ext) {
+				a.score += multRounded
 			}
 		}
 	}
 
+	// sort
 	slices.SortStableFunc(scoredMatches, func(a, b match) int {
 		if a.score < b.score {
 			return 1
@@ -244,5 +293,19 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) (*gi
 		return 0
 	})
 
-	return nil, nil
+	minMatch := scoredMatches[0].score
+	if minMatch < minScoreMatch {
+		return nil, fmt.Errorf("ERROR: Cannot find sufficient matches")
+	}
+
+	// find top candidate(s)
+	var candidates []*github.ReleaseAsset
+	for _, m := range scoredMatches {
+		if m.score == minMatch {
+			candidates = append(candidates, m.asset)
+			continue
+		}
+		break
+	}
+	return candidates, nil
 }
