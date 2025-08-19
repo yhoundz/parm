@@ -44,7 +44,17 @@ func ExtractTarGz(srcPath, destPath string) error {
 			return err
 		}
 
-		target, err := safeJoin(destPath, hdr.Name)
+		name := hdr.Name
+		if i := strings.IndexByte(name, '/'); i >= 0 {
+			name = name[i+1:]
+		} else {
+			continue
+		}
+		if name == "" {
+			continue
+		}
+
+		target, err := safeJoin(destPath, name)
 		if err != nil {
 			return err
 		}
@@ -72,7 +82,7 @@ func ExtractTarGz(srcPath, destPath string) error {
 				return err
 			}
 			linkTarget := hdr.Linkname
-			cleanedTarget := filepath.Clean(filepath.Join(filepath.Dir(hdr.Name), linkTarget))
+			cleanedTarget := filepath.Clean(filepath.Join(filepath.Dir(name), linkTarget))
 			if _, err := safeJoin(destPath, cleanedTarget); err != nil {
 				return err
 			}

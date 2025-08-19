@@ -97,18 +97,7 @@ var InstallCmd = &cobra.Command{
 
 		fmt.Println(installPath)
 
-		var versionedPath string = "ver-"
-
-		// TODO: sanitize
-		if branch != "" {
-			versionedPath += branch
-		} else if commit != "" {
-			versionedPath += branch
-		} else if release != "" {
-			versionedPath += branch
-		}
-
-		dest := filepath.Join(installPath, repo, versionedPath)
+		dest := filepath.Join(installPath, owner+"-"+repo)
 		return inst.Install(ctx, dest, owner, repo, opts)
 	},
 }

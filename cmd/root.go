@@ -7,6 +7,7 @@ import (
 	"os"
 	"parm/cmd/configure"
 	"parm/cmd/install"
+	"parm/cmd/uninstall"
 	"parm/internal/version"
 
 	"github.com/spf13/cobra"
@@ -39,6 +40,7 @@ func Execute() {
 func init() {
 	rootCmd.AddCommand(configure.ConfigCmd)
 	rootCmd.AddCommand(install.InstallCmd)
+	rootCmd.AddCommand(uninstall.UninstallCmd)
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.

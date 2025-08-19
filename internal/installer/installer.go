@@ -144,10 +144,10 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 			if err := downloadTo(ctx, dest, dl.String()); err != nil {
 				return err
 			}
-
 			if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
 				return err
 			}
+			os.Remove(dest)
 			return nil
 		}
 		matches, err := selectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
@@ -194,6 +194,7 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 	}
 
 	// none of the options what now?
+	// TODO: something happens here? throw an error?
 	return nil
 }
 
