@@ -250,7 +250,7 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 
 	extPref := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".AppImage"}
 	if goos == "windows" {
-		extPref = []string{".zip", ".exe", ".bin"}
+		extPref = []string{".zip", ".exe", ".msi", ".bin"}
 	}
 
 	// scoring
@@ -308,5 +308,7 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 		}
 		break
 	}
+
+	fmt.Print(candidates)
 	return candidates, nil
 }

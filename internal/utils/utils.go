@@ -44,6 +44,8 @@ func ExtractTarGz(srcPath, destPath string) error {
 			return err
 		}
 
+		// INFO: assumes that the resulting tar.gz will contain a single folder that holds the source code
+		// TODO: make this more robust?
 		name := hdr.Name
 		if i := strings.IndexByte(name, '/'); i >= 0 {
 			name = name[i+1:]
