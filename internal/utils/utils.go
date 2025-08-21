@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"parm/internal/config"
 	"path/filepath"
 	"strings"
 )
@@ -46,13 +47,8 @@ func ExtractTarGz(srcPath, destPath string) error {
 
 		// INFO: assumes that the resulting tar.gz will contain a single folder that holds the source code
 		// TODO: make this more robust?
-		name := hdr.Name
-		if i := strings.IndexByte(name, '/'); i >= 0 {
-			name = name[i+1:]
-		} else {
-			continue
-		}
-		if name == "" {
+		name, ok := stripTopDir(hdr.Name)
+		if !ok {
 			continue
 		}
 
@@ -97,45 +93,52 @@ func ExtractTarGz(srcPath, destPath string) error {
 }
 
 func ExtractZip(srcPath, destPath string) error {
-	reader, err := zip.OpenReader(srcPath)
+	r, err := zip.OpenReader(srcPath)
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
+	defer r.Close()
 
-	for _, file := range reader.File {
-		path, err := safeJoin(destPath, file.Name)
-		if err != nil {
-			return err
-		}
-		if file.FileInfo().IsDir() {
-			if err := os.MkdirAll(path, file.Mode()); err != nil {
-				return err
-			}
+	for _, f := range r.File {
+		name, ok := stripTopDir(f.Name)
+		if !ok {
 			continue
 		}
 
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		rc, err := f.Open()
+		if err != nil {
 			return err
 		}
-		rc, err := file.Open()
+		defer rc.Close()
+
+		fpath, err := safeJoin(destPath, name)
 		if err != nil {
 			return err
 		}
 
-		out, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, file.Mode())
-		if err != nil {
-			rc.Close()
-			return err
-		}
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(fpath, f.Mode())
+		} else {
+			var fdir string
+			if lastIndex := strings.LastIndex(fpath, string(os.PathSeparator)); lastIndex > -1 {
+				fdir = fpath[:lastIndex]
+			}
 
-		_, err = io.Copy(out, rc)
+			err = os.MkdirAll(fdir, f.Mode())
+			if err != nil {
+				return err
+			}
+			f, err := os.OpenFile(
+				fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if err != nil {
+				return err
+			}
+			defer f.Close()
 
-		rc.Close()
-		out.Close()
-
-		if err != nil {
-			return err
+			_, err = io.Copy(f, rc)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -167,4 +170,22 @@ func safeJoin(root, name string) (string, error) {
 		return "", fmt.Errorf("tar entry %q escapes extraction dir", name)
 	}
 	return target, nil
+}
+
+func stripTopDir(path string) (string, bool) {
+	if i := strings.IndexByte(path, '/'); i >= 0 {
+		out := path[i+1:]
+		if out == "" {
+			return "", false
+		}
+		return out, true
+	}
+	return "", false
+}
+
+func GetInstallDir(owner, repo string) string {
+	installPath := config.Cfg.ParmPkgDirPath
+	dir := owner + "-" + repo
+	dest := filepath.Join(installPath, dir)
+	return dest
 }

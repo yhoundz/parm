@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"parm/internal/cmdparser"
 	gh "parm/internal/github"
-	"parm/internal/parser"
 	"parm/internal/utils"
 	"path/filepath"
 	"runtime"
@@ -48,7 +48,7 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 			return fmt.Errorf("Error: branch: %s cannot be found", opts.Branch)
 		}
 
-		cloneLink, _ := parser.BuildGitLink(owner, repo)
+		cloneLink, _ := cmdparser.BuildGitLink(owner, repo)
 		cmd := exec.CommandContext(ctx, "git", "clone",
 			"--depth=1", "--recurse-submodules", "--shallow-submodules", "--branch",
 			opts.Branch, cloneLink, pkgPath)
@@ -74,7 +74,7 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 			return fmt.Errorf("ERROR: commit %q is not valid on %s/%s", opts.Commit, owner, repo)
 		}
 
-		cloneLink, _ := parser.BuildGitLink(owner, repo)
+		cloneLink, _ := cmdparser.BuildGitLink(owner, repo)
 
 		var execGitCmd = func(arg ...string) error {
 			cmd := exec.CommandContext(ctx, "git", arg...)
@@ -158,10 +158,10 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 			// TODO: allow users to choose what asset they want installed instead
 			return fmt.Errorf("ERROR: No install matches found")
 		}
-		if len(matches) > 1 {
-			// TODO: allow users to choose what asset they want installed instead
-			return nil
-		}
+		// if len(matches) > 1 {
+		// 	// TODO: allow users to choose what asset they want installed instead
+		// 	return nil
+		// }
 
 		ass := matches[0]
 		dest := filepath.Join(pkgPath, ass.GetName()) // download destination
@@ -253,6 +253,14 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 		extPref = []string{".zip", ".exe", ".msi", ".bin"}
 	}
 
+	// other score modifiers
+	scoreMods := map[string]int{
+		"musl": -1,
+	}
+	if goos == "windows" {
+		scoreMods = map[string]int{}
+	}
+
 	// scoring
 	scoredMatches := make([]match, len(assets))
 	for i, a := range assets {
@@ -279,6 +287,12 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 			var multRounded int = int(math.Round(mult))
 			if strings.HasSuffix(name, ext) {
 				a.score += multRounded
+			}
+		}
+
+		for j, m := range scoreMods {
+			if strings.Contains(name, j) {
+				a.score += m
 			}
 		}
 	}
@@ -309,6 +323,6 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 		break
 	}
 
-	fmt.Print(candidates)
+	// fmt.Print(candidates)
 	return candidates, nil
 }

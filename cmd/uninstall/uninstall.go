@@ -5,34 +5,29 @@ package uninstall
 
 import (
 	"fmt"
+	"parm/internal/cmdparser"
+	"parm/internal/installer"
 
 	"github.com/spf13/cobra"
 )
 
 // uninstallCmd represents the uninstall command
 var UninstallCmd = &cobra.Command{
-	Use:   "uninstall",
+	Use:   "uninstall <owner>/<repo>",
 	Short: "Uninstalls a parm package",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Long:  `Uninstalls a parm package. Does not remove the configuration files`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		pkg := args[0]
+		ctx := cmd.Context()
+		owner, repo, err := cmdparser.ParseRepoRef(pkg)
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("uninstall called")
+		if err != nil {
+			return fmt.Errorf("invalid package ref: %q: %w", pkg, err)
+		}
+
+		inst := installer.New(nil)
+		return inst.Uninstall(ctx, owner, repo)
 	},
 }
 
-func init() {
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// uninstallCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// uninstallCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
+func init() {}

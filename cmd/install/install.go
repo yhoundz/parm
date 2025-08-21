@@ -5,13 +5,12 @@ package install
 
 import (
 	"fmt"
-	"parm/internal/config"
 	"parm/internal/deps"
 	gh "parm/internal/github"
 	"parm/internal/installer"
-	"path/filepath"
+	"parm/internal/utils"
 
-	"parm/internal/parser"
+	"parm/internal/cmdparser"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -45,7 +44,7 @@ var InstallCmd = &cobra.Command{
 			}
 		}
 
-		owner, repo, tag, err := parser.ParseRepoReleaseRef(args[0])
+		owner, repo, tag, err := cmdparser.ParseRepoReleaseRef(args[0])
 		if err == nil {
 			if tag != "" {
 				if branch != "" || commit != "" || release != "" {
@@ -57,7 +56,7 @@ var InstallCmd = &cobra.Command{
 				// no tag matched, wait for other args
 			}
 		} else {
-			owner, repo, tag, err := parser.ParseGithubUrlPatternWithRelease(args[0])
+			owner, repo, tag, err := cmdparser.ParseGithubUrlPatternWithRelease(args[0])
 			if err != nil {
 				if tag != "" {
 					// there is a tag,
@@ -81,13 +80,12 @@ var InstallCmd = &cobra.Command{
 
 		fmt.Println("WARNING: installing with --branch will automatically download from source.")
 
-		installPath := config.Cfg.ParmPkgDirPath
 		ctx := cmd.Context()
 		token := viper.GetString("github_api_token")
 		client := gh.NewRepoClient(ctx, token)
 
 		inst := installer.New(client)
-		owner, repo, _ := parser.ParseRepoRef(pkg)
+		owner, repo, _ := cmdparser.ParseRepoRef(pkg)
 		opts := installer.InstallOptions{
 			Branch:  branch,
 			Commit:  commit,
@@ -95,10 +93,14 @@ var InstallCmd = &cobra.Command{
 			Source:  source,
 		}
 
-		fmt.Println(installPath)
+		dest := utils.GetInstallDir(owner, repo)
+		fmt.Println(dest)
 
-		dest := filepath.Join(installPath, owner+"-"+repo)
-		return inst.Install(ctx, dest, owner, repo, opts)
+		err := inst.Install(ctx, dest, owner, repo, opts)
+		if err != nil {
+			fmt.Print(err)
+		}
+		return err
 	},
 }
 

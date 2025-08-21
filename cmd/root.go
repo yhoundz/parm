@@ -17,11 +17,11 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "parm",
 	Short: "A zero-root, GitHub-native CLI package manager for installing and managing any GitHub-hosted tool.",
-	Long: `Parm (Probably a Repo Manager) is a thin CLI tool that downloads
-and installs prebuilt binaries or builds from source for any
-GitHub repository, keeping everything neatly isolated and in a single
-binary. It requires only Git and your shell, avoids system-wide changes
-or root access, and gives you full control over your programs.`,
+	Long: `Parm is a thin CLI tool/git wrapper that downloads and installs prebuilt
+binaries or builds from source for any GitHub repository, keeping everything
+neatly isolated and in a single binary. It requires only Git and your shell,
+avoids system-wide changes or root access, and gives you full control over
+your programs.`,
 	Version: version.AppVersion.String(),
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
