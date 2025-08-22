@@ -10,7 +10,11 @@ import (
 	"os"
 	"parm/internal/config"
 	"path/filepath"
+	"runtime"
 	"strings"
+
+	"github.com/h2non/filetype"
+	"github.com/h2non/filetype/types"
 )
 
 func ContainsAny(src string, tokens []string) bool {
@@ -188,4 +192,49 @@ func GetInstallDir(owner, repo string) string {
 	dir := owner + "-" + repo
 	dest := filepath.Join(installPath, dir)
 	return dest
+}
+
+// uses magic numbers to determine if a file is a binary executable
+func IsBinaryExecutable(path string) (bool, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+
+	if runtime.GOOS == "windows" {
+		if !strings.HasSuffix(strings.ToLower(info.Name()), ".exe") {
+			return false, nil
+		}
+	} else { // on unix system
+		if info.Mode()&0111 == 0 {
+			return false, nil
+		}
+	}
+
+	file, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+	defer file.Close()
+
+	const numBytes = 261
+	hdr := make([]byte, numBytes)
+	n, err := io.ReadAtLeast(file, hdr, 1)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return false, nil
+	}
+	if n == 0 {
+		return false, nil
+	}
+
+	kind, _ := filetype.Match(hdr)
+	if kind != types.Unknown {
+		if kind.Extension == "elf" ||
+			kind.Extension == "exe" ||
+			kind.Extension == "macho" {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
