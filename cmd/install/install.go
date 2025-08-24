@@ -5,6 +5,7 @@ package install
 
 import (
 	"fmt"
+	"parm/internal/cmdx"
 	"parm/internal/deps"
 	gh "parm/internal/github"
 	"parm/internal/installer"
@@ -30,16 +31,14 @@ var InstallCmd = &cobra.Command{
 	Short:   "Installs a new package",
 	Long:    ``,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if err := cmdx.MarkFlagsRequireFlag(cmd, "release", "source"); err != nil {
+			return err
+		}
 
 		// TODO: put this check elsewhere?
-		if source {
+		if commit != "" {
 			// if building from source, git is required
 			if err := deps.Require("git"); err != nil {
-				return err
-			}
-		} else {
-			// if downloading the binary, need tar to extract
-			if err := deps.Require("tar"); err != nil {
 				return err
 			}
 		}
@@ -111,5 +110,5 @@ func init() {
 	InstallCmd.PersistentFlags().StringVarP(&release, "release", "r", "", "Install binary from this release tag")
 
 	InstallCmd.MarkFlagsMutuallyExclusive("branch", "commit", "release")
-	InstallCmd.MarkFlagsMutuallyExclusive("branch", "commit", "source")
+	// InstallCmd.MarkFlagsMutuallyExclusive("branch", "commit", "source")
 }

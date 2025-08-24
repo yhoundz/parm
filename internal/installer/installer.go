@@ -59,9 +59,19 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 		if err := cmd.Run(); err != nil {
 			if eerr, ok := err.(*exec.ExitError); ok {
 				fmt.Printf("git exited with %d\n", eerr.ExitCode())
+				return eerr
 			} else {
 				fmt.Printf("failed to start or was killed: %v\n", err)
 			}
+			return err
+		}
+
+		man, err := NewManifest(owner, repo, opts.Branch, Branch, pkgPath)
+		if err != nil {
+			return fmt.Errorf("error: failed to create  manifest: %w", err)
+		}
+		if err := man.WriteManifest(pkgPath); err != nil {
+			return fmt.Errorf("error: failed to write manifest: %w", err)
 		}
 		return nil
 	} else if opts.Commit != "" {
@@ -111,6 +121,15 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 		if err != nil {
 			return err
 		}
+
+		man, err := NewManifest(owner, repo, opts.Commit, Commit, pkgPath)
+		if err != nil {
+			return fmt.Errorf("error: failed to create manifest: %w", err)
+		}
+		if err = man.WriteManifest(pkgPath); err != nil {
+			return fmt.Errorf("error: failed to write manifest: %w", err)
+		}
+
 		return nil
 	} else if opts.Release != "" {
 		// TODO: redo this part so i actually understand what's going on
@@ -148,6 +167,14 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 				return err
 			}
 			os.Remove(dest)
+
+			man, err := NewManifest(owner, repo, opts.Release, Source, pkgPath)
+			if err != nil {
+				return fmt.Errorf("error: failed to create manifest: %w", err)
+			}
+			if err := man.WriteManifest(pkgPath); err != nil {
+				return fmt.Errorf("error: failed to write manifest: %w", err)
+			}
 			return nil
 		}
 		matches, err := selectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
@@ -190,6 +217,15 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 				return err
 			}
 		}
+
+		man, err := NewManifest(owner, repo, opts.Release, Release, pkgPath)
+		if err != nil {
+			return fmt.Errorf("error: failed to create manifest: %w", err)
+		}
+		if err := man.WriteManifest(pkgPath); err != nil {
+			return fmt.Errorf("error: failed to write manifest: %w", err)
+		}
+
 		return nil
 	}
 

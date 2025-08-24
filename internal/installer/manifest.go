@@ -5,6 +5,7 @@ import (
 	"os"
 	"parm/internal/utils"
 	"path/filepath"
+	"time"
 )
 
 const ManifestFileName string = ".parmfile.json"
@@ -24,6 +25,28 @@ type Manifest struct {
 	LastUpdated string      `json:"last_updated"`
 	Executables []string    `json:"executables"`
 	InstallType InstallType `json:"install_type"`
+	Version     string      `json:"version"`
+}
+
+// TODO: create manifest options struct??
+func NewManifest(owner, repo, version string, installType InstallType, installDir string) (*Manifest, error) {
+	m := &Manifest{
+		Owner:       owner,
+		Repo:        repo,
+		LastUpdated: time.Now().UTC().Format(time.RFC3339),
+		Executables: []string{},
+		InstallType: installType,
+	}
+
+	if installType == Release {
+		binM, err := getBinExecutables(installDir)
+		if err != nil {
+			return nil, err
+		}
+		// FIX: optimize?
+		m.Executables = append(m.Executables, binM...)
+	}
+	return m, nil
 }
 
 func (m *Manifest) WriteManifest(installDir string) error {
@@ -46,11 +69,11 @@ func ReadManifest(installDir string) (*Manifest, error) {
 	return &m, err
 }
 
-func createManifest(installDir string) (*Manifest, error) {
+func getBinExecutables(installDir string) ([]string, error) {
 	var paths []string
 	scanDir := installDir
 	binDir := filepath.Join(installDir, "bin")
-	if info, err := os.Stat(binDir); err != nil && info.IsDir() {
+	if info, err := os.Stat(binDir); err == nil && info.IsDir() {
 		scanDir = binDir
 	}
 
@@ -77,8 +100,5 @@ func createManifest(installDir string) (*Manifest, error) {
 		return nil, err
 	}
 
-	return &Manifest{
-		Executables: paths,
-		InstallType: Branch,
-	}, nil
+	return paths, err
 }
