@@ -2,6 +2,7 @@ package installer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -24,10 +25,11 @@ type Installer struct {
 }
 
 type InstallOptions struct {
-	Branch  string
-	Commit  string
-	Release string
-	Source  bool
+	Branch     string
+	Commit     string
+	Release    string
+	Source     bool
+	PreRelease bool
 }
 
 func New(cli *github.RepositoriesService) *Installer {
@@ -131,7 +133,9 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 		}
 
 		return nil
-	} else if opts.Release != "" {
+	}
+
+	if opts.Release != "" {
 		// TODO: redo this part so i actually understand what's going on
 		// if source build, download the source code from tarball
 		// if not source, find best-matching binary based on GOOS and GOARCH, and then
@@ -147,90 +151,120 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 			return fmt.Errorf("ERROR: Release %s not valid, %w", opts.Release, err)
 		}
 
-		if opts.Source {
-			ref := "tags/" + rel.GetTagName()
-			dl, _, err := in.client.GetArchiveLink(
-				ctx,
-				owner, repo,
-				github.Tarball,
-				&github.RepositoryContentGetOptions{Ref: ref},
-				0,
-			)
-			if err != nil {
-				return fmt.Errorf("ERROR: cannot resolve source for %s/%s, with %w ", owner, repo, err)
-			}
-			dest := filepath.Join(pkgPath, fmt.Sprintf("%s-%s.tar.gz", repo, rel.GetTagName()))
-			if err := downloadTo(ctx, dest, dl.String()); err != nil {
-				return err
-			}
-			if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
-				return err
-			}
-			os.Remove(dest)
+		return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
 
-			man, err := NewManifest(owner, repo, opts.Release, Source, pkgPath)
-			if err != nil {
-				return fmt.Errorf("error: failed to create manifest: %w", err)
-			}
-			if err := man.WriteManifest(pkgPath); err != nil {
-				return fmt.Errorf("error: failed to write manifest: %w", err)
-			}
-			return nil
-		}
-		matches, err := selectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
+	} else if opts.PreRelease {
+		valid, rel, err := gh.ValidatePreRelease(ctx, in.client, owner, repo)
 		if err != nil {
+			return fmt.Errorf("err: cannot resolve pre-release %s on %s/%s: %w", rel.GetTagName(), owner, repo, err)
+		}
+		if !valid {
+			return fmt.Errorf("error: no valid pre-release found for %s/%s", owner, repo)
+		}
+
+		return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
+	} else {
+		rel, _, err := in.client.GetLatestRelease(ctx, owner, repo)
+		if err != nil {
+			var ghErr *github.ErrorResponse
+			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
+				return fmt.Errorf("no stable release found for %s/%s", owner, repo)
+			}
+			return fmt.Errorf("could not fetch latest release: %w", err)
+		}
+
+		return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
+	}
+
+	// none of the options what now?
+	// TODO: something happens here? throw an error?
+	// return nil
+}
+
+func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallOptions) error {
+	if opts.Source {
+		ref := "tags/" + rel.GetTagName()
+		dl, _, err := in.client.GetArchiveLink(
+			ctx,
+			owner, repo,
+			github.Tarball,
+			&github.RepositoryContentGetOptions{Ref: ref},
+			0,
+		)
+		if err != nil {
+			return fmt.Errorf("ERROR: cannot resolve source for %s/%s, with %w ", owner, repo, err)
+		}
+		dest := filepath.Join(pkgPath, fmt.Sprintf("%s-%s.tar.gz", repo, rel.GetTagName()))
+		if err := downloadTo(ctx, dest, dl.String()); err != nil {
 			return err
 		}
-		if matches == nil {
-			// TODO: allow users to choose what asset they want installed instead
-			return fmt.Errorf("ERROR: No install matches found")
+		if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
+			return err
 		}
-		// if len(matches) > 1 {
-		// 	// TODO: allow users to choose what asset they want installed instead
-		// 	return nil
-		// }
+		os.Remove(dest)
 
-		ass := matches[0]
-		dest := filepath.Join(pkgPath, ass.GetName()) // download destination
-		if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL()); err != nil {
-			return fmt.Errorf("ERROR: failed to download asset: %w", err)
-		}
-
-		switch {
-		case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
-			if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
-				return fmt.Errorf("ERROR: failed to extract tarball: %w", err)
-			}
-			os.Remove(dest)
-		case strings.HasSuffix(dest, ".zip"):
-			if err := utils.ExtractZip(dest, pkgPath); err != nil {
-				return fmt.Errorf("ERROR: failed to extract zip: %w", err)
-			}
-			os.Remove(dest)
-		default:
-			if runtime.GOOS != "windows" {
-				if err := os.Chmod(dest, 0o755); err != nil {
-					return fmt.Errorf("failed to make binary executable: %w", err)
-				}
-			}
-			if err := utils.MoveAllFrom(dest, pkgPath); err != nil {
-				return err
-			}
-		}
-
-		man, err := NewManifest(owner, repo, opts.Release, Release, pkgPath)
+		man, err := NewManifest(owner, repo, rel.GetTagName(), Source, pkgPath)
 		if err != nil {
 			return fmt.Errorf("error: failed to create manifest: %w", err)
 		}
 		if err := man.WriteManifest(pkgPath); err != nil {
 			return fmt.Errorf("error: failed to write manifest: %w", err)
 		}
-
 		return nil
 	}
+	matches, err := selectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		return err
+	}
+	if matches == nil {
+		// TODO: allow users to choose what asset they want installed instead
+		return fmt.Errorf("err: No install matches found")
+	}
+	if len(matches) == 0 {
+		// TODO: allow users to choose match
+		return fmt.Errorf("err: no compatible binary found for release %s", rel.GetTagName())
+	}
+	// if len(matches) > 1 {
+	// 	// TODO: allow users to choose what asset they want installed instead
+	// 	return nil
+	// }
 
-	// none of the options what now?
-	// TODO: something happens here? throw an error?
+	ass := matches[0]
+	dest := filepath.Join(pkgPath, ass.GetName()) // download destination
+	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL()); err != nil {
+		return fmt.Errorf("ERROR: failed to download asset: %w", err)
+	}
+
+	switch {
+	case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
+		if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
+			return fmt.Errorf("ERROR: failed to extract tarball: %w", err)
+		}
+		os.Remove(dest)
+	case strings.HasSuffix(dest, ".zip"):
+		if err := utils.ExtractZip(dest, pkgPath); err != nil {
+			return fmt.Errorf("ERROR: failed to extract zip: %w", err)
+		}
+		os.Remove(dest)
+	default:
+		if runtime.GOOS != "windows" {
+			if err := os.Chmod(dest, 0o755); err != nil {
+				return fmt.Errorf("failed to make binary executable: %w", err)
+			}
+		}
+		// if err := utils.MoveAllFrom(dest, pkgPath); err != nil {
+		// 	return err
+		// }
+	}
+
+	man, err := NewManifest(owner, repo, rel.GetTagName(), Release, pkgPath)
+	if err != nil {
+		return fmt.Errorf("error: failed to create manifest: %w", err)
+	}
+	if err := man.WriteManifest(pkgPath); err != nil {
+		return fmt.Errorf("error: failed to write manifest: %w", err)
+	}
+
 	return nil
 }
 

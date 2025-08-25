@@ -25,6 +25,43 @@ func GetNLatestReleases(
 	return rels, nil
 }
 
+func GetLatestPreRelease(
+	ctx context.Context,
+	client *github.RepositoriesService,
+	owner, repo string,
+) (*github.RepositoryRelease, error) {
+	rels, _, err := client.ListReleases(ctx, owner, repo, nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not list releases for %s/%s: %w", owner, repo, err)
+	}
+
+	for _, rel := range rels {
+		if rel.GetPrerelease() {
+			return rel, nil
+		}
+	}
+
+	return nil, nil
+}
+
+func ValidatePreRelease(
+	ctx context.Context,
+	client *github.RepositoriesService,
+	owner, repo string,
+) (bool, *github.RepositoryRelease, error) {
+	rel, err := GetLatestPreRelease(ctx, client, owner, repo)
+
+	if err != nil {
+		return false, nil, err
+	}
+
+	if rel != nil {
+		return true, rel, nil
+	}
+
+	return false, nil, nil
+}
+
 func ValidateRelease(
 	ctx context.Context,
 	client *github.RepositoriesService,

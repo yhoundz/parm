@@ -1,7 +1,7 @@
 /*
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 */
-package uninstall
+package remove
 
 import (
 	"fmt"
@@ -12,8 +12,8 @@ import (
 )
 
 // uninstallCmd represents the uninstall command
-var UninstallCmd = &cobra.Command{
-	Use:   "uninstall <owner>/<repo>",
+var RemoveCmd = &cobra.Command{
+	Use:   "remove <owner>/<repo>",
 	Short: "Uninstalls a parm package",
 	Long:  `Uninstalls a parm package. Does not remove the configuration files`,
 	RunE: func(cmd *cobra.Command, args []string) error {

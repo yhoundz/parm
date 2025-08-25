@@ -14,8 +14,9 @@ var UpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Updates a package",
 	Long:  `Updates a package to the latest available version.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("update called")
+		return nil
 	},
 }
 

@@ -18,6 +18,7 @@ import (
 )
 
 var source bool
+var pre_release bool
 var (
 	branch  string
 	commit  string
@@ -31,8 +32,24 @@ var InstallCmd = &cobra.Command{
 	Short:   "Installs a new package",
 	Long:    ``,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := cmdx.MarkFlagsRequireFlag(cmd, "release", "source"); err != nil {
-			return err
+
+		owner, repo, tag, err := cmdparser.ParseRepoReleaseRef(args[0])
+		if err != nil {
+			owner, repo, tag, err = cmdparser.ParseGithubUrlPatternWithRelease(args[0])
+		}
+		if err != nil {
+			return fmt.Errorf("cannot resolve git repository from input: %s", args[0])
+		}
+
+		if tag != "" {
+			confFlags := []string{"branch", "commit", "release", "pre-release"}
+			for _, flag := range confFlags {
+				if cmd.Flags().Changed(flag) {
+					return fmt.Errorf("cannot use @version shorthand with the --%s flag", flag)
+				}
+			}
+			release = tag
+			args[0] = owner + "/" + repo
 		}
 
 		// TODO: put this check elsewhere?
@@ -43,32 +60,8 @@ var InstallCmd = &cobra.Command{
 			}
 		}
 
-		owner, repo, tag, err := cmdparser.ParseRepoReleaseRef(args[0])
-		if err == nil {
-			if tag != "" {
-				if branch != "" || commit != "" || release != "" {
-					return fmt.Errorf("cannot mix @tag with --branch/--commit/--release")
-				}
-				release = tag
-				args[0] = owner + "/" + repo
-			} else {
-				// no tag matched, wait for other args
-			}
-		} else {
-			owner, repo, tag, err := cmdparser.ParseGithubUrlPatternWithRelease(args[0])
-			if err != nil {
-				if tag != "" {
-					// there is a tag,
-					if branch != "" || commit != "" || release != "" {
-						return fmt.Errorf("cannot mix @tag with --branch/--commit/--release")
-					}
-					release = tag
-					args[0] = owner + "/" + repo
-				}
-			} else {
-				// there is an error
-				return fmt.Errorf("Cannot resolve git repository")
-			}
+		if err := cmdx.MarkFlagsRequireFlag(cmd, "release", "source"); err != nil {
+			return err
 		}
 
 		return nil
@@ -86,10 +79,11 @@ var InstallCmd = &cobra.Command{
 		inst := installer.New(client)
 		owner, repo, _ := cmdparser.ParseRepoRef(pkg)
 		opts := installer.InstallOptions{
-			Branch:  branch,
-			Commit:  commit,
-			Release: release,
-			Source:  source,
+			Branch:     branch,
+			Commit:     commit,
+			Release:    release,
+			Source:     source,
+			PreRelease: pre_release,
 		}
 
 		dest := utils.GetInstallDir(owner, repo)
@@ -105,10 +99,10 @@ var InstallCmd = &cobra.Command{
 
 func init() {
 	InstallCmd.PersistentFlags().BoolVarP(&source, "source", "s", false, "Build from source")
+	InstallCmd.PersistentFlags().BoolVarP(&pre_release, "pre-release", "p", false, "Installs the latest pre-release binary, if availabale")
 	InstallCmd.PersistentFlags().StringVarP(&branch, "branch", "b", "", "Install from this git branch")
 	InstallCmd.PersistentFlags().StringVarP(&commit, "commit", "c", "", "Install from this git commit SHA")
 	InstallCmd.PersistentFlags().StringVarP(&release, "release", "r", "", "Install binary from this release tag")
 
-	InstallCmd.MarkFlagsMutuallyExclusive("branch", "commit", "release")
-	// InstallCmd.MarkFlagsMutuallyExclusive("branch", "commit", "source")
+	InstallCmd.MarkFlagsMutuallyExclusive("branch", "commit", "release", "pre-release")
 }
