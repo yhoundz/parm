@@ -13,10 +13,11 @@ const ManifestFileName string = ".parmfile.json"
 type InstallType string
 
 const (
-	Release InstallType = "binary"
-	Commit  InstallType = "commit"
-	Branch  InstallType = "branch"
-	Source  InstallType = "source"
+	Release    InstallType = "release"
+	Commit     InstallType = "commit"
+	Branch     InstallType = "branch"
+	Source     InstallType = "source"
+	PreRelease InstallType = "pre-release"
 )
 
 type Manifest struct {
