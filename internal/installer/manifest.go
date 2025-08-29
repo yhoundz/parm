@@ -16,7 +16,6 @@ const (
 	Release    InstallType = "release"
 	Commit     InstallType = "commit"
 	Branch     InstallType = "branch"
-	Source     InstallType = "source"
 	PreRelease InstallType = "pre-release"
 )
 
@@ -26,26 +25,28 @@ type Manifest struct {
 	LastUpdated string      `json:"last_updated"`
 	Executables []string    `json:"executables"`
 	InstallType InstallType `json:"install_type"`
+	IsSource    bool        `json:"is_source"`
 	Version     string      `json:"version"`
 }
 
 // TODO: create manifest options struct??
-func NewManifest(owner, repo, version string, installType InstallType, installDir string) (*Manifest, error) {
+func NewManifest(owner, repo, version string, installType InstallType, isSource bool, installDir string) (*Manifest, error) {
 	m := &Manifest{
 		Owner:       owner,
 		Repo:        repo,
 		LastUpdated: time.Now().UTC().Format(time.RFC3339),
 		Executables: []string{},
 		InstallType: installType,
+		Version:     version,
 	}
 
-	if installType == Release {
+	if installType == Release || installType == PreRelease {
 		binM, err := getBinExecutables(installDir)
 		if err != nil {
 			return nil, err
 		}
 		// FIX: optimize?
-		m.Executables = append(m.Executables, binM...)
+		m.Executables = binM
 	}
 	return m, nil
 }

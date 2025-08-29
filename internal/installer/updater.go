@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"parm/internal/utils"
+
+	"github.com/google/go-github/v74/github"
 )
 
 func (in *Installer) Update(ctx context.Context, owner, repo string) error {
@@ -40,4 +42,20 @@ func (in *Installer) Update(ctx context.Context, owner, repo string) error {
 	default:
 	}
 	return nil
+}
+
+func (in *Installer) updateRelease(ctx context.Context,
+	installDir string,
+	man *Manifest,
+	rel *github.RepositoryRelease,
+	opts InstallOptions) error {
+	owner := man.Owner
+	repo := man.Repo
+
+	if man.Version == rel.GetTagName() {
+		fmt.Printf("%s/%s@%s is already up to date.\n", owner, repo, man.Version)
+		return nil
+	}
+	fmt.Printf("Updating %s/%s from %s to %s...\n", owner, repo, man.Version, rel.GetTagName())
+	return in.Install(ctx, installDir, owner, repo, opts)
 }

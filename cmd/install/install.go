@@ -64,6 +64,10 @@ var InstallCmd = &cobra.Command{
 			return err
 		}
 
+		if err := cmdx.MarkFlagsRequireFlag(cmd, "pre-release", "source"); err != nil {
+			return err
+		}
+
 		return nil
 	},
 	Args: cobra.ExactArgs(1),
