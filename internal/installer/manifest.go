@@ -31,6 +31,7 @@ type Manifest struct {
 
 // TODO: create manifest options struct??
 func NewManifest(owner, repo, version string, installType InstallType, isSource bool, installDir string) (*Manifest, error) {
+	// isSource := installType == Release || installType == Commit ||
 	m := &Manifest{
 		Owner:       owner,
 		Repo:        repo,
@@ -40,12 +41,11 @@ func NewManifest(owner, repo, version string, installType InstallType, isSource 
 		Version:     version,
 	}
 
-	if installType == Release || installType == PreRelease {
+	if !isSource {
 		binM, err := getBinExecutables(installDir)
 		if err != nil {
 			return nil, err
 		}
-		// FIX: optimize?
 		m.Executables = binM
 	}
 	return m, nil
