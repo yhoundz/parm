@@ -9,20 +9,19 @@ import (
 	gh "parm/internal/github"
 )
 
-func (in *Installer) installFromBranch(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions) error {
-	valid, _, err := gh.ValidateBranch(ctx, in.client, owner, repo, opts.Version)
+func (in *Installer) installFromBranch(ctx context.Context, pkgPath, owner, repo, branch string) error {
+	valid, _, err := gh.ValidateBranch(ctx, in.client, owner, repo, branch)
 	if err != nil {
-		fmt.Printf("ERROR: cannot resolve branch: %q on %s/%s", opts.Version, owner, repo)
-		return err
+		return fmt.Errorf("error: cannot resolve branch: %q on %s/%s", branch, owner, repo)
 	}
 	if !valid {
-		return fmt.Errorf("Error: branch: %s cannot be found", opts.Version)
+		return fmt.Errorf("error: branch: %s cannot be found", branch)
 	}
 
 	cloneLink, _ := cmdparser.BuildGitLink(owner, repo)
 	cmd := exec.CommandContext(ctx, "git", "clone",
 		"--depth=1", "--recurse-submodules", "--shallow-submodules", "--branch",
-		opts.Version, cloneLink, pkgPath)
+		branch, cloneLink, pkgPath)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
@@ -37,7 +36,7 @@ func (in *Installer) installFromBranch(ctx context.Context, pkgPath, owner, repo
 		return err
 	}
 
-	man, err := NewManifest(owner, repo, opts.Version, Branch, true, pkgPath)
+	man, err := NewManifest(owner, repo, branch, Branch, true, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create  manifest: %w", err)
 	}

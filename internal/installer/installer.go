@@ -8,7 +8,6 @@ import (
 	"math"
 	"net/http"
 	"os"
-	gh "parm/internal/github"
 	"parm/internal/utils"
 	"path/filepath"
 	"slices"
@@ -34,39 +33,13 @@ func New(cli *github.RepositoriesService) *Installer {
 }
 
 func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions) error {
-	// WARNING: using --branch or --commit will automatically install from source
 	switch opts.Type {
 	case Branch:
-		return in.installFromBranch(ctx, pkgPath, owner, repo, opts)
+		return in.installFromBranch(ctx, pkgPath, owner, repo, opts.Version)
 	case Commit:
-		return in.installFromCommit(ctx, pkgPath, owner, repo, opts)
-	case Release:
-		// TODO: redo this part so i actually understand what's going on
-		// if source build, download the source code from tarball
-		// if not source, find best-matching binary based on GOOS and GOARCH, and then
-		// get the download link
-		// afterwards, download and extract the tarball to the desired dir.
-
-		// TODO: cleanup if something in the install process goes wrong?
-		valid, rel, err := gh.ValidateRelease(ctx, in.client, owner, repo, opts.Version)
-		if err != nil {
-			return fmt.Errorf("ERROR: Cannot resolve release %s on %s/%s", opts.Version, owner, repo)
-		}
-		if !valid {
-			return fmt.Errorf("ERROR: Release %s not valid, %w", opts.Version, err)
-		}
-
-		return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
-	case PreRelease:
-		valid, rel, err := gh.ValidatePreRelease(ctx, in.client, owner, repo)
-		if err != nil {
-			return fmt.Errorf("err: cannot resolve pre-release %s on %s/%s: %w", rel.GetTagName(), owner, repo, err)
-		}
-		if !valid {
-			return fmt.Errorf("error: no valid pre-release found for %s/%s", owner, repo)
-		}
-
-		return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
+		return in.installFromCommit(ctx, pkgPath, owner, repo, opts.Version)
+	case Release, PreRelease:
+		return in.installFromReleaseByType(ctx, pkgPath, owner, repo, opts)
 	default:
 		rel, _, err := in.client.GetLatestRelease(ctx, owner, repo)
 		if err != nil {

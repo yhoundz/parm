@@ -9,14 +9,14 @@ import (
 	gh "parm/internal/github"
 )
 
-func (in *Installer) installFromCommit(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions) error {
+func (in *Installer) installFromCommit(ctx context.Context, pkgPath, owner, repo, commitSHA string) error {
 	// TODO: testing
-	valid, _, err := gh.ValidateCommit(ctx, in.client, owner, repo, opts.Version)
+	valid, _, err := gh.ValidateCommit(ctx, in.client, owner, repo, commitSHA)
 	if err != nil {
-		return fmt.Errorf("ERROR: cannot resolve commit: %q on %s/%s", opts.Version, owner, repo)
+		return fmt.Errorf("ERROR: cannot resolve commit: %q on %s/%s", commitSHA, owner, repo)
 	}
 	if !valid {
-		return fmt.Errorf("ERROR: commit %q is not valid on %s/%s", opts.Version, owner, repo)
+		return fmt.Errorf("ERROR: commit %q is not valid on %s/%s", commitSHA, owner, repo)
 	}
 
 	cloneLink, _ := cmdparser.BuildGitLink(owner, repo)
@@ -40,13 +40,13 @@ func (in *Installer) installFromCommit(ctx context.Context, pkgPath, owner, repo
 	}
 
 	// fetch commit
-	err = execGitCmd("-C", pkgPath, "fetch", "--depth=1", "origin", opts.Version)
+	err = execGitCmd("-C", pkgPath, "fetch", "--depth=1", "origin", commitSHA)
 	if err != nil {
 		return err
 	}
 
 	// checkout commit + subms
-	err = execGitCmd("-C", pkgPath, "checkout", "--recurse-submodules", opts.Version)
+	err = execGitCmd("-C", pkgPath, "checkout", "--recurse-submodules", commitSHA)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (in *Installer) installFromCommit(ctx context.Context, pkgPath, owner, repo
 		return err
 	}
 
-	man, err := NewManifest(owner, repo, opts.Version, Commit, true, pkgPath)
+	man, err := NewManifest(owner, repo, commitSHA, Commit, true, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: %w", err)
 	}

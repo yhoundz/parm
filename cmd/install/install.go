@@ -32,7 +32,6 @@ var InstallCmd = &cobra.Command{
 	Short:   "Installs a new package",
 	Long:    ``,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-
 		owner, repo, tag, err := cmdparser.ParseRepoReleaseRef(args[0])
 		if err != nil {
 			owner, repo, tag, err = cmdparser.ParseGithubUrlPatternWithRelease(args[0])
@@ -82,12 +81,31 @@ var InstallCmd = &cobra.Command{
 
 		inst := installer.New(client)
 		owner, repo, _ := cmdparser.ParseRepoRef(pkg)
+
+		var insType installer.InstallType
+		var version string
+		if branch != "" {
+			insType = installer.Branch
+			version = branch
+		} else if commit != "" {
+			insType = installer.Commit
+			version = commit
+		} else if release != "" {
+			insType = installer.Release
+			version = release
+		} else if pre_release {
+			insType = installer.PreRelease
+			// INFO: do nothing, populate version later
+			version = ""
+		} else {
+			insType = installer.Release
+			version = ""
+		}
+
 		opts := installer.InstallOptions{
-			Branch:     branch,
-			Commit:     commit,
-			Release:    release,
-			Source:     source,
-			PreRelease: pre_release,
+			Type:    insType,
+			Version: version,
+			Source:  source,
 		}
 
 		dest := utils.GetInstallDir(owner, repo)
