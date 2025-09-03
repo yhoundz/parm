@@ -12,7 +12,7 @@ import (
 
 var ConfigCmd = &cobra.Command{
 	Use:     "config",
-	Aliases: []string{"configure"},
+	Aliases: []string{"configure, cfg"},
 	Short:   "Configures parm.",
 	Long:    `Prints the current configuration settings to your console.`,
 	// INFO: also allow users to set config keys using flags like --set key=value, as well as edit the file directly

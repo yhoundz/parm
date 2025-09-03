@@ -13,10 +13,10 @@ func (in *Installer) installFromCommit(ctx context.Context, pkgPath, owner, repo
 	// TODO: testing
 	valid, _, err := gh.ValidateCommit(ctx, in.client, owner, repo, commitSHA)
 	if err != nil {
-		return fmt.Errorf("ERROR: cannot resolve commit: %q on %s/%s", commitSHA, owner, repo)
+		return fmt.Errorf("ERROR: cannot resolve commit: %q on %s/%s: %w", commitSHA, owner, repo, err)
 	}
 	if !valid {
-		return fmt.Errorf("ERROR: commit %q is not valid on %s/%s", commitSHA, owner, repo)
+		return fmt.Errorf("ERROR: commit %q is not valid on %s/%s: %w", commitSHA, owner, repo, err)
 	}
 
 	cloneLink, _ := cmdparser.BuildGitLink(owner, repo)
@@ -25,7 +25,7 @@ func (in *Installer) installFromCommit(ctx context.Context, pkgPath, owner, repo
 		cmd := exec.CommandContext(ctx, "git", arg...)
 		cmd.Stdout, cmd.Stderr, cmd.Stdin = os.Stdout, os.Stderr, os.Stdin
 		if err := cmd.Run(); err != nil {
-			return err
+			return fmt.Errorf("git command %v failed: %w", arg, err)
 		}
 		return nil
 	}
@@ -61,9 +61,5 @@ func (in *Installer) installFromCommit(ctx context.Context, pkgPath, owner, repo
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: %w", err)
 	}
-	if err = man.WriteManifest(pkgPath); err != nil {
-		return fmt.Errorf("error: failed to write manifest: %w", err)
-	}
-
-	return nil
+	return man.WriteManifest(pkgPath)
 }

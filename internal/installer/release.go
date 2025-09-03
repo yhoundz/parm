@@ -2,36 +2,49 @@ package installer
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"math"
+	"net/http"
 	"os"
 	gh "parm/internal/github"
 	"parm/internal/utils"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/google/go-github/v74/github"
 )
 
 func (in *Installer) installFromReleaseByType(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions) error {
-	var rel *github.RepositoryRelease
-
 	switch opts.Type {
 	case Release:
-		// TODO: cleanup if something in the install process goes wrong?
-		valid, rel, err := gh.ValidateRelease(ctx, in.client, owner, repo, opts.Version)
-		if err != nil {
-			return fmt.Errorf("ERROR: Cannot resolve release %s on %s/%s", opts.Version, owner, repo)
-		}
-		if !valid {
-			return fmt.Errorf("ERROR: Release %s not valid, %w", opts.Version, err)
-		}
+		if opts.Version != "" {
+			valid, rel, err := gh.ValidateRelease(ctx, in.client, owner, repo, opts.Version)
+			if err != nil {
+				return fmt.Errorf("ERROR: Cannot resolve release %s on %s/%s", opts.Version, owner, repo)
+			}
+			if !valid {
+				return fmt.Errorf("ERROR: Release %s not valid, %w", opts.Version, err)
+			}
+			return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
+		} else {
+			rel, _, err := in.client.GetLatestRelease(ctx, owner, repo)
+			if err != nil {
+				var ghErr *github.ErrorResponse
+				if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
+					return fmt.Errorf("no stable release found for %s/%s", owner, repo)
+				}
+				return fmt.Errorf("could not fetch latest release: %w", err)
+			}
 
-		return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
+			return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
+		}
 	case PreRelease:
 		valid, rel, err := gh.ValidatePreRelease(ctx, in.client, owner, repo)
 		if err != nil {
-			return fmt.Errorf("err: cannot resolve pre-release %s on %s/%s: %w", rel.GetTagName(), owner, repo, err)
+			return fmt.Errorf("err: cannot resolve pre-release on %s/%s: %w", owner, repo, err)
 		}
 		if !valid {
 			return fmt.Errorf("error: no valid pre-release found for %s/%s", owner, repo)
@@ -41,10 +54,9 @@ func (in *Installer) installFromReleaseByType(ctx context.Context, pkgPath, owne
 	default:
 		return fmt.Errorf("invalid install type for release-based installation: %s", opts.Type)
 	}
-
-	return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
 }
 
+// Does NOT validate the release.
 func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallOptions) error {
 	if opts.Source {
 		ref := "tags/" + rel.GetTagName()
@@ -66,73 +78,151 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 			return err
 		}
 		os.Remove(dest)
-
-		man, err := NewManifest(owner, repo, rel.GetTagName(), Release, true, pkgPath)
+	} else {
+		matches, err := selectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
 		if err != nil {
-			return fmt.Errorf("error: failed to create manifest: %w", err)
+			return err
 		}
-		if err := man.WriteManifest(pkgPath); err != nil {
-			return fmt.Errorf("error: failed to write manifest: %w", err)
+		if matches == nil {
+			// TODO: allow users to choose what asset they want installed instead
+			return fmt.Errorf("err: No install matches found")
 		}
-		return nil
-	}
-	matches, err := selectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
-	if err != nil {
-		return err
-	}
-	if matches == nil {
-		// TODO: allow users to choose what asset they want installed instead
-		return fmt.Errorf("err: No install matches found")
-	}
-	if len(matches) == 0 {
-		// TODO: allow users to choose match
-		return fmt.Errorf("err: no compatible binary found for release %s", rel.GetTagName())
-	}
-	// if len(matches) > 1 {
-	// 	// TODO: allow users to choose what asset they want installed instead
-	// 	return nil
-	// }
+		if len(matches) == 0 {
+			// TODO: allow users to choose match
+			return fmt.Errorf("err: no compatible binary found for release %s", rel.GetTagName())
+		}
+		// if len(matches) > 1 {
+		// 	// TODO: allow users to choose what asset they want installed instead
+		// 	return nil
+		// }
 
-	ass := matches[0]
-	dest := filepath.Join(pkgPath, ass.GetName()) // download destination
-	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL()); err != nil {
-		return fmt.Errorf("ERROR: failed to download asset: %w", err)
-	}
+		ass := matches[0]
+		dest := filepath.Join(pkgPath, ass.GetName()) // download destination
+		if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL()); err != nil {
+			return fmt.Errorf("ERROR: failed to download asset: %w", err)
+		}
 
-	switch {
-	case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
-		if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
-			return fmt.Errorf("ERROR: failed to extract tarball: %w", err)
-		}
-		os.Remove(dest)
-	case strings.HasSuffix(dest, ".zip"):
-		if err := utils.ExtractZip(dest, pkgPath); err != nil {
-			return fmt.Errorf("ERROR: failed to extract zip: %w", err)
-		}
-		os.Remove(dest)
-	default:
-		if runtime.GOOS != "windows" {
-			if err := os.Chmod(dest, 0o755); err != nil {
-				return fmt.Errorf("failed to make binary executable: %w", err)
+		switch {
+		case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
+			if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
+				return fmt.Errorf("ERROR: failed to extract tarball: %w", err)
+			}
+			os.Remove(dest)
+		case strings.HasSuffix(dest, ".zip"):
+			if err := utils.ExtractZip(dest, pkgPath); err != nil {
+				return fmt.Errorf("ERROR: failed to extract zip: %w", err)
+			}
+			os.Remove(dest)
+		default:
+			if runtime.GOOS != "windows" {
+				if err := os.Chmod(dest, 0o755); err != nil {
+					return fmt.Errorf("failed to make binary executable: %w", err)
+				}
 			}
 		}
-		// if err := utils.MoveAllFrom(dest, pkgPath); err != nil {
-		// 	return err
-		// }
 	}
 
-	installT := Release
-	if opts.Type == PreRelease {
-		installT = PreRelease
-	}
-
-	man, err := NewManifest(owner, repo, rel.GetTagName(), installT, false, pkgPath)
+	man, err := NewManifest(owner, repo, rel.GetTagName(), opts.Type, opts.Source, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: %w", err)
 	}
-	if err := man.WriteManifest(pkgPath); err != nil {
-		return fmt.Errorf("error: failed to write manifest: %w", err)
+	return man.WriteManifest(pkgPath)
+}
+
+// infers the proper release asset based on the name of the asset
+func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*github.ReleaseAsset, error) {
+	type match struct {
+		asset *github.ReleaseAsset
+		score int
 	}
 
-	return nil
+	gooses := map[string][]string{
+		"windows": {"windows", "win64", "win32", "win"},
+		"darwin":  {"macos", "darwin", "mac", "osx"},
+		"linux":   {"linux"},
+	}
+	goarchs := map[string][]string{
+		"amd64": {"amd64", "x86_64", "x64", "64bit", "64-bit"},
+		"386":   {"386", "x86", "i386", "32bit", "32-bit"},
+		"arm64": {"arm64", "aarch64"},
+		"arm":   {"armv7", "armv6", "armhf", "armv7l"},
+	}
+
+	extPref := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".AppImage"}
+	if goos == "windows" {
+		extPref = []string{".zip", ".exe", ".msi", ".bin"}
+	}
+
+	// other score modifiers
+	scoreMods := map[string]int{
+		"musl": -1,
+	}
+	if goos == "windows" {
+		scoreMods = map[string]int{}
+	}
+
+	// scoring
+	scoredMatches := make([]match, len(assets))
+	for i, a := range assets {
+		scoredMatches[i] = match{asset: a, score: 0}
+	}
+
+	const goosMatch = 11
+	const goarchMatch = 7
+	const prefMatch = 3 // actually a multiplier for preference match
+	const minScoreMatch = goosMatch + goarchMatch
+
+	for i := range scoredMatches {
+		a := &scoredMatches[i]
+		name := a.asset.GetName()
+		if utils.ContainsAny(name, gooses[goos]) {
+			a.score += goosMatch
+		}
+		if utils.ContainsAny(name, goarchs[goarch]) {
+			a.score += goarchMatch
+		}
+
+		for j, ext := range extPref {
+			var mult float64 = float64(prefMatch) * float64((len(extPref) - j))
+			var multRounded int = int(math.Round(mult))
+			if strings.HasSuffix(name, ext) {
+				a.score += multRounded
+			}
+		}
+
+		for j, m := range scoreMods {
+			if strings.Contains(name, j) {
+				a.score += m
+			}
+		}
+	}
+
+	// sort
+	slices.SortStableFunc(scoredMatches, func(a, b match) int {
+		if a.score < b.score {
+			return 1
+		}
+		if a.score > b.score {
+			return -1
+		}
+		return 0
+	})
+
+	minMatch := scoredMatches[0].score
+	if minMatch < minScoreMatch {
+		return nil, fmt.Errorf("ERROR: Cannot find sufficient matches")
+	}
+
+	// find top candidate(s)
+	var candidates []*github.ReleaseAsset
+	for _, m := range scoredMatches {
+		if m.score == minMatch {
+			candidates = append(candidates, m.asset)
+			continue
+		}
+		break
+	}
+
+	// fmt.Print(candidates)
+	return candidates, nil
 }

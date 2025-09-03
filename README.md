@@ -16,7 +16,7 @@ TODO
 > If you DON'T have/want to use a GitHub personal access token, then you will be limited to 60 requests/hr instead of the 5000+ requests/hr with an API key. 
 > There is nothing I can do about this and this is a limitation of the program's design and the GitHub API.
 
-Parm uses the GitHub REST API to find and install packages. Theoretically, this means you can install any program off of GitHub, so ***YOU*** are responsible for the packages I install, since I don't maintain a registry of vetted packages.
+Parm uses the GitHub REST API to find and install packages. Theoretically, this means you can install any program off of GitHub, so ***YOU*** are responsible for the packages you install, since I don't maintain a registry of vetted packages.
 
 ### Add Personal Access Token:
 1. Add a personal access token (classic) by following [this guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
@@ -47,7 +47,7 @@ For example:
 parm install yhoundz/parm
 ```
 
-If you want, you can also use the full git for installation:
+If you want, you can also specify the full https/ssh link for installation:
 ```bash
 parm install https://github.com/yhoundz/parm.git
 ```
@@ -57,7 +57,7 @@ parm install git@github.com:yhoundz/parm.git
 ```
 
 
-If you want to install a specific version of a package, you can specify with the --release flag (-r for shorthand)
+If you want to install a specific version of a package, you can specify with the --release flag
 ```bash
 parm install yhoundz/parm --release v0.1.0
 ```
@@ -69,9 +69,9 @@ parm install yhoundz/parm@v0.1.0
 ```
 
 You can also install directly from source, but you will have to resolve dependencies and build it yourself. Not recommended unless you know what you're doing.
-This is effectively the same as running "git clone"
+This is effectively the same as running "git clone" (though it actually installs the source code as it was at the corresponding release).
 ```bash
-parm install yhoundz/parm --release @v0.1.0 --source
+parm install yhoundz/parm --release v0.1.0 --source
 ```
 
 #### Installing a Pre-Release:
@@ -85,6 +85,7 @@ And of course, you can specify if you want to install from source instead:
 ```bash
 parm install yhoundz/parm --pre-release --source
 ```
+
 ### Installing from a Branch (Not Recommended):
 
 > [!WARNING]
@@ -106,9 +107,11 @@ Installing in this way will always download the code from source, so you will ha
 
 > [!WARNING]
 > Installing using this method is not recommended, since it is effectively the same as `git clone`.
-> The option to install from a branch is only here for convenience.
+> The option to install from a commit is only here for convenience.
 
 To install from a commit, specify the commit SHA or the full commit hash:
 ```bash
 parm install yhoundz/parm --commit 3adf510f40acf1b33f921f052ad260d395bea3cb
 ```
+
+Installing in this way will also download the code from source, and you'll have to resolve dependencies and build the code yourself.

@@ -27,10 +27,9 @@ var (
 
 // installCmd represents the install command
 var InstallCmd = &cobra.Command{
-	Use:     "install <owner>/<repo>@[release-tag]",
-	Aliases: []string{"i"},
-	Short:   "Installs a new package",
-	Long:    ``,
+	Use:   "install <owner>/<repo>@[release-tag]",
+	Short: "Installs a new package",
+	Long:  ``,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		owner, repo, tag, err := cmdparser.ParseRepoReleaseRef(args[0])
 		if err != nil {
