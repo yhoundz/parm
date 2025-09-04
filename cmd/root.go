@@ -9,7 +9,7 @@ import (
 	"parm/cmd/install"
 	"parm/cmd/remove"
 	"parm/cmd/update"
-	"parm/internal/version"
+	"parm/internal/parmver"
 
 	"github.com/spf13/cobra"
 )
@@ -23,7 +23,7 @@ binaries or builds from source for any GitHub repository, keeping everything
 neatly isolated and in a single binary. It requires only Git and your shell,
 avoids system-wide changes or root access, and gives you full control over
 your programs.`,
-	Version: version.AppVersion.String(),
+	Version: parmver.AppVersion.String(),
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) {},

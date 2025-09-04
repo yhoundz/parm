@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	gh "parm/internal/github"
+	"parm/internal/manifest"
 	"parm/internal/utils"
 	"path/filepath"
 	"runtime"
@@ -19,7 +20,7 @@ import (
 
 func (in *Installer) installFromReleaseByType(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions) error {
 	switch opts.Type {
-	case Release:
+	case manifest.Release:
 		if opts.Version != "" {
 			valid, rel, err := gh.ValidateRelease(ctx, in.client, owner, repo, opts.Version)
 			if err != nil {
@@ -41,7 +42,7 @@ func (in *Installer) installFromReleaseByType(ctx context.Context, pkgPath, owne
 
 			return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
 		}
-	case PreRelease:
+	case manifest.PreRelease:
 		valid, rel, err := gh.ValidatePreRelease(ctx, in.client, owner, repo)
 		if err != nil {
 			return fmt.Errorf("err: cannot resolve pre-release on %s/%s: %w", owner, repo, err)
@@ -122,7 +123,7 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 		}
 	}
 
-	man, err := NewManifest(owner, repo, rel.GetTagName(), opts.Type, opts.Source, pkgPath)
+	man, err := manifest.NewManifest(owner, repo, rel.GetTagName(), opts.Type, opts.Source, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: %w", err)
 	}

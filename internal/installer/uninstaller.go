@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"parm/internal/manifest"
 	"parm/internal/utils"
 	"path/filepath"
 )
@@ -11,7 +12,7 @@ import (
 // TODO: when version management is added?, have an option to remove a specific version
 func (in *Installer) Uninstall(ctx context.Context, owner, repo string) error {
 	dir := utils.GetInstallDir(owner, repo)
-	manifest, err := ReadManifest(dir)
+	manifest, err := manifest.ReadManifest(dir)
 	if err != nil {
 		return fmt.Errorf("could not read manifest: %w", err)
 	}

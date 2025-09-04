@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"parm/internal/cmdparser"
 	gh "parm/internal/github"
+	"parm/internal/manifest"
 )
 
 func (in *Installer) installFromBranch(ctx context.Context, pkgPath, owner, repo, branch string) error {
@@ -33,7 +34,7 @@ func (in *Installer) installFromBranch(ctx context.Context, pkgPath, owner, repo
 		return fmt.Errorf("failed to run git clone: %w", err)
 	}
 
-	man, err := NewManifest(owner, repo, branch, Branch, true, pkgPath)
+	man, err := manifest.NewManifest(owner, repo, branch, manifest.Branch, true, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: %w", err)
 	}

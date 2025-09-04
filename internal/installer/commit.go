@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"parm/internal/cmdparser"
 	gh "parm/internal/github"
+	"parm/internal/manifest"
 )
 
 func (in *Installer) installFromCommit(ctx context.Context, pkgPath, owner, repo, commitSHA string) error {
@@ -57,7 +58,7 @@ func (in *Installer) installFromCommit(ctx context.Context, pkgPath, owner, repo
 		return err
 	}
 
-	man, err := NewManifest(owner, repo, commitSHA, Commit, true, pkgPath)
+	man, err := manifest.NewManifest(owner, repo, commitSHA, manifest.Commit, true, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: %w", err)
 	}

@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"parm/internal/manifest"
 	"path/filepath"
 
 	"github.com/google/go-github/v74/github"
@@ -16,7 +17,7 @@ type Installer struct {
 }
 
 type InstallOptions struct {
-	Type    InstallType
+	Type    manifest.InstallType
 	Version string
 	Source  bool
 }
@@ -29,11 +30,11 @@ func New(cli *github.RepositoriesService) *Installer {
 
 func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions) error {
 	switch opts.Type {
-	case Branch:
+	case manifest.Branch:
 		return in.installFromBranch(ctx, pkgPath, owner, repo, opts.Version)
-	case Commit:
+	case manifest.Commit:
 		return in.installFromCommit(ctx, pkgPath, owner, repo, opts.Version)
-	case Release, PreRelease:
+	case manifest.Release, manifest.PreRelease:
 		return in.installFromReleaseByType(ctx, pkgPath, owner, repo, opts)
 	}
 

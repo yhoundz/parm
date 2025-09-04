@@ -2,7 +2,7 @@
 Copyright © 2025 A.W. <EMAIL ADDRESS>
 */
 
-package version
+package parmver
 
 import "fmt"
 

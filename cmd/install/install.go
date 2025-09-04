@@ -9,6 +9,7 @@ import (
 	"parm/internal/deps"
 	gh "parm/internal/github"
 	"parm/internal/installer"
+	"parm/internal/manifest"
 	"parm/internal/utils"
 
 	"parm/internal/cmdparser"
@@ -81,23 +82,23 @@ var InstallCmd = &cobra.Command{
 		inst := installer.New(client)
 		owner, repo, _ := cmdparser.ParseRepoRef(pkg)
 
-		var insType installer.InstallType
+		var insType manifest.InstallType
 		var version string
 		if branch != "" {
-			insType = installer.Branch
+			insType = manifest.Branch
 			version = branch
 		} else if commit != "" {
-			insType = installer.Commit
+			insType = manifest.Commit
 			version = commit
 		} else if release != "" {
-			insType = installer.Release
+			insType = manifest.Release
 			version = release
 		} else if pre_release {
-			insType = installer.PreRelease
+			insType = manifest.PreRelease
 			// INFO: do nothing, populate version later
 			version = ""
 		} else {
-			insType = installer.Release
+			insType = manifest.Release
 			version = ""
 		}
 
