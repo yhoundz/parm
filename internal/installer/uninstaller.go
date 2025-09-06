@@ -10,9 +10,9 @@ import (
 )
 
 // TODO: when version management is added?, have an option to remove a specific version
-func (in *Installer) Uninstall(ctx context.Context, owner, repo string) error {
+func Uninstall(ctx context.Context, owner, repo string) error {
 	dir := utils.GetInstallDir(owner, repo)
-	manifest, err := manifest.ReadManifest(dir)
+	manifest, err := manifest.Read(dir)
 	if err != nil {
 		return fmt.Errorf("could not read manifest: %w", err)
 	}

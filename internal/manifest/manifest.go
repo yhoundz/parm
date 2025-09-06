@@ -30,7 +30,7 @@ type Manifest struct {
 }
 
 // TODO: create manifest options struct??
-func NewManifest(owner, repo, version string, installType InstallType, isSource bool, installDir string) (*Manifest, error) {
+func New(owner, repo, version string, installType InstallType, isSource bool, installDir string) (*Manifest, error) {
 	// isSource := installType == Release || installType == Commit ||
 	m := &Manifest{
 		Owner:       owner,
@@ -51,7 +51,7 @@ func NewManifest(owner, repo, version string, installType InstallType, isSource 
 	return m, nil
 }
 
-func (m *Manifest) WriteManifest(installDir string) error {
+func (m *Manifest) Write(installDir string) error {
 	path := filepath.Join(installDir, ManifestFileName)
 	data, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
@@ -60,7 +60,7 @@ func (m *Manifest) WriteManifest(installDir string) error {
 	return os.WriteFile(path, data, 0o644)
 }
 
-func ReadManifest(installDir string) (*Manifest, error) {
+func Read(installDir string) (*Manifest, error) {
 	path := filepath.Join(installDir, ManifestFileName)
 	data, err := os.ReadFile(path)
 	if err != nil {

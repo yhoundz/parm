@@ -1,4 +1,4 @@
-package installer
+package updater
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"parm/internal/deps"
+	"parm/internal/installer"
 	"parm/internal/manifest"
 	"parm/internal/utils"
 	"strings"
@@ -14,7 +15,11 @@ import (
 	"github.com/google/go-github/v74/github"
 )
 
-func (in *Installer) Update(ctx context.Context, owner, repo string) error {
+type Updater struct {
+	client *github.RepositoriesService
+}
+
+func (in *Updater) Update(ctx context.Context, owner, repo string) error {
 	installDir := utils.GetInstallDir(owner, repo)
 	man, err := manifest.ReadManifest(installDir)
 
@@ -40,7 +45,7 @@ func (in *Installer) Update(ctx context.Context, owner, repo string) error {
 
 		fmt.Printf("Updates found!")
 		fmt.Printf("Updating %s/%s from %s to %s...\n", owner, repo, man.Version, rel.GetTagName())
-		opts := InstallOptions{
+		opts := installer.InstallOptions{
 			Type:    man.InstallType,
 			Version: man.Version,
 			Source:  man.IsSource,
@@ -89,11 +94,11 @@ func (in *Installer) Update(ctx context.Context, owner, repo string) error {
 	return nil
 }
 
-func (in *Installer) updateRelease(ctx context.Context,
+func (in *Updater) updateRelease(ctx context.Context,
 	installDir string,
 	man *manifest.Manifest,
 	rel *github.RepositoryRelease,
-	opts InstallOptions) error {
+	opts installer.InstallOptions) error {
 	owner := man.Owner
 	repo := man.Repo
 

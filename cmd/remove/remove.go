@@ -25,8 +25,7 @@ var RemoveCmd = &cobra.Command{
 			return fmt.Errorf("invalid package ref: %q: %w", pkg, err)
 		}
 
-		inst := installer.New(nil)
-		return inst.Uninstall(ctx, owner, repo)
+		return installer.Uninstall(ctx, owner, repo)
 	},
 }
 

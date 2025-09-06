@@ -58,9 +58,9 @@ func (in *Installer) installFromCommit(ctx context.Context, pkgPath, owner, repo
 		return err
 	}
 
-	man, err := manifest.NewManifest(owner, repo, commitSHA, manifest.Commit, true, pkgPath)
+	man, err := manifest.New(owner, repo, commitSHA, manifest.Commit, true, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: %w", err)
 	}
-	return man.WriteManifest(pkgPath)
+	return man.Write(pkgPath)
 }

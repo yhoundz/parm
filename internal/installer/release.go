@@ -123,11 +123,11 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 		}
 	}
 
-	man, err := manifest.NewManifest(owner, repo, rel.GetTagName(), opts.Type, opts.Source, pkgPath)
+	man, err := manifest.New(owner, repo, rel.GetTagName(), opts.Type, opts.Source, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: %w", err)
 	}
-	return man.WriteManifest(pkgPath)
+	return man.Write(pkgPath)
 }
 
 // infers the proper release asset based on the name of the asset

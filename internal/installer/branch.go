@@ -34,9 +34,9 @@ func (in *Installer) installFromBranch(ctx context.Context, pkgPath, owner, repo
 		return fmt.Errorf("failed to run git clone: %w", err)
 	}
 
-	man, err := manifest.NewManifest(owner, repo, branch, manifest.Branch, true, pkgPath)
+	man, err := manifest.New(owner, repo, branch, manifest.Branch, true, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: %w", err)
 	}
-	return man.WriteManifest(pkgPath)
+	return man.Write(pkgPath)
 }
