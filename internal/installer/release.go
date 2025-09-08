@@ -2,10 +2,8 @@ package installer
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
-	"net/http"
 	"os"
 	gh "parm/internal/github"
 	"parm/internal/manifest"
@@ -18,43 +16,18 @@ import (
 	"github.com/google/go-github/v74/github"
 )
 
+type ReleaseInstaller interface {
+	InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallOptions) error
+}
+
 func (in *Installer) installFromReleaseByType(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions) error {
-	switch opts.Type {
-	case manifest.Release:
-		if opts.Version != "" {
-			valid, rel, err := gh.ValidateRelease(ctx, in.client, owner, repo, opts.Version)
-			if err != nil {
-				return fmt.Errorf("ERROR: Cannot resolve release %s on %s/%s", opts.Version, owner, repo)
-			}
-			if !valid {
-				return fmt.Errorf("ERROR: Release %s not valid, %w", opts.Version, err)
-			}
-			return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
-		} else {
-			rel, _, err := in.client.GetLatestRelease(ctx, owner, repo)
-			if err != nil {
-				var ghErr *github.ErrorResponse
-				if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
-					return fmt.Errorf("no stable release found for %s/%s", owner, repo)
-				}
-				return fmt.Errorf("could not fetch latest release: %w", err)
-			}
-
-			return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
-		}
-	case manifest.PreRelease:
-		valid, rel, err := gh.ValidatePreRelease(ctx, in.client, owner, repo)
-		if err != nil {
-			return fmt.Errorf("err: cannot resolve pre-release on %s/%s: %w", owner, repo, err)
-		}
-		if !valid {
-			return fmt.Errorf("error: no valid pre-release found for %s/%s", owner, repo)
-		}
-
-		return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
-	default:
-		return fmt.Errorf("invalid install type for release-based installation: %s", opts.Type)
+	isPre := opts.Type == manifest.PreRelease
+	rel, err := gh.ResolveRelease(ctx, in.client, owner, repo, opts.Version, isPre)
+	if err != nil {
+		return err
 	}
+
+	return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
 }
 
 // Does NOT validate the release.

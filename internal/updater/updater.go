@@ -16,12 +16,13 @@ import (
 )
 
 type Updater struct {
-	client *github.RepositoriesService
+	client       *github.RepositoriesService
+	relInstaller installer.ReleaseInstaller
 }
 
-func (in *Updater) Update(ctx context.Context, owner, repo string) error {
+func (up *Updater) Update(ctx context.Context, owner, repo string) error {
 	installDir := utils.GetInstallDir(owner, repo)
-	man, err := manifest.ReadManifest(installDir)
+	man, err := manifest.Read(installDir)
 
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -33,7 +34,7 @@ func (in *Updater) Update(ctx context.Context, owner, repo string) error {
 	switch man.InstallType {
 	case manifest.Release, manifest.PreRelease:
 		fmt.Printf("Checking for updates for %s/%s...\n", owner, repo)
-		rel, _, err := in.client.GetLatestRelease(ctx, owner, repo)
+		rel, _, err := up.client.GetLatestRelease(ctx, owner, repo)
 		if err != nil {
 			return fmt.Errorf("could not fetch latest release for %s/%s: %w", owner, repo, err)
 		}
@@ -50,7 +51,7 @@ func (in *Updater) Update(ctx context.Context, owner, repo string) error {
 			Version: man.Version,
 			Source:  man.IsSource,
 		}
-		return in.updateRelease(ctx, installDir, man, rel, opts)
+		return up.updateRelease(ctx, installDir, man, rel, opts)
 	case manifest.Branch:
 		if err := deps.Require("git"); err != nil {
 			return err
@@ -81,7 +82,7 @@ func (in *Updater) Update(ctx context.Context, owner, repo string) error {
 		man.LastUpdated = time.Now().UTC().Format(time.RFC3339)
 		man.Version = newSHA
 
-		if err := man.WriteManifest(installDir); err != nil {
+		if err := man.Write(installDir); err != nil {
 			return fmt.Errorf("failed to update manifest for %s/%s: %w", owner, repo, err)
 		}
 
@@ -94,7 +95,7 @@ func (in *Updater) Update(ctx context.Context, owner, repo string) error {
 	return nil
 }
 
-func (in *Updater) updateRelease(ctx context.Context,
+func (up *Updater) updateRelease(ctx context.Context,
 	installDir string,
 	man *manifest.Manifest,
 	rel *github.RepositoryRelease,
@@ -107,7 +108,8 @@ func (in *Updater) updateRelease(ctx context.Context,
 		return nil
 	}
 	fmt.Printf("Updating %s/%s from %s to %s...\n", owner, repo, man.Version, rel.GetTagName())
-	return in.installFromReleaseByType(ctx, installDir, owner, repo, opts)
+
+	return up.relInstaller.InstallFromRelease(ctx, installDir, owner, repo, rel, opts)
 }
 
 func getGitCommit(ctx context.Context, repoPath string) (string, error) {

@@ -120,3 +120,38 @@ func ValidateCommit(
 
 	return false, nil, err
 }
+
+func ResolveRelease(ctx context.Context, client *github.RepositoriesService, owner, repo, version string, preRelease bool) (*github.RepositoryRelease, error) {
+	if preRelease {
+		valid, rel, err := ValidatePreRelease(ctx, client, owner, repo)
+		if err != nil {
+			return nil, fmt.Errorf("err: cannot resolve pre-release on %s/%s: %w", owner, repo, err)
+		}
+		if !valid {
+			return nil, fmt.Errorf("error: no valid pre-release found for %s/%s", owner, repo)
+		}
+
+		return rel, nil
+	}
+
+	if version != "" {
+		valid, rel, err := ValidateRelease(ctx, client, owner, repo, version)
+		if err != nil {
+			return nil, fmt.Errorf("ERROR: Cannot resolve release %s on %s/%s", version, owner, repo)
+		}
+		if !valid {
+			return nil, fmt.Errorf("ERROR: Release %s not valid, %w", version, err)
+		}
+		return rel, nil
+	} else {
+		rel, _, err := client.GetLatestRelease(ctx, owner, repo)
+		if err != nil {
+			var ghErr *github.ErrorResponse
+			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
+				return nil, fmt.Errorf("no stable release found for %s/%s", owner, repo)
+			}
+			return nil, fmt.Errorf("could not fetch latest release: %w", err)
+		}
+		return rel, nil
+	}
+}
