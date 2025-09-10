@@ -6,7 +6,7 @@ package remove
 import (
 	"fmt"
 	"parm/internal/cmdparser"
-	"parm/internal/installer"
+	"parm/internal/uninstaller"
 
 	"github.com/spf13/cobra"
 )
@@ -25,7 +25,7 @@ var RemoveCmd = &cobra.Command{
 			return fmt.Errorf("invalid package ref: %q: %w", pkg, err)
 		}
 
-		return installer.Uninstall(ctx, owner, repo)
+		return uninstaller.Uninstall(ctx, owner, repo)
 	},
 }
 
