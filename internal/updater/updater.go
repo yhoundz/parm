@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	// "github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v74/github"
 )
 
@@ -35,11 +36,14 @@ func (up *Updater) Update(ctx context.Context, owner, repo string) error {
 	case manifest.Release, manifest.PreRelease:
 		fmt.Printf("Checking for updates for %s/%s...\n", owner, repo)
 		rel, _, err := up.client.GetLatestRelease(ctx, owner, repo)
+
+		newVer := rel.GetTagName()
+
 		if err != nil {
 			return fmt.Errorf("could not fetch latest release for %s/%s: %w", owner, repo, err)
 		}
 
-		if man.Version == rel.GetTagName() {
+		if newVer == man.Version {
 			fmt.Printf("%s/%s@%s is already up to date.", owner, repo, man.Version)
 			return nil
 		}
@@ -93,6 +97,10 @@ func (up *Updater) Update(ctx context.Context, owner, repo string) error {
 		return nil
 	}
 	return nil
+}
+
+func CheckUpdate(currVer string) (bool, error) {
+	return false, nil
 }
 
 func (up *Updater) updateRelease(ctx context.Context,

@@ -1,6 +1,9 @@
 package cmdparser
 
-import "testing"
+import (
+	"strconv"
+	"testing"
+)
 
 func TestParseRepoRef(t *testing.T) {
 	refs := map[string][]string{
@@ -13,8 +16,9 @@ func TestParseRepoRef(t *testing.T) {
 	}
 	for ref := range refs {
 		own, rep, err := ParseRepoRef(ref)
-		// TODO: check errors are correct
-		if refs[ref][0] != own || refs[ref][1] != rep {
+		expErr, _ := strconv.ParseBool(refs[ref][2])
+		actErr := expErr != (err != nil)
+		if refs[ref][0] != own || refs[ref][1] != rep || actErr {
 			t.Errorf("error, got '%s'/'%s', wanted %s/%s with err %q", own, rep, refs[ref][0], refs[ref][1], err)
 			return
 		}
@@ -32,8 +36,67 @@ func TestParseRepoReleaseRef(t *testing.T) {
 	}
 	for ref := range refs {
 		own, rep, tag, err := ParseRepoReleaseRef(ref)
-		// TODO: check errors are correct
-		if refs[ref][0] != own || refs[ref][1] != rep || refs[ref][2] != tag {
+		expErr, _ := strconv.ParseBool(refs[ref][3])
+		actErr := expErr != (err != nil)
+		if refs[ref][0] != own || refs[ref][1] != rep || refs[ref][2] != tag || actErr {
+			t.Errorf("error, got '%s'/'%s', wanted %s/%s with err %q", own, rep, refs[ref][0], refs[ref][1], err)
+			return
+		}
+	}
+}
+
+func TestParseGithubUrlPattern(t *testing.T) {
+	refs := map[string][]string{
+		// https
+		"https://github.com/neovim/neovim.git":               {"neovim", "neovim", "false"},
+		"https://github.com/AvaloniaUI/Avalonia.Samples.git": {"AvaloniaUI", "Avalonia.Samples", "false"},
+		"https://github.com/.git":                            {"", "", "true"},
+		"https://github.com//.git":                           {"", "", "true"},
+		"https://github.com/godotengine/.git":                {"", "", "true"},
+		"https://github.com/;.;:-/godot.git":                 {"", "", "true"},
+
+		// ssh
+		"git@github.com:neovim/neovim.git":               {"neovim", "neovim", "false"},
+		"git@github.com:AvaloniaUI/Avalonia.Samples.git": {"AvaloniaUI", "Avalonia.Samples", "false"},
+		"git@github.com:.git":                            {"", "", "true"},
+		"git@github.com:/.git":                           {"", "", "true"},
+		"git@github.com:godotengine/.git":                {"", "", "true"},
+		"git@github.com:;.;:-/godot.git":                 {"", "", "true"},
+	}
+	for ref := range refs {
+		own, rep, err := ParseGithubUrlPattern(ref)
+		expErr, _ := strconv.ParseBool(refs[ref][2])
+		actErr := expErr != (err != nil)
+		if refs[ref][0] != own || refs[ref][1] != rep || actErr {
+			t.Errorf("error, got '%s'/'%s', wanted %s/%s with err %q", own, rep, refs[ref][0], refs[ref][1], err)
+			return
+		}
+	}
+}
+
+func TestParseGithubUrlPatternWithRelease(t *testing.T) {
+	refs := map[string][]string{
+		// https
+		"https://github.com/neovim/neovim.git@v0.11.3":              {"neovim", "neovim", "v0.11.3", "false"},
+		"https://github.com/AvaloniaUI/Avalonia.Samples.git@v0.1.1": {"AvaloniaUI", "Avalonia.Samples", "v0.1.1", "false"},
+		"https://github.com/.git@":                                  {"", "", "", "true"},
+		"https://github.com//.git@i@tag":                            {"", "", "", "true"},
+		"https://github.com/godotengine/.git@tt0.v1":                {"", "", "", "true"},
+		"https://github.com/;.;:-/godot.git@irn":                    {"", "", "", "true"},
+
+		// ssh
+		"git@github.com:neovim/neovim.git@v0.11.3":              {"neovim", "neovim", "v0.11.3", "false"},
+		"git@github.com:AvaloniaUI/Avalonia.Samples.git@v0.1.1": {"AvaloniaUI", "Avalonia.Samples", "v0.1.1", "false"},
+		"git@github.com:.git@":                                  {"", "", "", "true"},
+		"git@github.com:/.git@i@tag":                            {"", "", "", "true"},
+		"git@github.com:godotengine/.git@tt0.v1":                {"", "", "", "true"},
+		"git@github.com:;.;:-/godot.git@irn":                    {"", "", "", "true"},
+	}
+	for ref := range refs {
+		own, rep, tag, err := ParseGithubUrlPatternWithRelease(ref)
+		expErr, _ := strconv.ParseBool(refs[ref][3])
+		actErr := expErr != (err != nil)
+		if refs[ref][0] != own || refs[ref][1] != rep || refs[ref][2] != tag || actErr {
 			t.Errorf("error, got '%s'/'%s', wanted %s/%s with err %q", own, rep, refs[ref][0], refs[ref][1], err)
 			return
 		}

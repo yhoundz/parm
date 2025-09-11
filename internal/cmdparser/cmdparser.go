@@ -44,7 +44,6 @@ func ParseGithubUrlPatternWithRelease(ref string) (owner string, repo string, re
 	return "", "", "", fmt.Errorf("Cannot validate owner/repository link: %q", ref)
 }
 
-// TODO: implement using ssh instead of https later
 func BuildGitLink(owner string, repo string) (httpsLink string, sshLink string) {
 	httpCloneLink := fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)
 	sshCloneLink := fmt.Sprintf("git@github.com:%s/%s.git", owner, repo)
