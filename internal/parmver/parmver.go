@@ -6,20 +6,11 @@ package parmver
 
 import "fmt"
 
-type ReleaseChannel int // channel
-type ReleaseStage int   // stage
+type ReleaseChannel int
 
 const (
 	Dev ReleaseChannel = iota
-	Nightly
 	Stable
-)
-
-const (
-	Alpha ReleaseStage = iota
-	Beta
-	Rc
-	Release
 )
 
 type Version struct {
@@ -27,15 +18,10 @@ type Version struct {
 	minor   int
 	patch   int
 	channel ReleaseChannel
-	stage   ReleaseStage
 }
 
 func (c ReleaseChannel) String() string {
 	switch c {
-	case Dev:
-		return "dev"
-	case Nightly:
-		return "nightly"
 	case Stable:
 		return "stable"
 	default:
@@ -43,30 +29,19 @@ func (c ReleaseChannel) String() string {
 	}
 }
 
-func (s ReleaseStage) String() string {
-	switch s {
-	case Alpha:
-		return "alpha"
-	case Beta:
-		return "beta"
-	case Rc:
-		return "rc"
-	case Release:
-		return "release"
-	default:
-		return "st?"
-	}
-}
-
 func (v Version) String() string {
-	return fmt.Sprintf("%d.%d.%d-%s/%s", v.major, v.minor, v.patch, v.channel.String(), v.stage)
+	switch v.channel {
+	case Dev:
+		return fmt.Sprintf("%d.%d.%d-%s", v.major, v.minor, v.patch, v.channel.String())
+	default:
+		return fmt.Sprintf("%d.%d.%d", v.major, v.minor, v.patch)
+	}
 }
 
 // TODO: stick this in some metadata file?
 var AppVersion = Version{
 	major:   0,
-	minor:   1,
+	minor:   0,
 	patch:   0,
 	channel: Dev,
-	stage:   Alpha,
 }

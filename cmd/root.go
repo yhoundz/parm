@@ -9,6 +9,7 @@ import (
 	"parm/cmd/install"
 	"parm/cmd/remove"
 	"parm/cmd/update"
+	"parm/internal/config"
 	"parm/internal/parmver"
 
 	"github.com/spf13/cobra"
@@ -24,6 +25,13 @@ neatly isolated and in a single binary. It requires only Git and your shell,
 avoids system-wide changes or root access, and gives you full control over
 your programs.`,
 	Version: parmver.AppVersion.String(),
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		err := config.Init()
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) {},

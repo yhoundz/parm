@@ -86,7 +86,7 @@ And of course, you can specify if you want to install from source instead:
 parm install yhoundz/parm --pre-release --source
 ```
 
-### Installing from a Branch (Not Recommended):
+### Installing from a Branch:
 
 > [!WARNING]
 > Installing using this method is not recommended, since it is effectively the same as `git clone`.
@@ -99,7 +99,7 @@ parm install yhoundz/parm --branch master
 
 Installing in this way will always download the code from source, so you will have to resolve dependencies and build the code yourself.
 
-### Installing from a Commit (Not Recommended):
+### Installing from a Commit:
 
 > [!CAUTION]
 > Installing from this method will PREVENT updating, and will pin the version indefinitely unless you change your install method. This is not a bug, and by design. 
