@@ -87,7 +87,7 @@ func getBinExecutables(installDir string) ([]string, error) {
 			return nil
 		}
 
-		isExec, err := utils.IsBinaryExecutable(path)
+		isExec, err := utils.IsValidBinaryExecutable(path)
 		if err != nil {
 			return err
 		}

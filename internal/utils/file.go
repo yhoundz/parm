@@ -59,26 +59,49 @@ func GetInstallDir(owner, repo string) string {
 	return dest
 }
 
-// uses magic numbers to determine if a file is a binary executable
-func IsBinaryExecutable(path string) (bool, error) {
-	info, err := os.Stat(path)
+// checks if a file is a binary executable, and then checks if it's even able to be run by the user.
+func IsValidBinaryExecutable(path string) (bool, error) {
+	kind, err := IsBinaryExecutable(path)
 	if err != nil {
 		return false, err
 	}
+	if kind == nil {
+		return false, err
+	}
 
+	switch runtime.GOOS {
+	case "windows":
+		return kind.Extension == "exe", nil
+	case "darwin":
+		return kind.Extension == "macho", nil
+	case "linux":
+		return kind.Extension == "elf", nil
+	}
+
+	return false, nil
+}
+
+// uses magic numbers to determine if a file is a binary executable
+func IsBinaryExecutable(path string) (*types.Type, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// precheck
 	if runtime.GOOS == "windows" {
 		if !strings.HasSuffix(strings.ToLower(info.Name()), ".exe") {
-			return false, nil
+			return nil, nil
 		}
 	} else { // on unix system
 		if info.Mode()&0111 == 0 {
-			return false, nil
+			return nil, nil
 		}
 	}
 
 	file, err := os.Open(path)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	defer file.Close()
 
@@ -86,10 +109,10 @@ func IsBinaryExecutable(path string) (bool, error) {
 	hdr := make([]byte, numBytes)
 	n, err := io.ReadAtLeast(file, hdr, 1)
 	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		return false, nil
+		return nil, nil
 	}
 	if n == 0 {
-		return false, nil
+		return nil, nil
 	}
 
 	kind, _ := filetype.Match(hdr)
@@ -97,9 +120,40 @@ func IsBinaryExecutable(path string) (bool, error) {
 		if kind.Extension == "elf" ||
 			kind.Extension == "exe" ||
 			kind.Extension == "macho" {
-			return true, nil
+			return &kind, nil
 		}
 	}
 
-	return false, nil
+	return nil, nil
+}
+
+func SymlinkBinToPath(binPath, destPath string) (string, error) {
+	isBin, err := IsValidBinaryExecutable(binPath)
+	if err != nil {
+		return "", err
+	}
+	if isBin {
+		return "", fmt.Errorf("error: provided dir is not a binary")
+	}
+
+	absBinDir, err := filepath.Abs(binPath)
+	if err != nil {
+		return "", err
+	}
+
+	newDestPath := filepath.Join(destPath, filepath.Base(absBinDir))
+
+	if _, err := os.Lstat(newDestPath); err != nil {
+		if err := os.Remove(newDestPath); err != nil {
+			return "", fmt.Errorf("failed to remove existing symlink at %w", err)
+		}
+	} else if !os.IsNotExist(err) {
+		return "", fmt.Errorf("failed to check destination path: %w", err)
+	}
+
+	if err := os.Symlink(absBinDir, newDestPath); err != nil {
+		return "", err
+	}
+
+	return "", nil
 }

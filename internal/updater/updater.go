@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	// "github.com/Masterminds/semver/v3"
+	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v74/github"
 )
 
@@ -99,7 +99,20 @@ func (up *Updater) Update(ctx context.Context, owner, repo string) error {
 	return nil
 }
 
-func CheckUpdate(currVer string) (bool, error) {
+func CheckUpdate(currVer, latestVer string) (bool, error) {
+	currSemVer, err := semver.NewVersion(currVer)
+	if err != nil {
+		return false, err
+	}
+	latestSemVer, err := semver.NewVersion(latestVer)
+	if err != nil {
+		return false, err
+	}
+
+	if latestSemVer.GreaterThan(currSemVer) {
+		return true, nil
+	}
+
 	return false, nil
 }
 

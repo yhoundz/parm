@@ -3,6 +3,7 @@ module parm
 go 1.24.5
 
 require (
+	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/google/go-github/v74 v74.0.0
 	github.com/h2non/filetype v1.1.3
 	github.com/shirou/gopsutil/v4 v4.25.7
@@ -12,7 +13,6 @@ require (
 )
 
 require (
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
