@@ -29,16 +29,7 @@ func New(cli *github.RepositoriesService) *Installer {
 }
 
 func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions) error {
-	switch opts.Type {
-	case manifest.Branch:
-		return in.installFromBranch(ctx, pkgPath, owner, repo, opts.Version)
-	case manifest.Commit:
-		return in.installFromCommit(ctx, pkgPath, owner, repo, opts.Version)
-	case manifest.Release, manifest.PreRelease:
-		return in.installFromReleaseByType(ctx, pkgPath, owner, repo, opts)
-	}
-
-	return fmt.Errorf("error: could not find a suitable install method.")
+	return in.installFromReleaseByType(ctx, pkgPath, owner, repo, opts)
 }
 
 func downloadTo(ctx context.Context, destPath, url string) error {

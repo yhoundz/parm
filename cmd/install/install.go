@@ -6,7 +6,6 @@ package install
 import (
 	"fmt"
 	"parm/internal/cmdx"
-	"parm/internal/deps"
 	gh "parm/internal/github"
 	"parm/internal/installer"
 	"parm/internal/manifest"
@@ -20,11 +19,7 @@ import (
 
 var source bool
 var pre_release bool
-var (
-	branch  string
-	commit  string
-	release string
-)
+var release string
 
 // installCmd represents the install command
 var InstallCmd = &cobra.Command{
@@ -41,7 +36,7 @@ var InstallCmd = &cobra.Command{
 		}
 
 		if tag != "" {
-			confFlags := []string{"branch", "commit", "release", "pre-release"}
+			confFlags := []string{"release", "pre-release"}
 			for _, flag := range confFlags {
 				if cmd.Flags().Changed(flag) {
 					return fmt.Errorf("cannot use @version shorthand with the --%s flag", flag)
@@ -49,14 +44,6 @@ var InstallCmd = &cobra.Command{
 			}
 			release = tag
 			args[0] = owner + "/" + repo
-		}
-
-		// TODO: put this check elsewhere?
-		if commit != "" {
-			// if building from source, git is required
-			if err := deps.Require("git"); err != nil {
-				return err
-			}
 		}
 
 		if err := cmdx.MarkFlagsRequireFlag(cmd, "release", "source"); err != nil {
@@ -73,8 +60,6 @@ var InstallCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		pkg := args[0]
 
-		fmt.Println("WARNING: installing with --branch will automatically download from source.")
-
 		ctx := cmd.Context()
 		token := viper.GetString("github_api_token")
 		client := gh.NewRepoClient(ctx, token)
@@ -84,13 +69,7 @@ var InstallCmd = &cobra.Command{
 
 		var insType manifest.InstallType
 		var version string
-		if branch != "" {
-			insType = manifest.Branch
-			version = branch
-		} else if commit != "" {
-			insType = manifest.Commit
-			version = commit
-		} else if release != "" {
+		if release != "" {
 			insType = manifest.Release
 			version = release
 		} else if pre_release {
@@ -122,9 +101,7 @@ var InstallCmd = &cobra.Command{
 func init() {
 	InstallCmd.PersistentFlags().BoolVarP(&source, "source", "s", false, "Build from source")
 	InstallCmd.PersistentFlags().BoolVarP(&pre_release, "pre-release", "p", false, "Installs the latest pre-release binary, if availabale")
-	InstallCmd.PersistentFlags().StringVarP(&branch, "branch", "b", "", "Install from this git branch")
-	InstallCmd.PersistentFlags().StringVarP(&commit, "commit", "c", "", "Install from this git commit SHA")
 	InstallCmd.PersistentFlags().StringVarP(&release, "release", "r", "", "Install binary from this release tag")
 
-	InstallCmd.MarkFlagsMutuallyExclusive("branch", "commit", "release", "pre-release")
+	InstallCmd.MarkFlagsMutuallyExclusive("release", "pre-release")
 }

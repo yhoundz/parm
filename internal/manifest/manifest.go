@@ -14,8 +14,6 @@ type InstallType string
 
 const (
 	Release    InstallType = "release"
-	Commit     InstallType = "commit"
-	Branch     InstallType = "branch"
 	PreRelease InstallType = "pre-release"
 )
 
@@ -31,7 +29,6 @@ type Manifest struct {
 
 // TODO: create manifest options struct??
 func New(owner, repo, version string, installType InstallType, isSource bool, installDir string) (*Manifest, error) {
-	// isSource := installType == Release || installType == Commit ||
 	m := &Manifest{
 		Owner:       owner,
 		Repo:        repo,

@@ -83,44 +83,6 @@ func ValidateRelease(
 	return false, nil, err
 }
 
-func ValidateBranch(
-	ctx context.Context,
-	client *github.RepositoriesService,
-	owner, repo, branch string) (bool, *github.Branch, error) {
-
-	br, _, err := client.GetBranch(ctx, owner, repo, branch, 0)
-
-	if err == nil {
-		return true, br, nil
-	}
-
-	var ghErr *github.ErrorResponse
-	if errors.As(err, &ghErr) && ghErr.Response.StatusCode != http.StatusOK {
-		return false, nil, nil
-	}
-
-	return false, nil, err
-}
-
-func ValidateCommit(
-	ctx context.Context,
-	client *github.RepositoriesService,
-	owner, repo, commitSha string) (bool, *github.RepositoryCommit, error) {
-
-	commit, _, err := client.GetCommit(ctx, owner, repo, commitSha, nil)
-
-	if err == nil {
-		return true, commit, nil
-	}
-
-	var ghErr *github.ErrorResponse
-	if errors.As(err, &ghErr) && ghErr.Response.StatusCode != http.StatusOK {
-		return false, nil, nil
-	}
-
-	return false, nil, err
-}
-
 func ResolveRelease(ctx context.Context, client *github.RepositoriesService, owner, repo, version string, preRelease bool) (*github.RepositoryRelease, error) {
 	if preRelease {
 		valid, rel, err := ValidatePreRelease(ctx, client, owner, repo)

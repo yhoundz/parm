@@ -2,8 +2,6 @@
 
 Parm is a package/repository manager that allows you to install any program binary from github and will manage it for you.
 
-Parm provides a lot of options on how you want to install/manage your software, including building from source, downloading a release binary, or even downloading a specific branch or commit of a repository.
-
 > [!CAUTION]
 > Parm is currently in a pre-release state. Expect breaking changes and bugs.
 
@@ -88,33 +86,3 @@ And of course, you can specify if you want to install from source instead:
 ```bash
 parm install yhoundz/parm --pre-release --source
 ```
-
-### Installing from a Branch:
-
-> [!WARNING]
-> Installing using this method is not recommended, since it is effectively the same as `git clone`.
-> The option to install from a branch is only here for convenience.
-
-To install from a branch, set the branch flag:
-```bash
-parm install yhoundz/parm --branch master
-```
-
-Installing in this way will always download the code from source, so you will have to resolve dependencies and build the code yourself.
-
-### Installing from a Commit:
-
-> [!CAUTION]
-> Installing from this method will PREVENT updating, and will pin the version indefinitely unless you change your install method. This is not a bug, and by design. 
-> If you would like updates, then install from branch instead. Or better yet, install by release.
-
-> [!WARNING]
-> Installing using this method is not recommended, since it is effectively the same as `git clone`.
-> The option to install from a commit is only here for convenience.
-
-To install from a commit, specify the commit SHA or the full commit hash:
-```bash
-parm install yhoundz/parm --commit 3adf510f40acf1b33f921f052ad260d395bea3cb
-```
-
-Installing in this way will also download the code from source, and you'll have to resolve dependencies and build the code yourself.
