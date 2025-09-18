@@ -49,7 +49,6 @@ func (up *Updater) Update(ctx context.Context, owner, repo string) error {
 		opts := installer.InstallOptions{
 			Type:    man.InstallType,
 			Version: man.Version,
-			Source:  man.IsSource,
 		}
 		return up.updateRelease(ctx, installDir, man, rel, opts)
 	}

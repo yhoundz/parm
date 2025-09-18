@@ -19,11 +19,9 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "parm",
 	Short: "A zero-root, GitHub-native CLI package manager for installing and managing any GitHub-hosted tool.",
-	Long: `Parm is a thin CLI tool/git wrapper that downloads and installs prebuilt
-binaries or builds from source for any GitHub repository, keeping everything
-neatly isolated and in a single binary. It requires only Git and your shell,
-avoids system-wide changes or root access, and gives you full control over
-your programs.`,
+	Long: `Parm is a thin CLI tool that downloads and installs prebuilt
+your programs. It has zero dependencies, zero root access, and is truly
+cross-platform on Windows, Linux, and MacOS.`,
 	Version: parmver.AppVersion.String(),
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		err := config.Init()

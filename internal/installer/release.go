@@ -32,27 +32,9 @@ func (in *Installer) installFromReleaseByType(ctx context.Context, pkgPath, owne
 
 // Does NOT validate the release.
 func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallOptions) error {
-	if opts.Source {
-		ref := "tags/" + rel.GetTagName()
-		dl, _, err := in.client.GetArchiveLink(
-			ctx,
-			owner, repo,
-			github.Tarball,
-			&github.RepositoryContentGetOptions{Ref: ref},
-			0,
-		)
-		if err != nil {
-			return fmt.Errorf("ERROR: cannot resolve source for %s/%s, with %w ", owner, repo, err)
-		}
-		dest := filepath.Join(pkgPath, fmt.Sprintf("%s-%s.tar.gz", repo, rel.GetTagName()))
-		if err := downloadTo(ctx, dest, dl.String()); err != nil {
-			return err
-		}
-		if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
-			return err
-		}
-		os.Remove(dest)
-	} else {
+	var ass *github.ReleaseAsset
+	var err error
+	if opts.Asset != "" {
 		matches, err := selectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
 		if err != nil {
 			return err
@@ -69,38 +51,53 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 		// 	// TODO: allow users to choose what asset they want installed instead
 		// 	return nil
 		// }
+		ass = matches[0]
 
-		ass := matches[0]
-		dest := filepath.Join(pkgPath, ass.GetName()) // download destination
-		if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL()); err != nil {
-			return fmt.Errorf("ERROR: failed to download asset: %w", err)
-		}
-
-		switch {
-		case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
-			if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
-				return fmt.Errorf("ERROR: failed to extract tarball: %w", err)
-			}
-			os.Remove(dest)
-		case strings.HasSuffix(dest, ".zip"):
-			if err := utils.ExtractZip(dest, pkgPath); err != nil {
-				return fmt.Errorf("ERROR: failed to extract zip: %w", err)
-			}
-			os.Remove(dest)
-		default:
-			if runtime.GOOS != "windows" {
-				if err := os.Chmod(dest, 0o755); err != nil {
-					return fmt.Errorf("failed to make binary executable: %w", err)
-				}
-			}
+	} else {
+		ass, err = getAssetByName(rel, opts.Asset)
+		if err != nil {
+			return err
 		}
 	}
 
-	man, err := manifest.New(owner, repo, rel.GetTagName(), opts.Type, opts.Source, pkgPath)
+	dest := filepath.Join(pkgPath, rel.GetName()) // download destination
+	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL()); err != nil {
+		return fmt.Errorf("ERROR: failed to download asset: %w", err)
+	}
+
+	switch {
+	case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
+		if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
+			return fmt.Errorf("ERROR: failed to extract tarball: %w", err)
+		}
+		os.Remove(dest)
+	case strings.HasSuffix(dest, ".zip"):
+		if err := utils.ExtractZip(dest, pkgPath); err != nil {
+			return fmt.Errorf("ERROR: failed to extract zip: %w", err)
+		}
+		os.Remove(dest)
+	default:
+		if runtime.GOOS != "windows" {
+			if err := os.Chmod(dest, 0o755); err != nil {
+				return fmt.Errorf("failed to make binary executable: %w", err)
+			}
+		}
+	}
+	man, err := manifest.New(owner, repo, rel.GetTagName(), opts.Type, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: %w", err)
 	}
 	return man.Write(pkgPath)
+}
+
+// gets release asset by name
+func getAssetByName(rel *github.RepositoryRelease, name string) (*github.ReleaseAsset, error) {
+	for _, ass := range rel.Assets {
+		if *ass.Name == name {
+			return ass, nil
+		}
+	}
+	return nil, fmt.Errorf("error: no asset by the name of %s was found in release %s", name, rel)
 }
 
 // infers the proper release asset based on the name of the asset

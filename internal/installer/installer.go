@@ -19,7 +19,7 @@ type Installer struct {
 type InstallOptions struct {
 	Type    manifest.InstallType
 	Version string
-	Source  bool
+	Asset   string
 }
 
 func New(cli *github.RepositoriesService) *Installer {

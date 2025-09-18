@@ -38,7 +38,6 @@ func (v Version) String() string {
 	}
 }
 
-// TODO: stick this in some metadata file?
 var AppVersion = Version{
 	major:   0,
 	minor:   0,

@@ -23,12 +23,11 @@ type Manifest struct {
 	LastUpdated string      `json:"last_updated"`
 	Executables []string    `json:"executables"`
 	InstallType InstallType `json:"install_type"`
-	IsSource    bool        `json:"is_source"`
 	Version     string      `json:"version"`
 }
 
 // TODO: create manifest options struct??
-func New(owner, repo, version string, installType InstallType, isSource bool, installDir string) (*Manifest, error) {
+func New(owner, repo, version string, installType InstallType, installDir string) (*Manifest, error) {
 	m := &Manifest{
 		Owner:       owner,
 		Repo:        repo,
@@ -38,13 +37,11 @@ func New(owner, repo, version string, installType InstallType, isSource bool, in
 		Version:     version,
 	}
 
-	if !isSource {
-		binM, err := getBinExecutables(installDir)
-		if err != nil {
-			return nil, err
-		}
-		m.Executables = binM
+	binM, err := getBinExecutables(installDir)
+	if err != nil {
+		return nil, err
 	}
+	m.Executables = binM
 	return m, nil
 }
 

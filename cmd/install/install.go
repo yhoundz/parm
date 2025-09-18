@@ -17,9 +17,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-var source bool
 var pre_release bool
 var release string
+var asset string
 
 // installCmd represents the install command
 var InstallCmd = &cobra.Command{
@@ -46,11 +46,11 @@ var InstallCmd = &cobra.Command{
 			args[0] = owner + "/" + repo
 		}
 
-		if err := cmdx.MarkFlagsRequireFlag(cmd, "release", "source"); err != nil {
+		if err := cmdx.MarkFlagsRequireFlag(cmd, "release", "asset"); err != nil {
 			return err
 		}
 
-		if err := cmdx.MarkFlagsRequireFlag(cmd, "pre-release", "source"); err != nil {
+		if err := cmdx.MarkFlagsRequireFlag(cmd, "pre-release", "asset"); err != nil {
 			return err
 		}
 
@@ -84,7 +84,7 @@ var InstallCmd = &cobra.Command{
 		opts := installer.InstallOptions{
 			Type:    insType,
 			Version: version,
-			Source:  source,
+			Asset:   asset,
 		}
 
 		dest := utils.GetInstallDir(owner, repo)
@@ -99,9 +99,9 @@ var InstallCmd = &cobra.Command{
 }
 
 func init() {
-	InstallCmd.PersistentFlags().BoolVarP(&source, "source", "s", false, "Build from source")
 	InstallCmd.PersistentFlags().BoolVarP(&pre_release, "pre-release", "p", false, "Installs the latest pre-release binary, if availabale")
 	InstallCmd.PersistentFlags().StringVarP(&release, "release", "r", "", "Install binary from this release tag")
+	InstallCmd.PersistentFlags().StringVarP(&asset, "asset", "a", "", "Installs a specific asset from a release")
 
 	InstallCmd.MarkFlagsMutuallyExclusive("release", "pre-release")
 }
