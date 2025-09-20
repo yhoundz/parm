@@ -33,17 +33,17 @@ func Init() error {
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			if err := v.SafeWriteConfig(); err != nil {
-				return fmt.Errorf("ERROR: cannot create config file: %w", err)
+				return fmt.Errorf("error: cannot create config file: %w", err)
 			}
 		} else {
-			return fmt.Errorf("ERROR: Cannot read config file %w", err)
+			return fmt.Errorf("error: Cannot read config file %w", err)
 		}
 	}
 
 	setEnvVars(v)
 
 	if err := v.Unmarshal(&Cfg); err != nil {
-		return fmt.Errorf("ERROR: Cannot unmarshal config file %w", err)
+		return fmt.Errorf("error: Cannot unmarshal config file %w", err)
 	}
 
 	// watch for live reload ??

@@ -7,6 +7,7 @@ import (
 	"os"
 	"parm/cmd/configure"
 	"parm/cmd/install"
+	"parm/cmd/list"
 	"parm/cmd/remove"
 	"parm/cmd/update"
 	"parm/internal/config"
@@ -49,4 +50,5 @@ func init() {
 	rootCmd.AddCommand(install.InstallCmd)
 	rootCmd.AddCommand(remove.RemoveCmd)
 	rootCmd.AddCommand(update.UpdateCmd)
+	rootCmd.AddCommand(list.ListCmd)
 }

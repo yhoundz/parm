@@ -35,6 +35,12 @@ func (up *Updater) Update(ctx context.Context, owner, repo string) error {
 
 		newVer := rel.GetTagName()
 
+		needsUpdate, err := CheckUpdate(man.Version, newVer)
+		if !needsUpdate {
+			fmt.Printf("%s/%s is already up to date (ver %s).", owner, repo, man.Version)
+			return nil
+		}
+
 		if err != nil {
 			return fmt.Errorf("could not fetch latest release for %s/%s: %w", owner, repo, err)
 		}

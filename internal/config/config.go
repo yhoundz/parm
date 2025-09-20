@@ -13,6 +13,9 @@ type Config struct {
 
 	// where to store the packages
 	ParmPkgDirPath string `mapstructure:"parm_pkg_dir_path"`
+
+	// directory added to PATH where symlinked binaries reside
+	ParmBinPath string `mapstructure:"parm_bin_path"`
 }
 
 func setEnvVars(v *viper.Viper) {

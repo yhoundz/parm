@@ -7,31 +7,44 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	// "github.com/spf13/viper"
+	"github.com/spf13/viper"
 )
+
+var setValues map[string]string
 
 var ConfigCmd = &cobra.Command{
 	Use:     "config",
 	Aliases: []string{"configure, cfg"},
 	Short:   "Configures parm.",
 	Long:    `Prints the current configuration settings to your console.`,
-	// INFO: also allow users to set config keys using flags like --set key=value, as well as edit the file directly
-	// TODO:
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("config called")
+		if len(setValues) > 0 {
+			for k, v := range setValues {
+				viper.Set(k, v)
+				fmt.Printf("Set %s = %s\n", k, v)
+			}
+
+			if err := viper.WriteConfig(); err != nil {
+				if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+					if err = viper.SafeWriteConfig(); err != nil {
+						return fmt.Errorf("error: failed to create config file: %w", err)
+					}
+				} else {
+					return fmt.Errorf("error: failed to write config file: %w", err)
+				}
+			}
+			return nil
+		}
+
+		settings := viper.AllSettings()
+		for k, v := range settings {
+			fmt.Printf("%s: %s\n", k, v)
+		}
+
 		return nil
 	},
 }
 
 func init() {
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// configCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// configCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	ConfigCmd.PersistentFlags().StringToStringVarP(&setValues, "set", "s", nil, "Set config k/v pairs (e.g. --set key=value)")
 }
