@@ -5,13 +5,12 @@ package install
 
 import (
 	"fmt"
-	"parm/internal/cmdx"
 	gh "parm/internal/github"
 	"parm/internal/installer"
 	"parm/internal/manifest"
 	"parm/internal/utils"
-
-	"parm/internal/cmdparser"
+	"parm/pkg/cmdparser"
+	"parm/pkg/cmdx"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
