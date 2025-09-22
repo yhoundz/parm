@@ -34,6 +34,7 @@ var InstallCmd = &cobra.Command{
 			return fmt.Errorf("cannot resolve git repository from input: %s", args[0])
 		}
 
+		// TODO: if tag is a pre-release tag, use the pre-release release channel
 		if tag != "" {
 			confFlags := []string{"release", "pre-release"}
 			for _, flag := range confFlags {

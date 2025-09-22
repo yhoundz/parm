@@ -11,6 +11,7 @@ import (
 )
 
 var setValues map[string]string
+var resetKey string
 
 var ConfigCmd = &cobra.Command{
 	Use:     "config",
@@ -47,4 +48,6 @@ var ConfigCmd = &cobra.Command{
 
 func init() {
 	ConfigCmd.PersistentFlags().StringToStringVarP(&setValues, "set", "s", nil, "Set config k/v pairs (e.g. --set key=value)")
+	ConfigCmd.PersistentFlags().StringVarP(&resetKey, "reset", "r", "", "Reset config key back to its default value.")
+	ConfigCmd.MarkFlagsMutuallyExclusive("reset", "set")
 }

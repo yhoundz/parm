@@ -18,6 +18,12 @@ type Config struct {
 	ParmBinPath string `mapstructure:"parm_bin_path"`
 }
 
+// TODO: set defaults
+var DefaultCfg = Config{
+	GitHubApiTokenFallback: "",
+	ParmPkgDirPath:         getDefaultPkgDir(),
+}
+
 func setEnvVars(v *viper.Viper) {
 	v.BindEnv("github_api_token", "GITHUB_TOKEN", "GH_TOKEN", "PARM_GITHUB_TOKEN")
 }
