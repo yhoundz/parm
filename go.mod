@@ -4,6 +4,7 @@ go 1.24.5
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
+	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/google/go-github/v74 v74.0.0
 	github.com/h2non/filetype v1.1.3
 	github.com/shirou/gopsutil/v4 v4.25.7
@@ -17,7 +18,6 @@ require (
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
