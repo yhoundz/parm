@@ -28,7 +28,10 @@ func Init() error {
 	v.SetConfigType("toml")
 	v.AddConfigPath(cfgPath)
 
-	setConfigDefaults(v)
+	err = setConfigDefaults(v)
+	if err != nil {
+		return err
+	}
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {

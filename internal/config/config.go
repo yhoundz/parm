@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/viper"
 )
 
@@ -28,9 +29,17 @@ func setEnvVars(v *viper.Viper) {
 	v.BindEnv("github_api_token", "GITHUB_TOKEN", "GH_TOKEN", "PARM_GITHUB_TOKEN")
 }
 
-func setConfigDefaults(v *viper.Viper) {
-	v.SetDefault("github_api_token_fallback", "")
-	v.SetDefault("parm_pkg_dir_path", getDefaultPkgDir())
+func setConfigDefaults(v *viper.Viper) error {
+	var cfgMap map[string]interface{}
+	if err := mapstructure.Decode(DefaultCfg, &cfgMap); err != nil {
+		return err
+	}
+
+	for k, val := range cfgMap {
+		v.SetDefault(k, val)
+	}
+
+	return nil
 }
 
 func getDefaultPkgDir() string {
@@ -49,4 +58,13 @@ func getDefaultPkgDir() string {
 	}
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".local", "share", "parm")
+}
+
+func getDefaultBinDir() string {
+	if dir, ok := os.LookupEnv("XDG_BIN_HOME"); ok {
+		return dir
+	}
+
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".local", "bin")
 }

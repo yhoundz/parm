@@ -3,6 +3,7 @@ package cmdparser
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 var ownerRepoStr = `([a-z\d](?:[a-z\d-]{0,38}[a-z\d])?)/([a-z\d_.-]+)`
@@ -48,4 +49,12 @@ func BuildGitLink(owner string, repo string) (httpsLink string, sshLink string) 
 	httpCloneLink := fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)
 	sshCloneLink := fmt.Sprintf("git@github.com:%s/%s.git", owner, repo)
 	return httpCloneLink, sshCloneLink
+}
+
+func StringToString(in string) (string, string, error) {
+	parts := strings.SplitN(in, "=", 2)
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid argument format: %q. Expected key=value", in)
+	}
+	return parts[0], parts[1], nil
 }

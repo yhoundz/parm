@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+Copyright © 2025 Alexander Wang
 */
 package remove
 
@@ -13,9 +13,10 @@ import (
 
 // uninstallCmd represents the uninstall command
 var RemoveCmd = &cobra.Command{
-	Use:   "remove <owner>/<repo>",
-	Short: "Uninstalls a parm package",
-	Long:  `Uninstalls a parm package. Does not remove the configuration files`,
+	Use:     "remove <owner>/<repo>",
+	Aliases: []string{"uninstall"},
+	Short:   "Uninstalls a parm package",
+	Long:    `Uninstalls a parm package. Does not remove the configuration files`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		pkg := args[0]
 		ctx := cmd.Context()
