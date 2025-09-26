@@ -34,7 +34,7 @@ func (in *Installer) installFromReleaseByType(ctx context.Context, pkgPath, owne
 func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallOptions) error {
 	var ass *github.ReleaseAsset
 	var err error
-	if opts.Asset != "" {
+	if opts.Asset == "" {
 		matches, err := selectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
 		if err != nil {
 			return err
@@ -60,7 +60,7 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 		}
 	}
 
-	dest := filepath.Join(pkgPath, rel.GetName()) // download destination
+	dest := filepath.Join(pkgPath, ass.GetName()) // download destination
 	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL()); err != nil {
 		return fmt.Errorf("ERROR: failed to download asset: %w", err)
 	}
@@ -194,6 +194,6 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 		break
 	}
 
-	// fmt.Print(candidates)
+	fmt.Print(candidates[0])
 	return candidates, nil
 }

@@ -23,6 +23,7 @@ type Config struct {
 var DefaultCfg = Config{
 	GitHubApiTokenFallback: "",
 	ParmPkgDirPath:         getDefaultPkgDir(),
+	ParmBinPath:            getDefaultBinDir(),
 }
 
 func setEnvVars(v *viper.Viper) {
@@ -30,7 +31,7 @@ func setEnvVars(v *viper.Viper) {
 }
 
 func setConfigDefaults(v *viper.Viper) error {
-	var cfgMap map[string]interface{}
+	var cfgMap map[string]any
 	if err := mapstructure.Decode(DefaultCfg, &cfgMap); err != nil {
 		return err
 	}

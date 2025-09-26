@@ -17,6 +17,13 @@ type Updater struct {
 	relInstaller installer.ReleaseInstaller
 }
 
+func New(cli *github.RepositoriesService, rel installer.ReleaseInstaller) *Updater {
+	return &Updater{
+		client:       cli,
+		relInstaller: rel,
+	}
+}
+
 func (up *Updater) Update(ctx context.Context, owner, repo string) error {
 	installDir := utils.GetInstallDir(owner, repo)
 	man, err := manifest.Read(installDir)
