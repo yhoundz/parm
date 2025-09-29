@@ -10,12 +10,12 @@ Parm is a **pa**ckage/**r**epository **m**anager that allows you to install any 
 2. [Pre-requisites](#pre-requisites)
 3. [Install](#install)
 4. [GitHub Personal Access Token](#github-personal-access-token)
-    -. [Add Personal Access Token](#add-personal-access-token)
+    - [Add Personal Access Token](#add-personal-access-token)
 5. [Usage](#usage)
-    -. [Installing Releases](#installing-releases)
-        -. [Installing a Pre-Release](#installing-a-pre-release)
-    -. [Updating a Package](#updating-a-package)
-    -. [Deleting a Package](#deleting-a-package)
+    - [Installing Releases](#installing-releases)
+        - [Installing a Pre-Release](#installing-a-pre-release)
+    - [Updating a Package](#updating-a-package)
+    - [Deleting a Package](#deleting-a-package)
 6. [Contributing](#contributing)
 
 ## Why Parm?
