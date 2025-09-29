@@ -13,20 +13,25 @@ import (
 
 // uninstallCmd represents the uninstall command
 var RemoveCmd = &cobra.Command{
-	Use:     "remove <owner>/<repo>",
+	Use:     "remove <owner>/<repo>...",
 	Aliases: []string{"uninstall"},
 	Short:   "Uninstalls a parm package",
 	Long:    `Uninstalls a parm package. Does not remove the configuration files`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		pkg := args[0]
-		ctx := cmd.Context()
-		owner, repo, err := cmdparser.ParseRepoRef(pkg)
+	Run: func(cmd *cobra.Command, args []string) {
+		for _, pkg := range args {
+			ctx := cmd.Context()
+			owner, repo, err := cmdparser.ParseRepoRef(pkg)
 
-		if err != nil {
-			return fmt.Errorf("invalid package ref: %q: %w", pkg, err)
+			if err != nil {
+				fmt.Printf("invalid package ref: %q: %s", pkg, err)
+				continue
+			}
+
+			err = uninstaller.Uninstall(ctx, owner, repo)
+			if err != nil {
+				fmt.Printf("error: cannot uninstall %s: %s", pkg, err)
+			}
 		}
-
-		return uninstaller.Uninstall(ctx, owner, repo)
 	},
 }
 

@@ -9,3 +9,4 @@ Below are a list of features and improvements that are planned for future releas
 - Better version management: Entails being able to install multiple versions at once and switching between them easily.
 - Boostrapping: Allowing the user to upgrade or uninstall Parm itself without having to rerun the install script again and do it from within the CLI.
 - Switching release channels: Allow the user to switch between the "Release" and "Pre-release" channels, changing how the update command behaves.
+- Shell autocompletion.
