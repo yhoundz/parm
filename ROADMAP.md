@@ -1,4 +1,4 @@
-# ROADMAP
+# Roadmap
 
 Parm is still in a very early state, and breaking changes are to be expected. Additionally, a lot of features may not be implemented yet, or working as expected. If you would like to propose a new feature, [create a new issue](https://github.com/yhoundz/parm/issues/new).
 
