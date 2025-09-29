@@ -83,6 +83,8 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 			}
 		}
 	}
+
+	// TODO: create manifest elsewhere?
 	man, err := manifest.New(owner, repo, rel.GetTagName(), opts.Type, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: %w", err)

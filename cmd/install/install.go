@@ -94,6 +94,7 @@ var InstallCmd = &cobra.Command{
 		if err != nil {
 			fmt.Print(err)
 		}
+
 		return err
 	},
 }

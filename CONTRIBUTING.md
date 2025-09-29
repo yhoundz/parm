@@ -134,25 +134,38 @@ Enhancement suggestions are tracked as [GitHub issues](https://github.com/yhound
 <!-- You might want to create an issue template for enhancement suggestions that can be used as a guide and that defines the structure of the information to be included. If you do so, reference it here in the description. -->
 
 ### Your First Code Contribution
-<!-- TODO
-include Setup of env, IDE and typical getting started instructions?
+To get started contributing, install Go version 1.24.5 [here](https://go.dev/dl/). Follow the installation instructions [here](https://go.dev/doc/install).
 
--->
+Then, git clone the repository:
+```sh
+git clone https://github.com/yhoundz/parm.git
+```
+
+Install all the dependencies for Parm:
+```sh
+go mod download
+```
+
+After that, everything should work. You can test it by running the program:
+```sh
+go run main.go
+```
 
 ### Improving The Documentation
-<!-- TODO
-Updating, improving and correcting the documentation
-
--->
+Improvements to the documentation are always welcome. If you see something that can be improved, [create a pull request](https://github.com/yhoundz/parm/pulls).
 
 ## Styleguides
-### Commit Messages
-<!-- TODO
 
--->
+### Commit Messages
+Commit messages should be succinct and describe the summary of the code changes. As of right now, there isn't any strict style guide for commit messages, but I recommend you follow an existing standard (e.g. the [Conventional Commit specification](https://www.conventionalcommits.org/en/v1.0.0/)).
+
+### Code Style
+Go is a very opinionated language, and Parm tries its best to follow convention. Outside of the [official style guide for Go](https://google.github.io/styleguide/go/), there aren't many restrictions on style besides using common sense.
+
+As for formatting, use the default settings of gofmt, which should already be configured by the gopls language server.
 
 ## Join The Project Team
-<!-- TODO -->
+At the moment, I am undecided whether I want to take on long-term maintainers.
 
 <!-- omit in toc -->
 ## Attribution
