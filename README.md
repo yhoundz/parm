@@ -1,6 +1,6 @@
 # Parm 🧀
 
-Parm is a **pa**ckage/**r**epository **m**anager that allows you to install any program binary from a github release and will manage it for you.
+Parm is a **pa**ckage/**r**epository **m**anager that allows you to install any program binary from a github release and will manage it for you. It's meant to be lightweight, has zero root access, and requires no dependencies.
 
 > [!CAUTION]
 > Parm is currently in a pre-release state. Expect breaking changes and bugs.
@@ -44,7 +44,7 @@ Parm is *not* intended to replace your system/OS-level package manager (think ap
 
 ## Pre-requisites
 1. *(optional)* Must have `ldd` on Linux or `otool` on macOS installed and added to `PATH`
-    - Parm may use these tools to search for potential dependencies on installed programs. If these tools are not found or if there is an error invoking them, then Parm will fallback to a naive dependency search algorithm instead which may be inaccurate. It is important to note that Windows machines do not have a similar tool out of the box and has a different linking process, so Parm won't try to resolve dependencies at all on Windows machine at the moment.
+    - Parm may use these tools to search for potential dependencies on installed programs. If these tools are not found or if there is an error invoking them, then Parm will fallback to a naive dependency search algorithm instead which may be inaccurate. It is important to note that Windows machines do not have a similar tool out of the box and has a different linking process, so Parm won't try to resolve dependencies at all on Windows at the moment.
     - These tools should already be installed and added to `PATH` on your machine. You can check this by running
     ```sh
     which ldd
@@ -143,7 +143,7 @@ parm uninstall <owner>/<repo> ...
 ## Contributing
 Parm is in a very early state, so any and all PRs are welcome. If you want to contribute to a new feature not already on the [roadmap](#ROADMAP.md), please [create an issue](https://github.com/yhoundz/parm/issues/new) first, or check if an issue has already been created for it.
 
-Before making a contribution, read over the [contributing guidelines](#/contributing.md).
+Before making a contribution, read over the [contributing guidelines](#contributing.md).
 
 ## Acknowledgements
 Parm was created using the [Go programming language](https://go.dev/) and the [cobra](https://cobra.dev/) CLI framework.
