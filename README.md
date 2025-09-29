@@ -6,17 +6,17 @@ Parm is a **pa**ckage/**r**epository **m**anager that allows you to install any 
 > Parm is currently in a pre-release state. Expect breaking changes and bugs.
 
 **Table of Contents:**
-i. [Why Parm?](#why-parm)
-ii. [Pre-requisites](#pre-requisites)
-iii. [Install](#install)
-iv. [GitHub Personal Access Token](#github-personal-access-token)
-    a. [Add Personal Access Token](#add-personal-access-token)
-v. [Usage](#usage)
-    a. [Installing Releases](#installing-releases)
-        1. [Installing a Pre-Release](#installing-a-pre-release)
-    b. [Updating a Package](#updating-a-package)
-    c. [Deleting a Package](#deleting-a-package)
-vi. [Contributing](#contributing)
+1. [Why Parm?](#why-parm)
+2. [Pre-requisites](#pre-requisites)
+3. [Install](#install)
+4. [GitHub Personal Access Token](#github-personal-access-token)
+    -. [Add Personal Access Token](#add-personal-access-token)
+5. [Usage](#usage)
+    -. [Installing Releases](#installing-releases)
+        -. [Installing a Pre-Release](#installing-a-pre-release)
+    -. [Updating a Package](#updating-a-package)
+    -. [Deleting a Package](#deleting-a-package)
+6. [Contributing](#contributing)
 
 ## Why Parm?
 In short: if you like your current package manager, this isn't for you.
