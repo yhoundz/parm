@@ -41,6 +41,7 @@ I just wanted a single, unified way to manage my installed programs without havi
 ### Disclaimers
 > [!CAUTION]
 > Parm uses the GitHub REST API to find and install packages. Theoretically, this means you can install any program off of GitHub, so ***YOU*** are responsible for the packages you install, since I don't maintain a registry of vetted packages.
+
 > [!NOTE]
 > Parm is *not* intended to replace your system/OS-level package manager (think apt, pacman, or anything that can install low-level libraries, tools, or services). In general, it is closer to programs like homebrew, as it is meant to install more high-level, user-facing applications such as neovim.
 
@@ -145,7 +146,7 @@ parm uninstall <owner>/<repo> ...
 ## Contributing
 Parm is in a very early state, so any and all PRs are welcome. If you want to contribute to a new feature not already on the [roadmap](ROADMAP.md), please [create an issue](https://github.com/yhoundz/parm/issues/new) first, or check if an issue has already been created for it.
 
-Before making a contribution, read over the [contributing guidelines](contributing.md) as well as the [code of conduct](code_of_conduct.md).
+Before making a contribution, read over the [contributing guidelines](CONTRIBUTING.md) as well as the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Acknowledgements
 Parm was created using the [Go programming language](https://go.dev/) and the [cobra](https://cobra.dev/) CLI framework.
