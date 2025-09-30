@@ -24,8 +24,10 @@ func (c ReleaseChannel) String() string {
 	switch c {
 	case Stable:
 		return "stable"
+	case Dev:
+		return "dev"
 	default:
-		return "ch?"
+		return "unknown?"
 	}
 }
 
@@ -38,9 +40,4 @@ func (v Version) String() string {
 	}
 }
 
-var AppVersion = Version{
-	major:   0,
-	minor:   0,
-	patch:   0,
-	channel: Dev,
-}
+var AppVersion = Version{}

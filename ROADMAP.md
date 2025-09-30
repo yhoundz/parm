@@ -5,6 +5,7 @@ Parm is still in a very early state, and breaking changes are to be expected. Ad
 Below are a list of planned features and improvements:
 
 ## Planned for v0.2.0
+- Logging to a file, both informational and error logging.
 - Allow users to be able to choose which asset to release if a direct match isn't found.
 - Caching API calls or expensive operations (like listing installed packages)
 - Better version management: Entails being able to install multiple versions at once and switching between them easily.

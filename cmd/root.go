@@ -11,7 +11,7 @@ import (
 	"parm/cmd/remove"
 	"parm/cmd/update"
 	"parm/internal/config"
-	"parm/internal/parmver"
+	"parm/parmver"
 
 	"github.com/spf13/cobra"
 )

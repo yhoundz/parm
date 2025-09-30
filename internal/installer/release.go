@@ -196,6 +196,6 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 		break
 	}
 
-	fmt.Print(candidates[0])
+	// fmt.Print(candidates[0])
 	return candidates, nil
 }

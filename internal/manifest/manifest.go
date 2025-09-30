@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const ManifestFileName string = ".parmfile.json"
+const ManifestFileName string = ".curdfile.json"
 
 type InstallType string
 
