@@ -2,19 +2,18 @@
 
 Parm is a **pa**ckage/**r**epository **m**anager that allows you to install any program binary from a github release and will manage it for you. It's meant to be lightweight, has zero root access, and requires no dependencies.
 
-> [!CAUTION]
+> [!WARNING]
 > Parm is currently in a pre-release state. Expect breaking changes and bugs.
 
 **Table of Contents:**
 1. [Introduction](#introduction)
     - [What is Parm?](#what-is-parm)
     - [Motivation](#motivation)
-    - [Disclaimer](#disclaimer)
+    - [Disclaimers](#disclaimers)
 2. [Pre-requisites](#pre-requisites)
-3. [Install](#install)
-4. [GitHub Personal Access Token](#github-personal-access-token)
-    - [Add Personal Access Token](#add-personal-access-token)
-5. [Usage](#usage)
+3. [Installation](#install)
+4. [GitHub Personal Access Token](#adding-a-github-personal-access-token)
+5. [Usage/Documentation](#usage)
     - [Installing Releases](#installing-releases)
         - [Installing a Pre-Release](#installing-a-pre-release)
     - [Updating a Package](#updating-a-package)
@@ -26,12 +25,12 @@ Parm is a **pa**ckage/**r**epository **m**anager that allows you to install any 
 **TL;DR**: If you like your current package manager, this isn't for you. If not, keep reading or [install](#install) Parm.
 
 ### What is Parm?
-Parm is a package manager that allows you to install any program off of GitHub by leveraging repository releases. As such, it uses the GitHub API to retrieve and download packages, and Parm will install and manage them for you (e.g. extract the release tarball, add the binaries to PATH, check for updates, etc.).
+Parm is a package manager that allows you to install any program off of GitHub via their REST API. Parm directly downloads binaries provided by GitHub repository releases and includes niceties such as symlinking binaries to PATH and checking for updates.
 
-This approach allows for the program to be incredibly lightweight and not have to deal with individuals maintaining upstream releases of packages (as is the case with traditional package managers). Additionally, you won't have to wait for maintainers to update packages, as you'll get packages directly from GitHub with no middleman. This also means that Parm is completely cross-platform!
+This approach allows for the program to be incredibly lightweight and not have to deal with individuals maintaining upstream releases of packages. This means you get upstream releases faster and there is virtually no maintenance burden for managing package registries downstream.
 
 ### Motivation
-I originally wanted to build this because I use an older version of Ubuntu, of which the standard package manager (apt) often has a lot of outdated packages now. As such, if I wanted to install a recent release, I would have to either build it from source, use homebrew, or find some alternative installation method. While they're all acceptable solutions, I felt they were:
+I originally wanted to build this because I use an older version of Ubuntu, of which the builtin package manager (apt) often has a lot of outdated packages. As such, if I wanted to install a recent release, I would have to either build it from source, use homebrew, or find some alternative installation method. While they're all acceptable solutions, I felt they were:
 
 - Too cumbersome (in the case of building from source)
 - Hard to work with (like homebrew, which can be difficult to install any other version except the latest release version. Even then, the version you want may not even be available)
@@ -39,13 +38,19 @@ I originally wanted to build this because I use an older version of Ubuntu, of w
 
 I just wanted a single, unified way to manage my installed programs without having to deal with stale versions on my OS package manager or having to installing packages in a non-standardized way.
 
-### Disclaimer
-Parm is *not* intended to replace your system/OS-level package manager (think apt, pacman, or anything that can install low-level libraries, tools, or services). In general, it is closer to programs like homebrew, asdf, or even lazy.nvim, as it is meant to install more high-level, user-facing applications such as neovim.
+### Disclaimers
+> [!CAUTION]
+> Parm uses the GitHub REST API to find and install packages. Theoretically, this means you can install any program off of GitHub, so ***YOU*** are responsible for the packages you install, since I don't maintain a registry of vetted packages.
+> [!NOTE]
+> Parm is *not* intended to replace your system/OS-level package manager (think apt, pacman, or anything that can install low-level libraries, tools, or services). In general, it is closer to programs like homebrew, as it is meant to install more high-level, user-facing applications such as neovim.
+
 
 ## Pre-requisites
-1. *(optional)* Must have `ldd` on Linux or `otool` on macOS installed and added to `PATH`
-    - Parm may use these tools to search for potential dependencies on installed programs. If these tools are not found or if there is an error invoking them, then Parm will fallback to a naive dependency search algorithm instead which may be inaccurate. It is important to note that Windows machines do not have a similar tool out of the box and has a different linking process, so Parm won't try to resolve dependencies at all on Windows at the moment.
-    - These tools should already be installed and added to `PATH` on your machine. You can check this by running
+1. *(optional)* Must have `ldd` on Linux or `otool` on macOS installed and added to PATH
+    - Parm may use these tools to search for potential dependencies on installed programs. 
+        - If these tools are not found or if there is an error invoking them, then Parm will fallback to a naive dependency search algorithm instead which may be inaccurate.
+        - It is important to note that Windows machines do not have a similar tool out of the box and have a different linking process, so Parm won't try to resolve dependencies at all on Windows machine at the moment.
+    - Both `ldd` and `otool` should already be installed and added to PATH on your machine. You can check this by running
     ```sh
     which ldd
     ```
@@ -53,19 +58,16 @@ Parm is *not* intended to replace your system/OS-level package manager (think ap
     ```sh
     which otool
     ```
-2. *(optional)* Must have a **free** GitHub personal access token with access to PUBLIC repositories. Go [here](#github-personal-access-token) to find out how to add an access token.
+2. *(optional)* Must have a **free** GitHub personal access token with access to PUBLIC repositories. Go [here](#adding-a-github-personal-access-token) to find out how to add an access token.
 
 ## Install
 TODO
 
-## GitHub Personal Access Token
+## Adding a GitHub Personal Access Token
 > [!IMPORTANT]
 > If you DON'T have/want to use a GitHub personal access token, then you will be limited to 60 requests/hr instead of the 5000+ requests/hr with an API key. 
 > There is nothing I can do about this and this is a limitation of the program's design and the GitHub API.
 
-Parm uses the GitHub REST API to find and install packages. Theoretically, this means you can install any program off of GitHub, so ***YOU*** are responsible for the packages you install, since I don't maintain a registry of vetted packages.
-
-### Add Personal Access Token
 1. Add a personal access token (classic) by following [this guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
     - You can use a fine-grained personal access token if you want, but this is not tested properly. Check out the guide for that [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token).
 2. Add the API key to your shell environment:
@@ -143,7 +145,7 @@ parm uninstall <owner>/<repo> ...
 ## Contributing
 Parm is in a very early state, so any and all PRs are welcome. If you want to contribute to a new feature not already on the [roadmap](ROADMAP.md), please [create an issue](https://github.com/yhoundz/parm/issues/new) first, or check if an issue has already been created for it.
 
-Before making a contribution, read over the [contributing guidelines](CONTRIBUTING.md).
+Before making a contribution, read over the [contributing guidelines](contributing.md) as well as the [code of conduct](code_of_conduct.md).
 
 ## Acknowledgements
 Parm was created using the [Go programming language](https://go.dev/) and the [cobra](https://cobra.dev/) CLI framework.
