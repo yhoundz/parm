@@ -78,7 +78,9 @@ func getMissingLibsDarwin(ctx context.Context, path string) ([]string, error) {
 	return getMissingLibsFallBack(path)
 }
 
-func getMissingLibsFallBack(path string) ([]string, error)
+func getMissingLibsFallBack(path string) ([]string, error) {
+	return nil, nil
+}
 
 func hasSharedLib(name string) (bool, error) {
 	var searchPaths []string

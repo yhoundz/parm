@@ -25,7 +25,7 @@ Parm is a **pa**ckage/**r**epository **m**anager that allows you to install any 
 **TL;DR**: If you like your current package manager, this isn't for you. If not, keep reading or [install](#install) Parm.
 
 ### What is Parm?
-Parm is a package manager that allows you to install any program off of GitHub via their REST API. Parm directly downloads binaries provided by GitHub repository releases and includes niceties such as symlinking binaries to PATH and checking for updates.
+Parm is a cross-platform package manager that allows you to install any program off of GitHub via their REST API. Parm directly downloads binaries provided by GitHub repository releases and includes niceties such as symlinking binaries to PATH and checking for updates.
 
 This approach allows for the program to be incredibly lightweight and not have to deal with individuals maintaining upstream releases of packages. This means you get upstream releases faster and there is virtually no maintenance burden for managing package registries downstream.
 
