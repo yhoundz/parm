@@ -14,12 +14,12 @@ func TestParseRepoRef(t *testing.T) {
 		"godotengine/":                {"", "", "true"},
 		";.;:-/godot":                 {"", "", "true"},
 	}
-	for ref := range refs {
+	for ref, val := range refs {
 		own, rep, err := ParseRepoRef(ref)
-		expErr, _ := strconv.ParseBool(refs[ref][2])
+		expErr, _ := strconv.ParseBool(val[2])
 		actErr := expErr != (err != nil)
-		if refs[ref][0] != own || refs[ref][1] != rep || actErr {
-			t.Errorf("error, got '%s'/'%s', wanted %s/%s with err %q", own, rep, refs[ref][0], refs[ref][1], err)
+		if val[0] != own || val[1] != rep || actErr {
+			t.Errorf("error, got '%s'/'%s', wanted %s/%s with err %q", own, rep, val[0], val[1], err)
 			return
 		}
 	}
@@ -34,12 +34,12 @@ func TestParseRepoReleaseRef(t *testing.T) {
 		"godotengine/@4.4.1-stable":           {"", "", "", "true"},
 		";.;:-/godot@4.4.1-stable":            {"", "", "", "true"},
 	}
-	for ref := range refs {
+	for ref, val := range refs {
 		own, rep, tag, err := ParseRepoReleaseRef(ref)
-		expErr, _ := strconv.ParseBool(refs[ref][3])
+		expErr, _ := strconv.ParseBool(val[3])
 		actErr := expErr != (err != nil)
-		if refs[ref][0] != own || refs[ref][1] != rep || refs[ref][2] != tag || actErr {
-			t.Errorf("error, got '%s'/'%s', wanted %s/%s with err %q", own, rep, refs[ref][0], refs[ref][1], err)
+		if val[0] != own || val[1] != rep || val[2] != tag || actErr {
+			t.Errorf("error, got '%s'/'%s', wanted %s/%s with err %q", own, rep, val[0], val[1], err)
 			return
 		}
 	}
@@ -63,12 +63,12 @@ func TestParseGithubUrlPattern(t *testing.T) {
 		"git@github.com:godotengine/.git":                {"", "", "true"},
 		"git@github.com:;.;:-/godot.git":                 {"", "", "true"},
 	}
-	for ref := range refs {
+	for ref, val := range refs {
 		own, rep, err := ParseGithubUrlPattern(ref)
-		expErr, _ := strconv.ParseBool(refs[ref][2])
+		expErr, _ := strconv.ParseBool(val[2])
 		actErr := expErr != (err != nil)
-		if refs[ref][0] != own || refs[ref][1] != rep || actErr {
-			t.Errorf("error, got '%s'/'%s', wanted %s/%s with err %q", own, rep, refs[ref][0], refs[ref][1], err)
+		if val[0] != own || val[1] != rep || actErr {
+			t.Errorf("error, got '%s'/'%s', wanted %s/%s with err %q", own, rep, val[0], val[1], err)
 			return
 		}
 	}
@@ -92,13 +92,35 @@ func TestParseGithubUrlPatternWithRelease(t *testing.T) {
 		"git@github.com:godotengine/.git@tt0.v1":                {"", "", "", "true"},
 		"git@github.com:;.;:-/godot.git@irn":                    {"", "", "", "true"},
 	}
-	for ref := range refs {
+	for ref, val := range refs {
 		own, rep, tag, err := ParseGithubUrlPatternWithRelease(ref)
-		expErr, _ := strconv.ParseBool(refs[ref][3])
+		expErr, _ := strconv.ParseBool(val[3])
 		actErr := expErr != (err != nil)
-		if refs[ref][0] != own || refs[ref][1] != rep || refs[ref][2] != tag || actErr {
-			t.Errorf("error, got '%s'/'%s', wanted %s/%s with err %q", own, rep, refs[ref][0], refs[ref][1], err)
+		if val[0] != own || val[1] != rep || val[2] != tag || actErr {
+			t.Errorf("error, got '%s'/'%s', wanted %s/%s with err %q", own, rep, val[0], val[1], err)
 			return
+		}
+	}
+}
+
+func TestStringToString(t *testing.T) {
+	refs := map[string][]string{
+		// https
+		"key=value":     {"key", "value", "false"},
+		"key=value=key": {"key", "value=key", "false"},
+		"hello world":   {"", "", "true"},
+		"======":        {"", "=====", "false"},
+		"hello = world": {"hello ", " world", "false"},
+		"":              {"", "", "true"},
+		"six=seven":     {"six", "seven", "false"},
+	}
+	for ref, val := range refs {
+		s1, s2, err := StringToString(ref)
+		act1, act2 := val[0], val[1]
+		expErr, _ := strconv.ParseBool(val[2])
+		actErr := expErr != (err != nil)
+		if actErr || s1 != act1 || s2 != act2 {
+			t.Errorf("error: got %s and %s, wanted %s and %s. returned with err: %q", s1, s2, act1, act2, err)
 		}
 	}
 }

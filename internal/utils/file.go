@@ -52,10 +52,18 @@ func stripTopDir(path string) (string, bool) {
 	return "", false
 }
 
+func MakeInstallDir(owner, repo string, perm os.FileMode) (string, error) {
+	path := GetInstallDir(owner, repo)
+	err := os.MkdirAll(path, perm)
+	if err != nil {
+		return "", fmt.Errorf("error: cannot create install dir: %w", err)
+	}
+	return path, nil
+}
+
 func GetInstallDir(owner, repo string) string {
 	installPath := config.Cfg.ParmPkgDirPath
-	dir := owner + "-" + repo
-	dest := filepath.Join(installPath, dir)
+	dest := filepath.Join(installPath, owner, repo)
 	return dest
 }
 

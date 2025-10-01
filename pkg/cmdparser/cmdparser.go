@@ -6,8 +6,7 @@ import (
 	"strings"
 )
 
-var ownerRepoStr = `([a-z\d](?:[a-z\d-]{0,38}[a-z\d])?)/([a-z\d_.-]+)`
-
+var ownerRepoStr = `([a-z\d](?:[a-z\d-]{0,38}[a-z\d])*)/([a-z\d_.-]+?)`
 var ownerRepoPattern = regexp.MustCompile(`(?i)^` + ownerRepoStr + `$`)
 var ownerRepoTagPattern = regexp.MustCompile(`(?i)^` + ownerRepoStr + `(?:@(.+))?$`)
 var githubUrlPattern = regexp.MustCompile(`(?i)^(?:https://github\.com/|git@github\.com:)` + ownerRepoStr + `(?:\.git)?$`)
@@ -32,7 +31,10 @@ func ParseRepoReleaseRef(ref string) (owner string, repo string, release string,
 // general purpose
 func ParseGithubUrlPattern(ref string) (owner string, repo string, err error) {
 	if matches := githubUrlPattern.FindStringSubmatch(ref); matches != nil {
-		return matches[2], matches[3], nil
+		owner, repo := matches[1], matches[2]
+		if repo != ".git" {
+			return owner, repo, nil
+		}
 	}
 	return "", "", fmt.Errorf("Cannot validate owner/repository link: %q", ref)
 }
@@ -40,7 +42,10 @@ func ParseGithubUrlPattern(ref string) (owner string, repo string, err error) {
 // specifically parsing tag args
 func ParseGithubUrlPatternWithRelease(ref string) (owner string, repo string, release string, err error) {
 	if matches := githubUrlPatternWithRelease.FindStringSubmatch(ref); matches != nil {
-		return matches[2], matches[3], matches[4], nil
+		owner, repo, tag := matches[1], matches[2], matches[3]
+		if repo != ".git" {
+			return owner, repo, tag, nil
+		}
 	}
 	return "", "", "", fmt.Errorf("Cannot validate owner/repository link: %q", ref)
 }
