@@ -17,7 +17,13 @@ type Event struct {
 	Done    bool
 }
 
+type Hooks struct {
+	Callback  Callback
+	Decorator Decorator
+}
+
 type Callback func(Event)
+type Decorator func(stage Stage, r io.Reader, total int64) io.Reader
 
 type Reader struct {
 	reader   io.Reader

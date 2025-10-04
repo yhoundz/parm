@@ -18,21 +18,21 @@ import (
 )
 
 type ReleaseInstaller interface {
-	InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallOptions) error
+	InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallOptions, hooks *progress.Hooks) error
 }
 
-func (in *Installer) installFromReleaseByType(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions) error {
+func (in *Installer) installFromReleaseByType(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions, hooks *progress.Hooks) error {
 	isPre := opts.Type == manifest.PreRelease
 	rel, err := gh.ResolveRelease(ctx, in.client, owner, repo, opts.Version, isPre)
 	if err != nil {
 		return err
 	}
 
-	return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts)
+	return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts, hooks)
 }
 
 // Does NOT validate the release.
-func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallOptions) error {
+func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallOptions, hooks *progress.Hooks) error {
 	var ass *github.ReleaseAsset
 	var err error
 	if opts.Asset == "" {
@@ -62,14 +62,14 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 	}
 
 	dest := filepath.Join(pkgPath, ass.GetName()) // download destination
-	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL(), opts.Progress); err != nil {
+	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL(), hooks); err != nil {
 		return fmt.Errorf("ERROR: failed to download asset: %w", err)
 	}
 
 	switch {
 	case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
-		if opts.Progress != nil {
-			opts.Progress(progress.Event{
+		if hooks.Callback != nil {
+			hooks.Callback(progress.Event{
 				Stage:   progress.StageExtract,
 				Current: 0,
 				Total:   -1,
@@ -79,15 +79,15 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 			return fmt.Errorf("ERROR: failed to extract tarball: %w", err)
 		}
 		_ = os.Remove(dest)
-		if opts.Progress != nil {
-			opts.Progress(progress.Event{
+		if hooks.Callback != nil {
+			hooks.Callback(progress.Event{
 				Stage: progress.StageExtract,
 				Done:  true,
 			})
 		}
 	case strings.HasSuffix(dest, ".zip"):
-		if opts.Progress != nil {
-			opts.Progress(progress.Event{
+		if hooks.Callback != nil {
+			hooks.Callback(progress.Event{
 				Stage:   progress.StageExtract,
 				Current: 0,
 				Total:   -1,
@@ -97,8 +97,8 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 			return fmt.Errorf("ERROR: failed to extract zip: %w", err)
 		}
 		_ = os.Remove(dest)
-		if opts.Progress != nil {
-			opts.Progress(progress.Event{
+		if hooks.Callback != nil {
+			hooks.Callback(progress.Event{
 				Stage: progress.StageExtract,
 				Done:  true,
 			})

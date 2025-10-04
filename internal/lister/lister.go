@@ -6,7 +6,6 @@ import (
 	"parm/internal/manifest"
 	"path/filepath"
 
-	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 )
 
@@ -31,11 +30,10 @@ func GetInstalledPkgInfo() ([]string, PkgListData, error) {
 }
 
 func GetAllPkgManifest() ([]*manifest.Manifest, error) {
-	pkgDir := viper.GetViper().Get("parm_pkg_dir_path")
-	if pkgDir == nil {
+	pkgDirPath := viper.GetViper().GetString("parm_pkg_dir_path")
+	if pkgDirPath == "" {
 		return nil, fmt.Errorf("error: parm_pkg_dir_path could not be found")
 	}
-	pkgDirPath := cast.ToString(pkgDir)
 
 	var mans []*manifest.Manifest
 	entries, err := os.ReadDir(pkgDirPath)
@@ -47,13 +45,20 @@ func GetAllPkgManifest() ([]*manifest.Manifest, error) {
 		if !file.IsDir() {
 			continue
 		}
-		fullFilePath := filepath.Join(pkgDirPath, file.Name())
-		man, err := manifest.Read(fullFilePath)
+		path := filepath.Join(pkgDirPath, file.Name())
+		pkgs, err := os.ReadDir(path)
 		if err != nil {
-			// cannot find manifest, assume it's not an installation folder and continue
 			continue
 		}
-		mans = append(mans, man)
+		for _, pkg := range pkgs {
+			fullFilePath := filepath.Join(path, pkg.Name())
+			man, err := manifest.Read(fullFilePath)
+			if err != nil {
+				// cannot find manifest, assume it's not an installation folder and continue
+				continue
+			}
+			mans = append(mans, man)
+		}
 	}
 
 	return mans, nil

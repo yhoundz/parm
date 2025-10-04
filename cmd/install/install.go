@@ -5,10 +5,10 @@ package install
 
 import (
 	"fmt"
+	"io"
 	gh "parm/internal/github"
 	"parm/internal/installer"
 	"parm/internal/manifest"
-	"parm/internal/utils"
 	"parm/pkg/cmdparser"
 	"parm/pkg/cmdx"
 	"parm/pkg/progress"
@@ -83,31 +83,38 @@ var InstallCmd = &cobra.Command{
 			version = ""
 		}
 
-		pbRender := func(ev progress.Event) {
-			pb := progressbar.NewBar()
-			pb.Progress(100. * float64(ev.Current) / float64(ev.Total))
-		}
+		pb := progressbar.NewBar()
+		// pbRender := func(ev progress.Event) {
+		// 	pb.Progress(100. * float64(ev.Current) / float64(ev.Total))
+		// }
+		//
+		// _, done := progress.GetAsyncCallback(pbRender, 128)
+		// defer done()
 
-		wrapped, done := progress.GetAsyncCallback(pbRender, 128)
-		defer done()
+		hooks := &progress.Hooks{
+			Decorator: func(stage progress.Stage, r io.Reader, total int64) io.Reader {
+				if stage != progress.StageDownload {
+					return r
+				}
+				return progressbar.NewAutoReader(pb, r, total)
+			},
+			Callback: nil,
+		}
 
 		opts := installer.InstallOptions{
-			Type:     insType,
-			Version:  version,
-			Asset:    asset,
-			Progress: wrapped,
+			Type:    insType,
+			Version: version,
+			Asset:   asset,
 		}
 
-		dest, err := utils.MakeInstallDir(owner, repo, 0o755)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("installing %s/%s to %s\n", owner, repo, dest)
+		fmt.Printf("installing %s/%s\n", owner, repo)
 
-		err = inst.Install(ctx, dest, owner, repo, opts)
+		err := inst.Install(ctx, owner, repo, opts, hooks)
 		if err != nil {
-			fmt.Print(err)
+			fmt.Printf("%q\n", err)
 		}
+
+		fmt.Println()
 
 		return err
 	},

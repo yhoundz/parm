@@ -38,7 +38,8 @@ var UpdateCmd = &cobra.Command{
 			inst := installer.New(client)
 			up := updater.New(client, inst)
 
-			err = up.Update(ctx, owner, repo)
+			// TODO: change this later
+			err = up.Update(ctx, owner, repo, nil)
 			if err != nil {
 				fmt.Printf("error: failed to update %s/%s\n", owner, repo)
 			}
