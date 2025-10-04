@@ -34,13 +34,7 @@ func ExtractTarGz(srcPath, destPath string) error {
 			return err
 		}
 
-		// INFO: assumes that the resulting tar.gz will contain a single folder that holds the source code
-		// TODO: make this more robust?
-		name, ok := stripTopDir(hdr.Name)
-		if !ok {
-			continue
-		}
-
+		name := hdr.Name
 		target, err := safeJoin(destPath, name)
 		if err != nil {
 			return err
@@ -89,10 +83,7 @@ func ExtractZip(srcPath, destPath string) error {
 	defer r.Close()
 
 	for _, f := range r.File {
-		name, ok := stripTopDir(f.Name)
-		if !ok {
-			continue
-		}
+		name := f.Name
 
 		rc, err := f.Open()
 		if err != nil {

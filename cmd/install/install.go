@@ -11,7 +11,9 @@ import (
 	"parm/internal/utils"
 	"parm/pkg/cmdparser"
 	"parm/pkg/cmdx"
+	"parm/pkg/progress"
 
+	"fortio.org/progressbar"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -81,16 +83,28 @@ var InstallCmd = &cobra.Command{
 			version = ""
 		}
 
-		opts := installer.InstallOptions{
-			Type:    insType,
-			Version: version,
-			Asset:   asset,
+		pbRender := func(ev progress.Event) {
+			pb := progressbar.NewBar()
+			pb.Progress(100. * float64(ev.Current) / float64(ev.Total))
 		}
 
-		dest := utils.GetInstallDir(owner, repo)
-		fmt.Println(dest)
+		wrapped, done := progress.GetAsyncCallback(pbRender, 128)
+		defer done()
 
-		err := inst.Install(ctx, dest, owner, repo, opts)
+		opts := installer.InstallOptions{
+			Type:     insType,
+			Version:  version,
+			Asset:    asset,
+			Progress: wrapped,
+		}
+
+		dest, err := utils.MakeInstallDir(owner, repo, 0o755)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("installing %s/%s to %s\n", owner, repo, dest)
+
+		err = inst.Install(ctx, dest, owner, repo, opts)
 		if err != nil {
 			fmt.Print(err)
 		}

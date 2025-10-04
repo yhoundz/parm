@@ -44,7 +44,7 @@ func (up *Updater) Update(ctx context.Context, owner, repo string) error {
 
 		needsUpdate, err := CheckUpdate(man.Version, newVer)
 		if !needsUpdate {
-			fmt.Printf("%s/%s is already up to date (ver %s).", owner, repo, man.Version)
+			fmt.Printf("%s/%s is already up to date (ver %s).\n", owner, repo, man.Version)
 			return nil
 		}
 
@@ -53,11 +53,11 @@ func (up *Updater) Update(ctx context.Context, owner, repo string) error {
 		}
 
 		if newVer == man.Version {
-			fmt.Printf("%s/%s@%s is already up to date.", owner, repo, man.Version)
+			fmt.Printf("%s/%s@%s is already up to date.\n", owner, repo, man.Version)
 			return nil
 		}
 
-		fmt.Printf("Updates found!")
+		fmt.Printf("Updates found!\n")
 		fmt.Printf("Updating %s/%s from %s to %s...\n", owner, repo, man.Version, rel.GetTagName())
 		opts := installer.InstallOptions{
 			Type:    man.InstallType,

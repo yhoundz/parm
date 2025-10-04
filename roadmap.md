@@ -14,6 +14,7 @@ Below are a list of planned features and improvements:
 
 ## Planned for Later Versions
 - Shell autocompletion.
+- Checksum comparison (i.e. the user can input a checksum as a flag, and Parm will compare the user's checksum to the checksum of the downloaded tarball)
 
 ## To be Determined
 - None
