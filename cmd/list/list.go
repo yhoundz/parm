@@ -22,7 +22,8 @@ var ListCmd = &cobra.Command{
 		for _, pkg := range list {
 			fmt.Println(pkg)
 		}
-		fmt.Printf("Total: %d packages installed.", data.NumPkgs)
+		fmt.Printf("Total: %d packages installed.\n", data.NumPkgs)
+		// fmt.Println("hello world")
 		return nil
 	},
 }

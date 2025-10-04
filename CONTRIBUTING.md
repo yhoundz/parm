@@ -66,7 +66,9 @@ Depending on how large the project is, you may want to outsource the questioning
 ## I Want To Contribute
 
 > ### Legal Notice <!-- omit in toc -->
+> By contributing to this project you agree to the following terms: 
 > When contributing to this project, you must agree that you have authored 100% of the content, that you have the necessary rights to the content and that the content you contribute may be provided under the project licence.
+> This project is licensed under the GNU General Public License v3.0 (GPLv3), as outlined in [LICENSE](LICENSE). The maintainers reserve the right to change the license at their sole discretion, provided the new license is as permissive or more permissive than GPLv3 and not more restrictive. It the maintainers' sole responsibility to determine if the new license meets these criteria, including whether it imposes fewer restrictions on use, modification, distribution, or sublicensing.
 
 ### Reporting Bugs
 

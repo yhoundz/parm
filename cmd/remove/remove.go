@@ -23,13 +23,13 @@ var RemoveCmd = &cobra.Command{
 			owner, repo, err := cmdparser.ParseRepoRef(pkg)
 
 			if err != nil {
-				fmt.Printf("invalid package ref: %q: %s", pkg, err)
+				fmt.Printf("invalid package ref: %q: %s\n", pkg, err)
 				continue
 			}
 
 			err = uninstaller.Uninstall(ctx, owner, repo)
 			if err != nil {
-				fmt.Printf("error: cannot uninstall %s: %s", pkg, err)
+				fmt.Printf("error: cannot uninstall %s: %s\n", pkg, err)
 			}
 		}
 	},

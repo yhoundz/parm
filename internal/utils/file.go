@@ -41,17 +41,6 @@ func safeJoin(root, name string) (string, error) {
 	return target, nil
 }
 
-func stripTopDir(path string) (string, bool) {
-	if i := strings.IndexByte(path, '/'); i >= 0 {
-		out := path[i+1:]
-		if out == "" {
-			return "", false
-		}
-		return out, true
-	}
-	return "", false
-}
-
 func MakeInstallDir(owner, repo string, perm os.FileMode) (string, error) {
 	path := GetInstallDir(owner, repo)
 	err := os.MkdirAll(path, perm)
@@ -65,6 +54,15 @@ func GetInstallDir(owner, repo string) string {
 	installPath := config.Cfg.ParmPkgDirPath
 	dest := filepath.Join(installPath, owner, repo)
 	return dest
+}
+
+func GetParentDir(path string) (string, error) {
+	pth, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Dir(pth), nil
 }
 
 // checks if a file is a binary executable, and then checks if it's even able to be run by the user.

@@ -40,7 +40,7 @@ var UpdateCmd = &cobra.Command{
 
 			err = up.Update(ctx, owner, repo)
 			if err != nil {
-				fmt.Printf("error: failed to update %s/%s", owner, repo)
+				fmt.Printf("error: failed to update %s/%s\n", owner, repo)
 			}
 		}
 		return nil

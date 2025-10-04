@@ -8,6 +8,7 @@ import (
 	gh "parm/internal/github"
 	"parm/internal/manifest"
 	"parm/internal/utils"
+	"parm/pkg/progress"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -61,21 +62,47 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 	}
 
 	dest := filepath.Join(pkgPath, ass.GetName()) // download destination
-	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL()); err != nil {
+	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL(), opts.Progress); err != nil {
 		return fmt.Errorf("ERROR: failed to download asset: %w", err)
 	}
 
 	switch {
 	case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
+		if opts.Progress != nil {
+			opts.Progress(progress.Event{
+				Stage:   progress.StageExtract,
+				Current: 0,
+				Total:   -1,
+			})
+		}
 		if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
 			return fmt.Errorf("ERROR: failed to extract tarball: %w", err)
 		}
-		os.Remove(dest)
+		_ = os.Remove(dest)
+		if opts.Progress != nil {
+			opts.Progress(progress.Event{
+				Stage: progress.StageExtract,
+				Done:  true,
+			})
+		}
 	case strings.HasSuffix(dest, ".zip"):
+		if opts.Progress != nil {
+			opts.Progress(progress.Event{
+				Stage:   progress.StageExtract,
+				Current: 0,
+				Total:   -1,
+			})
+		}
 		if err := utils.ExtractZip(dest, pkgPath); err != nil {
 			return fmt.Errorf("ERROR: failed to extract zip: %w", err)
 		}
-		os.Remove(dest)
+		_ = os.Remove(dest)
+		if opts.Progress != nil {
+			opts.Progress(progress.Event{
+				Stage: progress.StageExtract,
+				Done:  true,
+			})
+		}
 	default:
 		if runtime.GOOS != "windows" {
 			if err := os.Chmod(dest, 0o755); err != nil {

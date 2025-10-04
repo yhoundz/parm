@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	fortio.org/progressbar v1.1.0 // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect

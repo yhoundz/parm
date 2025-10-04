@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"parm/internal/manifest"
+	"parm/pkg/progress"
 	"path/filepath"
 
 	"github.com/google/go-github/v74/github"
@@ -17,9 +18,10 @@ type Installer struct {
 }
 
 type InstallOptions struct {
-	Type    manifest.InstallType
-	Version string
-	Asset   string
+	Type     manifest.InstallType
+	Version  string
+	Asset    string
+	Progress progress.Callback
 }
 
 func New(cli *github.RepositoriesService) *Installer {
@@ -32,7 +34,7 @@ func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, o
 	return in.installFromReleaseByType(ctx, pkgPath, owner, repo, opts)
 }
 
-func downloadTo(ctx context.Context, destPath, url string) error {
+func downloadTo(ctx context.Context, destPath, url string, cb progress.Callback) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -59,6 +61,25 @@ func downloadTo(ctx context.Context, destPath, url string) error {
 	}
 	defer file.Close()
 
-	_, err = io.Copy(file, resp.Body)
+	if cb == nil {
+		_, err = io.Copy(file, resp.Body)
+		return err
+	}
+
+	cb(progress.Event{
+		Stage:   progress.StageDownload,
+		Current: 0,
+		Total:   resp.ContentLength,
+	})
+
+	reader := progress.NewReader(resp.Body, resp.ContentLength, progress.StageDownload, cb)
+	written, err := io.Copy(file, reader)
+
+	cb(progress.Event{
+		Stage:   progress.StageDownload,
+		Current: written,
+		Total:   resp.ContentLength,
+		Done:    true,
+	})
 	return err
 }
