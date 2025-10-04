@@ -3,19 +3,18 @@ module parm
 go 1.24.5
 
 require (
+	fortio.org/progressbar v1.1.0
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/google/go-github/v74 v74.0.0
 	github.com/h2non/filetype v1.1.3
 	github.com/shirou/gopsutil/v4 v4.25.7
-	github.com/spf13/cast v1.7.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	golang.org/x/oauth2 v0.30.0
 )
 
 require (
-	fortio.org/progressbar v1.1.0 // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
@@ -27,6 +26,7 @@ require (
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
+	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect

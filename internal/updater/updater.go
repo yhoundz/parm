@@ -7,6 +7,7 @@ import (
 	"parm/internal/installer"
 	"parm/internal/manifest"
 	"parm/internal/utils"
+	"parm/pkg/progress"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v74/github"
@@ -24,7 +25,7 @@ func New(cli *github.RepositoriesService, rel installer.ReleaseInstaller) *Updat
 	}
 }
 
-func (up *Updater) Update(ctx context.Context, owner, repo string) error {
+func (up *Updater) Update(ctx context.Context, owner, repo string, hooks *progress.Hooks) error {
 	installDir := utils.GetInstallDir(owner, repo)
 	man, err := manifest.Read(installDir)
 
@@ -63,7 +64,7 @@ func (up *Updater) Update(ctx context.Context, owner, repo string) error {
 			Type:    man.InstallType,
 			Version: man.Version,
 		}
-		return up.updateRelease(ctx, installDir, man, rel, opts)
+		return up.updateRelease(ctx, installDir, man, rel, opts, hooks)
 	}
 	return nil
 }
@@ -89,7 +90,8 @@ func (up *Updater) updateRelease(ctx context.Context,
 	installDir string,
 	man *manifest.Manifest,
 	rel *github.RepositoryRelease,
-	opts installer.InstallOptions) error {
+	opts installer.InstallOptions,
+	hooks *progress.Hooks) error {
 	owner := man.Owner
 	repo := man.Repo
 
@@ -99,5 +101,5 @@ func (up *Updater) updateRelease(ctx context.Context,
 	}
 	fmt.Printf("Updating %s/%s from %s to %s...\n", owner, repo, man.Version, rel.GetTagName())
 
-	return up.relInstaller.InstallFromRelease(ctx, installDir, owner, repo, rel, opts)
+	return up.relInstaller.InstallFromRelease(ctx, installDir, owner, repo, rel, opts, hooks)
 }

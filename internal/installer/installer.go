@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"parm/internal/manifest"
+	"parm/internal/uninstaller"
+	"parm/internal/utils"
 	"parm/pkg/progress"
 	"path/filepath"
 
@@ -18,10 +20,9 @@ type Installer struct {
 }
 
 type InstallOptions struct {
-	Type     manifest.InstallType
-	Version  string
-	Asset    string
-	Progress progress.Callback
+	Type    manifest.InstallType
+	Version string
+	Asset   string
 }
 
 func New(cli *github.RepositoriesService) *Installer {
@@ -30,11 +31,25 @@ func New(cli *github.RepositoriesService) *Installer {
 	}
 }
 
-func (in *Installer) Install(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions) error {
-	return in.installFromReleaseByType(ctx, pkgPath, owner, repo, opts)
+func (in *Installer) Install(ctx context.Context, owner, repo string, opts InstallOptions, hooks *progress.Hooks) error {
+	dest := utils.GetInstallDir(owner, repo)
+	_, err := os.Stat(dest)
+
+	// if error is something else, ignore it for now and hope it propogates downwards if it's actually serious
+	if err == nil {
+		if err := uninstaller.Uninstall(ctx, owner, repo); err != nil {
+			return err
+		}
+	}
+
+	dest, err = utils.MakeInstallDir(owner, repo, 0o755)
+	if err != nil {
+		return err
+	}
+	return in.installFromReleaseByType(ctx, dest, owner, repo, opts, hooks)
 }
 
-func downloadTo(ctx context.Context, destPath, url string, cb progress.Callback) error {
+func downloadTo(ctx context.Context, destPath, url string, hooks *progress.Hooks) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -61,25 +76,27 @@ func downloadTo(ctx context.Context, destPath, url string, cb progress.Callback)
 	}
 	defer file.Close()
 
-	if cb == nil {
+	if hooks == nil {
 		_, err = io.Copy(file, resp.Body)
 		return err
 	}
 
-	cb(progress.Event{
-		Stage:   progress.StageDownload,
-		Current: 0,
-		Total:   resp.ContentLength,
-	})
+	var r io.Reader = resp.Body
+	var closer io.Closer
 
-	reader := progress.NewReader(resp.Body, resp.ContentLength, progress.StageDownload, cb)
-	written, err := io.Copy(file, reader)
+	if hooks.Decorator != nil {
+		wr := hooks.Decorator(progress.StageDownload, resp.Body, resp.ContentLength)
+		if rc, ok := wr.(io.ReadCloser); ok {
+			r, closer = rc, rc
+		} else {
+			r = wr
+		}
+	}
 
-	cb(progress.Event{
-		Stage:   progress.StageDownload,
-		Current: written,
-		Total:   resp.ContentLength,
-		Done:    true,
-	})
+	_, err = io.Copy(file, r)
+	if closer != nil {
+		_ = closer.Close()
+	}
+
 	return err
 }
