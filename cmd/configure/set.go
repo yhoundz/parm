@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+Copyright © 2025 Alexander Wang
 */
 package configure
 
@@ -29,10 +29,10 @@ var SetCmd = &cobra.Command{
 		if err := viper.WriteConfig(); err != nil {
 			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 				if err = viper.SafeWriteConfig(); err != nil {
-					return fmt.Errorf("error: failed to create config file: %w", err)
+					return fmt.Errorf("error: failed to create config file: \n%w", err)
 				}
 			} else {
-				return fmt.Errorf("error: failed to write config file: %w", err)
+				return fmt.Errorf("error: failed to write config file: \n%w", err)
 			}
 		}
 		return nil

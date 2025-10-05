@@ -44,16 +44,14 @@ var InstallCmd = &cobra.Command{
 					return fmt.Errorf("cannot use @version shorthand with the --%s flag", flag)
 				}
 			}
-			release = tag
+			cmd.Flags().Set("release", tag)
 			args[0] = owner + "/" + repo
 		}
 
 		if err := cmdx.MarkFlagsRequireFlag(cmd, "release", "asset"); err != nil {
-			return err
-		}
-
-		if err := cmdx.MarkFlagsRequireFlag(cmd, "pre-release", "asset"); err != nil {
-			return err
+			if err := cmdx.MarkFlagsRequireFlag(cmd, "pre-release", "asset"); err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -63,7 +61,7 @@ var InstallCmd = &cobra.Command{
 		pkg := args[0]
 
 		ctx := cmd.Context()
-		token := viper.GetString("github_api_token")
+		token, _ := gh.GetStoredApiKey(viper.GetViper())
 		client := gh.NewRepoClient(ctx, token)
 
 		inst := installer.New(client)
@@ -84,12 +82,6 @@ var InstallCmd = &cobra.Command{
 		}
 
 		pb := progressbar.NewBar()
-		// pbRender := func(ev progress.Event) {
-		// 	pb.Progress(100. * float64(ev.Current) / float64(ev.Total))
-		// }
-		//
-		// _, done := progress.GetAsyncCallback(pbRender, 128)
-		// defer done()
 
 		hooks := &progress.Hooks{
 			Decorator: func(stage progress.Stage, r io.Reader, total int64) io.Reader {

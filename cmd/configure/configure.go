@@ -5,9 +5,12 @@ package configure
 
 import (
 	"fmt"
+	"maps"
+	"parm/internal/config"
+	"slices"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var ConfigCmd = &cobra.Command{
@@ -16,9 +19,13 @@ var ConfigCmd = &cobra.Command{
 	Short:   "Configures parm.",
 	Long:    `Prints the current configuration settings to your console.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		settings := viper.AllSettings()
-		for k, v := range settings {
-			fmt.Printf("%s: %s\n", k, v)
+		var settings map[string]any
+		if err := mapstructure.Decode(config.Cfg, &settings); err != nil {
+			return err
+		}
+		sorted := slices.Sorted(maps.Keys(settings))
+		for _, k := range sorted {
+			fmt.Printf("%s: %s\n", k, settings[k])
 		}
 
 		return nil
@@ -27,4 +34,5 @@ var ConfigCmd = &cobra.Command{
 
 func init() {
 	ConfigCmd.AddCommand(SetCmd)
+	ConfigCmd.AddCommand(ResetCmd)
 }

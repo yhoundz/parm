@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"parm/internal/config"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -12,23 +11,6 @@ import (
 	"github.com/h2non/filetype"
 	"github.com/h2non/filetype/types"
 )
-
-func MoveAllFrom(src, dest string) error {
-	entries, err := os.ReadDir(src)
-	if err != nil {
-		return err
-	}
-
-	for _, e := range entries {
-		oldPath := filepath.Join(src, e.Name())
-		newPath := filepath.Join(dest, e.Name())
-
-		if err := os.Rename(oldPath, newPath); err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 func safeJoin(root, name string) (string, error) {
 	cleaned := filepath.Clean(name)
@@ -39,21 +21,6 @@ func safeJoin(root, name string) (string, error) {
 		return "", fmt.Errorf("tar entry %q escapes extraction dir", name)
 	}
 	return target, nil
-}
-
-func MakeInstallDir(owner, repo string, perm os.FileMode) (string, error) {
-	path := GetInstallDir(owner, repo)
-	err := os.MkdirAll(path, perm)
-	if err != nil {
-		return "", fmt.Errorf("error: cannot create install dir: %w", err)
-	}
-	return path, nil
-}
-
-func GetInstallDir(owner, repo string) string {
-	installPath := config.Cfg.ParmPkgDirPath
-	dest := filepath.Join(installPath, owner, repo)
-	return dest
 }
 
 func GetParentDir(path string) (string, error) {
@@ -151,10 +118,10 @@ func SymlinkBinToPath(binPath, destPath string) (string, error) {
 
 	if _, err := os.Lstat(newDestPath); err != nil {
 		if err := os.Remove(newDestPath); err != nil {
-			return "", fmt.Errorf("failed to remove existing symlink at %w", err)
+			return "", fmt.Errorf("failed to remove existing symlink at \n%w", err)
 		}
 	} else if !os.IsNotExist(err) {
-		return "", fmt.Errorf("failed to check destination path: %w", err)
+		return "", fmt.Errorf("failed to check destination path: \n%w", err)
 	}
 
 	if err := os.Symlink(absBinDir, newDestPath); err != nil {

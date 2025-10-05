@@ -9,22 +9,6 @@ import (
 	"github.com/google/go-github/v74/github"
 )
 
-func GetNLatestReleases(
-	ctx context.Context,
-	client *github.RepositoriesService,
-	owner, repo string,
-	n int) ([]*github.RepositoryRelease, error) {
-	rels, _, err := client.ListReleases(ctx, owner, repo, &github.ListOptions{PerPage: n})
-	if err != nil {
-		return nil, fmt.Errorf("list releases: %w", err)
-	}
-	if len(rels) == 0 {
-		return nil, fmt.Errorf("no releases for %s/%s", owner, repo)
-	}
-
-	return rels, nil
-}
-
 func GetLatestPreRelease(
 	ctx context.Context,
 	client *github.RepositoriesService,
@@ -32,7 +16,7 @@ func GetLatestPreRelease(
 ) (*github.RepositoryRelease, error) {
 	rels, _, err := client.ListReleases(ctx, owner, repo, nil)
 	if err != nil {
-		return nil, fmt.Errorf("could not list releases for %s/%s: %w", owner, repo, err)
+		return nil, fmt.Errorf("could not list releases for %s/%s: \n%w", owner, repo, err)
 	}
 
 	for _, rel := range rels {
@@ -87,7 +71,7 @@ func ResolveRelease(ctx context.Context, client *github.RepositoriesService, own
 	if preRelease {
 		valid, rel, err := ValidatePreRelease(ctx, client, owner, repo)
 		if err != nil {
-			return nil, fmt.Errorf("err: cannot resolve pre-release on %s/%s: %w", owner, repo, err)
+			return nil, fmt.Errorf("err: cannot resolve pre-release on %s/%s: \n%w", owner, repo, err)
 		}
 		if !valid {
 			return nil, fmt.Errorf("error: no valid pre-release found for %s/%s", owner, repo)
@@ -99,10 +83,10 @@ func ResolveRelease(ctx context.Context, client *github.RepositoriesService, own
 	if version != "" {
 		valid, rel, err := ValidateRelease(ctx, client, owner, repo, version)
 		if err != nil {
-			return nil, fmt.Errorf("ERROR: Cannot resolve release %s on %s/%s", version, owner, repo)
+			return nil, fmt.Errorf("error: Cannot resolve release %s on %s/%s", version, owner, repo)
 		}
 		if !valid {
-			return nil, fmt.Errorf("ERROR: Release %s not valid, %w", version, err)
+			return nil, fmt.Errorf("error: Release %s not valid, \n%w", version, err)
 		}
 		return rel, nil
 	} else {
@@ -110,9 +94,9 @@ func ResolveRelease(ctx context.Context, client *github.RepositoriesService, own
 		if err != nil {
 			var ghErr *github.ErrorResponse
 			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
-				return nil, fmt.Errorf("no stable release found for %s/%s", owner, repo)
+				return nil, fmt.Errorf("error: no stable release found for %s/%s", owner, repo)
 			}
-			return nil, fmt.Errorf("could not fetch latest release: %w", err)
+			return nil, fmt.Errorf("error: could not fetch latest release: \n%w", err)
 		}
 		return rel, nil
 	}

@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 A.W. <EMAIL ADDRESS>
+Copyright © 2025 Alexander Wang
 */
 
 package main

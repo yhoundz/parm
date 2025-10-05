@@ -14,7 +14,7 @@ import (
 // uninstallCmd represents the uninstall command
 var RemoveCmd = &cobra.Command{
 	Use:     "remove <owner>/<repo>...",
-	Aliases: []string{"uninstall"},
+	Aliases: []string{"uninstall, rm"},
 	Short:   "Uninstalls a parm package",
 	Long:    `Uninstalls a parm package. Does not remove the configuration files`,
 	Run: func(cmd *cobra.Command, args []string) {

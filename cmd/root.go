@@ -1,15 +1,18 @@
 /*
-Copyright © 2025 A.W. <EMAIL ADDRESS>
+Copyright © 2025 Alexander Wang
 */
 package cmd
 
 import (
 	"os"
 	"parm/cmd/configure"
+	"parm/cmd/info"
 	"parm/cmd/install"
 	"parm/cmd/list"
 	"parm/cmd/remove"
+	"parm/cmd/search"
 	"parm/cmd/update"
+	"parm/cmd/verify"
 	"parm/internal/config"
 	"parm/parmver"
 
@@ -51,4 +54,7 @@ func init() {
 	rootCmd.AddCommand(remove.RemoveCmd)
 	rootCmd.AddCommand(update.UpdateCmd)
 	rootCmd.AddCommand(list.ListCmd)
+	rootCmd.AddCommand(info.InfoCmd)
+	rootCmd.AddCommand(search.SearchCmd)
+	rootCmd.AddCommand(verify.VerifyCmd)
 }

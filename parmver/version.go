@@ -1,15 +1,15 @@
 /*
-Copyright © 2025 A.W. <EMAIL ADDRESS>
+Copyright © 2025 Alexander Wang
 */
 
 package parmver
 
 import "fmt"
 
-type ReleaseChannel int
+type Channel int
 
 const (
-	Dev ReleaseChannel = iota
+	Dev Channel = iota
 	Stable
 )
 
@@ -17,10 +17,10 @@ type Version struct {
 	major   int
 	minor   int
 	patch   int
-	channel ReleaseChannel
+	channel Channel
 }
 
-func (c ReleaseChannel) String() string {
+func (c Channel) String() string {
 	switch c {
 	case Stable:
 		return "stable"

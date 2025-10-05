@@ -1,11 +1,13 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+Copyright © 2025 Alexander Wang
 */
 package configure
 
 import (
 	"fmt"
+	"maps"
 	"parm/internal/config"
+	"slices"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/cobra"
@@ -24,6 +26,13 @@ var ResetCmd = &cobra.Command{
 		if err := mapstructure.Decode(config.DefaultCfg, &cfgMap); err != nil {
 			return err
 		}
+
+		if resetAll {
+			args = slices.Sorted(maps.Keys(cfgMap))
+		} else {
+			slices.Sort(args)
+		}
+
 		for _, arg := range args {
 			def, ok := cfgMap[arg]
 			if !ok {
@@ -33,7 +42,7 @@ var ResetCmd = &cobra.Command{
 			viper.Set(arg, def)
 			fmt.Printf("Reset %s to default value: %v\n", arg, def)
 			if err := viper.WriteConfig(); err != nil {
-				return fmt.Errorf("error: failed to write config file: %w", err)
+				return fmt.Errorf("error: failed to write config file: \n%w", err)
 			}
 		}
 		return nil

@@ -33,7 +33,10 @@ var UpdateCmd = &cobra.Command{
 			}
 
 			ctx := cmd.Context()
-			token := viper.GetString("github_api_token")
+			token, err := gh.GetStoredApiKey(viper.GetViper())
+			if err != nil {
+				return err
+			}
 			client := gh.NewRepoClient(ctx, token)
 			inst := installer.New(client)
 			up := updater.New(client, inst)

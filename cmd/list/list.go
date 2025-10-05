@@ -13,7 +13,6 @@ import (
 var ListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists out currently installed packages",
-	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		list, data, err := lister.GetInstalledPkgInfo()
 		if err != nil {
@@ -23,7 +22,6 @@ var ListCmd = &cobra.Command{
 			fmt.Println(pkg)
 		}
 		fmt.Printf("Total: %d packages installed.\n", data.NumPkgs)
-		// fmt.Println("hello world")
 		return nil
 	},
 }
