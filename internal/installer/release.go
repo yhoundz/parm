@@ -24,6 +24,9 @@ type ReleaseInstaller interface {
 func (in *Installer) installFromReleaseByType(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions, hooks *progress.Hooks) error {
 	isPre := opts.Type == manifest.PreRelease
 	rel, err := gh.ResolveRelease(ctx, in.client, owner, repo, opts.Version, isPre)
+	if rel.GetPrerelease() && !isPre {
+		opts.Type = manifest.PreRelease
+	}
 	if err != nil {
 		return err
 	}
@@ -63,58 +66,32 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 
 	dest := filepath.Join(pkgPath, ass.GetName()) // download destination
 	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL(), hooks); err != nil {
-		return fmt.Errorf("ERROR: failed to download asset: %w", err)
+		return fmt.Errorf("error: failed to download asset: \n%w", err)
 	}
 
 	switch {
 	case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
-		if hooks.Callback != nil {
-			hooks.Callback(progress.Event{
-				Stage:   progress.StageExtract,
-				Current: 0,
-				Total:   -1,
-			})
-		}
 		if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
-			return fmt.Errorf("ERROR: failed to extract tarball: %w", err)
+			return fmt.Errorf("error: failed to extract tarball: \n%w", err)
 		}
 		_ = os.Remove(dest)
-		if hooks.Callback != nil {
-			hooks.Callback(progress.Event{
-				Stage: progress.StageExtract,
-				Done:  true,
-			})
-		}
 	case strings.HasSuffix(dest, ".zip"):
-		if hooks.Callback != nil {
-			hooks.Callback(progress.Event{
-				Stage:   progress.StageExtract,
-				Current: 0,
-				Total:   -1,
-			})
-		}
 		if err := utils.ExtractZip(dest, pkgPath); err != nil {
-			return fmt.Errorf("ERROR: failed to extract zip: %w", err)
+			return fmt.Errorf("error: failed to extract zip: \n%w", err)
 		}
 		_ = os.Remove(dest)
-		if hooks.Callback != nil {
-			hooks.Callback(progress.Event{
-				Stage: progress.StageExtract,
-				Done:  true,
-			})
-		}
 	default:
 		if runtime.GOOS != "windows" {
 			if err := os.Chmod(dest, 0o755); err != nil {
-				return fmt.Errorf("failed to make binary executable: %w", err)
+				return fmt.Errorf("failed to make binary executable: \n%w", err)
 			}
 		}
 	}
 
-	// TODO: create manifest elsewhere?
+	// TODO: create manifest elsewhere for better separation of concerns?
 	man, err := manifest.New(owner, repo, rel.GetTagName(), opts.Type, pkgPath)
 	if err != nil {
-		return fmt.Errorf("error: failed to create manifest: %w", err)
+		return fmt.Errorf("error: failed to create manifest: \n%w", err)
 	}
 	return man.Write(pkgPath)
 }
@@ -210,7 +187,7 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 
 	minMatch := scoredMatches[0].score
 	if minMatch < minScoreMatch {
-		return nil, fmt.Errorf("ERROR: Cannot find sufficient matches")
+		fmt.Println("warning: selected release asset may not be completely accurate")
 	}
 
 	// find top candidate(s)

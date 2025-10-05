@@ -136,14 +136,14 @@ func GetBinDeps(path string) ([]string, error) {
 		return nil, fmt.Errorf("error: unsupported system")
 	}
 	if err != nil {
-		return nil, fmt.Errorf("error: failed to open binary: '%s': %w", path, err)
+		return nil, fmt.Errorf("error: failed to open binary: '%s': \n%w", path, err)
 	}
 
 	defer file.Close()
 
 	libs, err := file.ImportedLibraries()
 	if err != nil {
-		return nil, fmt.Errorf("error: failed to get imported libs on %s: %w", path, err)
+		return nil, fmt.Errorf("error: failed to get imported libs on %s: \n%w", path, err)
 	}
 
 	return libs, nil

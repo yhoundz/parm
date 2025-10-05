@@ -33,7 +33,7 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, hooks *progre
 		if os.IsNotExist(err) {
 			return fmt.Errorf("package %s/%s does not exist", owner, repo)
 		}
-		return fmt.Errorf("could not read manifest for %s/%s: %w", owner, repo, err)
+		return fmt.Errorf("could not read manifest for %s/%s: \n%w", owner, repo, err)
 	}
 
 	switch man.InstallType {
@@ -50,7 +50,7 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, hooks *progre
 		}
 
 		if err != nil {
-			return fmt.Errorf("could not fetch latest release for %s/%s: %w", owner, repo, err)
+			return fmt.Errorf("could not fetch latest release for %s/%s: \n%w", owner, repo, err)
 		}
 
 		if newVer == man.Version {
