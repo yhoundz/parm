@@ -13,6 +13,7 @@ import (
 var ListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists out currently installed packages",
+	Args:  cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		list, data, err := lister.GetInstalledPkgInfo()
 		if err != nil {

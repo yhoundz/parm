@@ -31,7 +31,7 @@ func New(owner, repo, version string, installType InstallType, installDir string
 	m := &Manifest{
 		Owner:       owner,
 		Repo:        repo,
-		LastUpdated: time.Now().UTC().Format(time.RFC3339),
+		LastUpdated: time.Now().UTC().Format(time.DateTime),
 		Executables: []string{},
 		InstallType: installType,
 		Version:     version,

@@ -65,7 +65,17 @@ var InstallCmd = &cobra.Command{
 		client := gh.NewRepoClient(ctx, token)
 
 		inst := installer.New(client)
-		owner, repo, _ := cmdparser.ParseRepoRef(pkg)
+
+		var owner, repo string
+		var err error
+
+		owner, repo, err = cmdparser.ParseRepoRef(pkg)
+		if err != nil {
+			owner, repo, err = cmdparser.ParseGithubUrlPattern(pkg)
+			if err != nil {
+				return err
+			}
+		}
 
 		var insType manifest.InstallType
 		var version string
@@ -101,7 +111,7 @@ var InstallCmd = &cobra.Command{
 
 		fmt.Printf("installing %s/%s\n", owner, repo)
 
-		err := inst.Install(ctx, owner, repo, opts, hooks)
+		err = inst.Install(ctx, owner, repo, opts, hooks)
 		if err != nil {
 			fmt.Printf("%q\n", err)
 		}

@@ -3,6 +3,8 @@ package utils
 import (
 	"fmt"
 	"os"
+	"parm/internal/config"
+	"path/filepath"
 )
 
 func MakeInstallDir(owner, repo string, perm os.FileMode) (string, error) {
