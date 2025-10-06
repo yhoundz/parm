@@ -20,7 +20,23 @@ var UpdateCmd = &cobra.Command{
 	Short: "Updates a package",
 	Long:  `Updates a package to the latest available version.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+		token, err := gh.GetStoredApiKey(viper.GetViper())
+		if err != nil {
+			fmt.Printf("%s\ncontinuing without api key.\n", err)
+		}
+		client := gh.NewRepoClient(ctx, token)
+		inst := installer.New(client)
+		up := updater.New(client, inst)
+		updated := make(map[string]bool)
+
 		for _, pkg := range args {
+			if _, ok := updated[pkg]; ok {
+				// already updated package
+				continue
+			}
+			updated[pkg] = true
+
 			var owner, repo string
 			var err error
 
@@ -28,18 +44,10 @@ var UpdateCmd = &cobra.Command{
 			if err != nil {
 				owner, repo, err = cmdparser.ParseGithubUrlPattern(pkg)
 				if err != nil {
-					return err
+					fmt.Printf("%s\n", err)
+					continue
 				}
 			}
-
-			ctx := cmd.Context()
-			token, err := gh.GetStoredApiKey(viper.GetViper())
-			if err != nil {
-				return err
-			}
-			client := gh.NewRepoClient(ctx, token)
-			inst := installer.New(client)
-			up := updater.New(client, inst)
 
 			// TODO: change this later
 			err = up.Update(ctx, owner, repo, nil)

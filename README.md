@@ -27,10 +27,15 @@ Parm is a **pa**ckage/**r**epository **m**anager that allows you to install any 
 ### What is Parm?
 Parm is a cross-platform package manager that allows you to install any program off of GitHub via their REST API. Parm directly downloads binaries provided by GitHub repository releases and includes niceties such as symlinking binaries to PATH and checking for updates.
 
-This approach allows for the program to be incredibly lightweight and not have to deal with individuals maintaining upstream releases of packages. This means you get upstream releases faster and there is virtually no maintenance burden for managing package registries downstream.
+This means that Parm:
+
+- has zero root access & zero required dependencies
+- requires no additional package maintainers
+- receives new versions upstream instantly.
+- is incredibly lightweight
 
 ### Motivation
-I originally wanted to build this because I use an older version of Ubuntu, of which the builtin package manager (apt) often has a lot of outdated packages. As such, if I wanted to install a recent release, I would have to either build it from source, use homebrew, or find some alternative installation method. While they're all acceptable solutions, I felt they were:
+My builtin package manager (apt) often has a lot of outdated packages. As such, if I wanted to install a recent release, I would have to either build it from source, use homebrew, or find some alternative installation method. While they're all acceptable solutions, I felt they were:
 
 - Too cumbersome (in the case of building from source)
 - Hard to work with (like homebrew, which can be difficult to install any other version except the latest release version. Even then, the version you want may not even be available)
