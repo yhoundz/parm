@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"math"
 	"os"
-	gh "parm/internal/github"
+	"parm/internal/gh"
 	"parm/internal/manifest"
-	"parm/internal/utils"
+	"parm/pkg/archive"
 	"parm/pkg/progress"
 	"path/filepath"
 	"runtime"
@@ -71,12 +71,12 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 
 	switch {
 	case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
-		if err := utils.ExtractTarGz(dest, pkgPath); err != nil {
+		if err := archive.ExtractTarGz(dest, pkgPath); err != nil {
 			return fmt.Errorf("error: failed to extract tarball: \n%w", err)
 		}
 		_ = os.Remove(dest)
 	case strings.HasSuffix(dest, ".zip"):
-		if err := utils.ExtractZip(dest, pkgPath); err != nil {
+		if err := archive.ExtractZip(dest, pkgPath); err != nil {
 			return fmt.Errorf("error: failed to extract zip: \n%w", err)
 		}
 		_ = os.Remove(dest)
@@ -152,10 +152,10 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 	for i := range scoredMatches {
 		a := &scoredMatches[i]
 		name := a.asset.GetName()
-		if utils.ContainsAny(name, gooses[goos]) {
+		if containsAny(name, gooses[goos]) {
 			a.score += goosMatch
 		}
-		if utils.ContainsAny(name, goarchs[goarch]) {
+		if containsAny(name, goarchs[goarch]) {
 			a.score += goarchMatch
 		}
 
@@ -202,4 +202,13 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 
 	// fmt.Print(candidates[0])
 	return candidates, nil
+}
+
+func containsAny(src string, tokens []string) bool {
+	for _, a := range tokens {
+		if strings.Contains(src, a) {
+			return true
+		}
+	}
+	return false
 }

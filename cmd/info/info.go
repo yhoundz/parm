@@ -5,11 +5,10 @@ package info
 
 import (
 	"fmt"
-	gh "parm/internal/github"
-	"parm/internal/informer"
+	"parm/internal/core/catalog"
+	"parm/internal/gh"
 	"parm/pkg/cmdparser"
 
-	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -27,7 +26,7 @@ var InfoCmd = &cobra.Command{
 		if err != nil {
 			fmt.Printf("%s\ncontinuing without api key", err)
 		}
-		client := gh.NewRepoClient(ctx, token)
+		client := gh.New(ctx, token).Repos()
 		var owner, repo string
 
 		owner, repo, err = cmdparser.ParseRepoRef(pkg)
@@ -38,10 +37,12 @@ var InfoCmd = &cobra.Command{
 			}
 		}
 
-		info, err := informer.GetPackageInfo(ctx, client, owner, repo, getUpstream)
+		info, err := catalog.GetPackageInfo(ctx, client, owner, repo, getUpstream)
 		if err != nil {
 			return err
 		}
+		pr := info.String()
+		fmt.Println(pr)
 		return nil
 	},
 }

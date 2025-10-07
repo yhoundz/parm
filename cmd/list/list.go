@@ -5,7 +5,7 @@ package list
 
 import (
 	"fmt"
-	"parm/internal/lister"
+	"parm/internal/core/catalog"
 
 	"github.com/spf13/cobra"
 )
@@ -15,7 +15,7 @@ var ListCmd = &cobra.Command{
 	Short: "Lists out currently installed packages",
 	Args:  cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		list, data, err := lister.GetInstalledPkgInfo()
+		list, data, err := catalog.GetInstalledPkgInfo()
 		if err != nil {
 			return err
 		}

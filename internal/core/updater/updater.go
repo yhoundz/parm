@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"parm/internal/installer"
+	"parm/internal/core/installer"
 	"parm/internal/manifest"
-	"parm/internal/utils"
+	"parm/internal/parmutil"
 	"parm/pkg/progress"
 
 	"github.com/Masterminds/semver/v3"
@@ -26,7 +26,7 @@ func New(cli *github.RepositoriesService, rel installer.ReleaseInstaller) *Updat
 }
 
 func (up *Updater) Update(ctx context.Context, owner, repo string, hooks *progress.Hooks) error {
-	installDir := utils.GetInstallDir(owner, repo)
+	installDir := parmutil.GetInstallDir(owner, repo)
 	man, err := manifest.Read(installDir)
 
 	if err != nil {

@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var query string
+
 // searchCmd represents the search command
 var SearchCmd = &cobra.Command{
 	Use:   "search",
@@ -18,4 +20,6 @@ var SearchCmd = &cobra.Command{
 	},
 }
 
-func init() {}
+func init() {
+	SearchCmd.PersistentFlags().StringVarP(&query, "query", "q", "", "Searches for the exact query string outlined by the GitHub REST API instead of a general search term.")
+}

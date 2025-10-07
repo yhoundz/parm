@@ -5,7 +5,7 @@ package remove
 
 import (
 	"fmt"
-	"parm/internal/uninstaller"
+	"parm/internal/core/uninstaller"
 	"parm/pkg/cmdparser"
 
 	"github.com/spf13/cobra"

@@ -1,4 +1,4 @@
-package utils
+package sysutil
 
 import (
 	"path/filepath"
@@ -7,15 +7,6 @@ import (
 
 	"github.com/shirou/gopsutil/v4/process"
 )
-
-func ContainsAny(src string, tokens []string) bool {
-	for _, a := range tokens {
-		if strings.Contains(src, a) {
-			return true
-		}
-	}
-	return false
-}
 
 func IsProcessRunning(execPath string) (bool, error) {
 	absPath, err := filepath.Abs(execPath)
