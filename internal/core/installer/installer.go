@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"parm/internal/core/uninstaller"
+	"parm/internal/gh"
 	"parm/internal/manifest"
 	"parm/internal/parmutil"
 	"parm/pkg/progress"
@@ -18,12 +19,20 @@ import (
 // TODO: symlink binaries to PATH
 // TODO: write tests/setup docker
 // TODO: update manifest when updating packages
+// TODO: create install scripts: .sh, .ps1, .fish
+// TODO: when installing, check if dir exists before overwriting it
+// TODO: if download fails for some reason at any point, remove all traces of partially installed dirs
+// TODO: Check for dependencies after installation and bubble them up to the user
+// TODO: create section on how to add packages to parm in README.md
+// TODO: make readme prettier w/ html/css + CI/CD badges
+// TODO: restructure README
+// TODO: add migrate command if user changes bin or install dir in config
 
 type Installer struct {
 	client *github.RepositoriesService
 }
 
-type InstallOptions struct {
+type InstallFlags struct {
 	Type    manifest.InstallType
 	Version string
 	Asset   string
@@ -35,22 +44,33 @@ func New(cli *github.RepositoriesService) *Installer {
 	}
 }
 
-func (in *Installer) Install(ctx context.Context, owner, repo string, opts InstallOptions, hooks *progress.Hooks) error {
+func (in *Installer) Install(ctx context.Context, owner, repo string, opts InstallFlags, hooks *progress.Hooks) error {
 	dest := parmutil.GetInstallDir(owner, repo)
-	_, err := os.Stat(dest)
+	f, _ := os.Stat(dest)
 
 	// if error is something else, ignore it for now and hope it propogates downwards if it's actually serious
-	if err == nil {
+	if f != nil {
 		if err := uninstaller.Uninstall(ctx, owner, repo); err != nil {
 			return err
 		}
 	}
 
-	dest, err = parmutil.MakeInstallDir(owner, repo, 0o755)
+	dest, err := parmutil.MakeInstallDir(owner, repo, 0o755)
 	if err != nil {
 		return err
 	}
-	return in.installFromReleaseByType(ctx, dest, owner, repo, opts, hooks)
+
+	// validate opts and correct them
+	isPre := opts.Type == manifest.PreRelease
+	rel, err := gh.ResolveRelease(ctx, in.client, owner, repo, opts.Version, isPre)
+	if err != nil {
+		return err
+	}
+	if rel.GetPrerelease() && !isPre {
+		opts.Type = manifest.PreRelease
+	}
+
+	return in.InstallFromRelease(ctx, dest, owner, repo, rel, opts, hooks)
 }
 
 func downloadTo(ctx context.Context, destPath, url string, hooks *progress.Hooks) error {

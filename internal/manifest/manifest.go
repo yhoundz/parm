@@ -39,7 +39,9 @@ func New(owner, repo, version string, installType InstallType, installDir string
 
 	binM, err := getBinExecutables(installDir)
 	if err != nil {
-		return nil, err
+		// just return no bins
+		m.Executables = nil
+		return m, err
 	}
 	m.Executables = binM
 	return m, nil

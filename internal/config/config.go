@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -19,11 +20,12 @@ type Config struct {
 	ParmBinPath string `mapstructure:"parm_bin_path"`
 }
 
-// TODO: set defaults
-var DefaultCfg = Config{
+var defaultPkgDir = getOrCreateDefaultPkgDir()
+var defaultBinDir = getOrCreateDefaultBinDir()
+var DefaultCfg = &Config{
 	GitHubApiTokenFallback: "",
-	ParmPkgDirPath:         getDefaultPkgDir(),
-	ParmBinPath:            getDefaultBinDir(),
+	ParmPkgDirPath:         defaultPkgDir,
+	ParmBinPath:            defaultBinDir,
 }
 
 func setEnvVars(v *viper.Viper) {
@@ -43,29 +45,66 @@ func setConfigDefaults(v *viper.Viper) error {
 	return nil
 }
 
-func getDefaultPkgDir() string {
-	if d, ok := os.LookupEnv("XDG_DATA_HOME"); ok && d != "" {
-		return filepath.Join(d, "parm")
-	}
-	if runtime.GOOS == "darwin" {
-		home, _ := os.UserHomeDir()
-		// TODO: change this?
-		return filepath.Join(home, "Library", "Application Support", "parm")
-	}
-	if runtime.GOOS == "windows" {
-		if d, ok := os.LookupEnv("APPDATA"); ok && d != "" {
-			return filepath.Join(d, "parm")
+func GetDefaultPrefixDir() (string, error) {
+	var path string
+	switch runtime.GOOS {
+	case "linux":
+		if dir, ok := os.LookupEnv("XDG_DATA_HOME"); ok && dir != "" {
+			path = filepath.Join(dir, "parm")
+			return path, nil
 		}
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		path = filepath.Join(home, ".local", "share", "parm")
+		return path, nil
+	case "darwin":
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(home, "Library", "Application Support", "parm"), nil
+	case "windows":
+		var err error
+		if pf, err := os.UserHomeDir(); err != nil && pf != "" {
+			return filepath.Join(pf, ".parm"), nil
+		}
+		return "", err
+	default:
+		return "", fmt.Errorf("error: os not supported")
 	}
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".local", "share", "parm")
 }
 
-func getDefaultBinDir() string {
-	if dir, ok := os.LookupEnv("XDG_BIN_HOME"); ok {
-		return dir
+func getOrCreateDefaultPkgDir() string {
+	return getOrCreatDefaultDir("pkg")
+}
+
+func getOrCreateDefaultBinDir() string {
+	return getOrCreatDefaultDir("bin")
+}
+
+// TODO: return err?
+func getOrCreatDefaultDir(addedPath string) string {
+	prefix, err := GetDefaultPrefixDir()
+	if err != nil {
+		return ""
 	}
 
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".local", "bin")
+	path := filepath.Join(prefix, filepath.Clean(addedPath))
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			if mkErr := os.MkdirAll(path, 0o700); mkErr != nil {
+				return ""
+			}
+			return path
+		}
+		return ""
+	}
+	if !fi.IsDir() {
+		return ""
+	}
+	return path
 }

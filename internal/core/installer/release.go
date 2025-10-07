@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"parm/internal/gh"
 	"parm/internal/manifest"
 	"parm/pkg/archive"
 	"parm/pkg/progress"
@@ -18,24 +17,11 @@ import (
 )
 
 type ReleaseInstaller interface {
-	InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallOptions, hooks *progress.Hooks) error
-}
-
-func (in *Installer) installFromReleaseByType(ctx context.Context, pkgPath, owner, repo string, opts InstallOptions, hooks *progress.Hooks) error {
-	isPre := opts.Type == manifest.PreRelease
-	rel, err := gh.ResolveRelease(ctx, in.client, owner, repo, opts.Version, isPre)
-	if rel.GetPrerelease() && !isPre {
-		opts.Type = manifest.PreRelease
-	}
-	if err != nil {
-		return err
-	}
-
-	return in.InstallFromRelease(ctx, pkgPath, owner, repo, rel, opts, hooks)
+	InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallFlags, hooks *progress.Hooks) error
 }
 
 // Does NOT validate the release.
-func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallOptions, hooks *progress.Hooks) error {
+func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallFlags, hooks *progress.Hooks) error {
 	var ass *github.ReleaseAsset
 	var err error
 	if opts.Asset == "" {
@@ -89,6 +75,7 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 	}
 
 	// TODO: create manifest elsewhere for better separation of concerns?
+	// Return an InstallResult and let the CLI call a manifest writer service.
 	man, err := manifest.New(owner, repo, rel.GetTagName(), opts.Type, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: \n%w", err)

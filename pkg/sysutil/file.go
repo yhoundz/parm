@@ -105,7 +105,7 @@ func SymlinkBinToPath(binPath, destPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if isBin {
+	if !isBin {
 		return "", fmt.Errorf("error: provided dir is not a binary")
 	}
 
@@ -116,9 +116,9 @@ func SymlinkBinToPath(binPath, destPath string) (string, error) {
 
 	newDestPath := filepath.Join(destPath, filepath.Base(absBinDir))
 
-	if _, err := os.Lstat(newDestPath); err != nil {
+	if _, err := os.Lstat(newDestPath); err == nil {
 		if err := os.Remove(newDestPath); err != nil {
-			return "", fmt.Errorf("failed to remove existing symlink at \n%w", err)
+			return "", fmt.Errorf("failed to remove existing symlink at %s\n%w", newDestPath, err)
 		}
 	} else if !os.IsNotExist(err) {
 		return "", fmt.Errorf("failed to check destination path: \n%w", err)
@@ -128,5 +128,5 @@ func SymlinkBinToPath(binPath, destPath string) (string, error) {
 		return "", err
 	}
 
-	return "", nil
+	return newDestPath, nil
 }

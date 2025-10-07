@@ -60,7 +60,7 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, hooks *progre
 
 		fmt.Printf("Updates found!\n")
 		fmt.Printf("Updating %s/%s from %s to %s...\n", owner, repo, man.Version, rel.GetTagName())
-		opts := installer.InstallOptions{
+		opts := installer.InstallFlags{
 			Type:    man.InstallType,
 			Version: man.Version,
 		}
@@ -90,7 +90,7 @@ func (up *Updater) updateRelease(ctx context.Context,
 	installDir string,
 	man *manifest.Manifest,
 	rel *github.RepositoryRelease,
-	opts installer.InstallOptions,
+	opts installer.InstallFlags,
 	hooks *progress.Hooks) error {
 	owner := man.Owner
 	repo := man.Repo
