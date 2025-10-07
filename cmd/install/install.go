@@ -6,12 +6,16 @@ package install
 import (
 	"fmt"
 	"io"
+	"parm/internal/config"
 	"parm/internal/core/installer"
 	"parm/internal/gh"
 	"parm/internal/manifest"
+	"parm/internal/parmutil"
 	"parm/pkg/cmdparser"
 	"parm/pkg/cmdx"
 	"parm/pkg/progress"
+	"parm/pkg/sysutil"
+	"path/filepath"
 
 	"fortio.org/progressbar"
 	"github.com/spf13/cobra"
@@ -103,7 +107,7 @@ var InstallCmd = &cobra.Command{
 			Callback: nil,
 		}
 
-		opts := installer.InstallOptions{
+		opts := installer.InstallFlags{
 			Type:    insType,
 			Version: version,
 			Asset:   asset,
@@ -116,7 +120,28 @@ var InstallCmd = &cobra.Command{
 			fmt.Printf("%q\n", err)
 		}
 
+		pathToSymLinkTo := filepath.Join(config.Cfg.ParmBinPath, repo)
+		// TODO: do better with manifest reading, very inefficient right now especially since we just wrote the manifest like 2 lines ago
+		srcPath := parmutil.GetInstallDir(owner, repo)
+		man, err := manifest.Read(srcPath)
+		if err != nil {
+			return err
+		}
+		for _, execPath := range man.Executables {
+			var path string
+			if filepath.IsAbs(execPath) {
+				path = execPath
+			} else {
+				path = filepath.Join(srcPath, filepath.Clean(execPath))
+			}
+			_, err = sysutil.SymlinkBinToPath(path, pathToSymLinkTo)
+			if err != nil {
+				return err
+			}
+		}
+
 		fmt.Println()
+		// TODO: output for symlinking
 
 		return err
 	},

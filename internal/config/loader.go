@@ -10,14 +10,20 @@ import (
 
 var Cfg Config
 
-func Init() error {
-	// will have to be figured out by the install script
+func GetParmConfigDir() (string, error) {
 	cfgDir, err := os.UserConfigDir()
 	if err != nil {
-		return fmt.Errorf("error: cannot find user config dir: \n%w", err)
+		return "", fmt.Errorf("error: cannot find XDG_CONFIG_HOME or APPDATA: \n%w", err)
 	}
 	cfgPath := filepath.Join(cfgDir, "parm")
+	return cfgPath, nil
+}
 
+func Init() error {
+	cfgPath, err := GetParmConfigDir()
+	if err != nil {
+		return err
+	}
 	if err := os.MkdirAll(cfgPath, 0o700); err != nil {
 		return fmt.Errorf("error: cannot create config dir: \n%w", err)
 	}
