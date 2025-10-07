@@ -3,7 +3,7 @@ package manifest
 import (
 	"encoding/json"
 	"os"
-	"parm/internal/utils"
+	"parm/pkg/sysutil"
 	"path/filepath"
 	"time"
 )
@@ -81,7 +81,7 @@ func getBinExecutables(installDir string) ([]string, error) {
 			return nil
 		}
 
-		isExec, err := utils.IsValidBinaryExecutable(path)
+		isExec, err := sysutil.IsValidBinaryExecutable(path)
 		if err != nil {
 			return err
 		}

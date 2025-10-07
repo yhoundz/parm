@@ -1,4 +1,4 @@
-package utils
+package archive
 
 import (
 	"archive/tar"
@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"parm/pkg/sysutil"
 	"path/filepath"
 	"strings"
 )
@@ -35,7 +36,7 @@ func ExtractTarGz(srcPath, destPath string) error {
 		}
 
 		name := hdr.Name
-		target, err := safeJoin(destPath, name)
+		target, err := sysutil.SafeJoin(destPath, name)
 		if err != nil {
 			return err
 		}
@@ -64,7 +65,7 @@ func ExtractTarGz(srcPath, destPath string) error {
 			}
 			linkTarget := hdr.Linkname
 			cleanedTarget := filepath.Clean(filepath.Join(filepath.Dir(name), linkTarget))
-			if _, err := safeJoin(destPath, cleanedTarget); err != nil {
+			if _, err := sysutil.SafeJoin(destPath, cleanedTarget); err != nil {
 				return err
 			}
 			_ = os.Symlink(linkTarget, target)
@@ -91,7 +92,7 @@ func ExtractZip(srcPath, destPath string) error {
 		}
 		defer rc.Close()
 
-		fpath, err := safeJoin(destPath, name)
+		fpath, err := sysutil.SafeJoin(destPath, name)
 		if err != nil {
 			return err
 		}

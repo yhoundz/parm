@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"os"
 	"parm/internal/manifest"
-	"parm/internal/utils"
+	"parm/internal/parmutil"
+	"parm/pkg/sysutil"
 	"path/filepath"
 )
 
 // TODO: when version management is added?, have an option to remove a specific version
 func Uninstall(ctx context.Context, owner, repo string) error {
-	dir := utils.GetInstallDir(owner, repo)
+	dir := parmutil.GetInstallDir(owner, repo)
 	fi, err := os.Stat(dir)
 	if err != nil {
 		return fmt.Errorf("error: dir does not exist: \n%w", err)
@@ -36,7 +37,7 @@ func Uninstall(ctx context.Context, owner, repo string) error {
 	}
 
 	for _, path := range execPaths {
-		isRunning, err := utils.IsProcessRunning(path)
+		isRunning, err := sysutil.IsProcessRunning(path)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: Could not check for process: %s: %v\n", path, err)
 			continue
@@ -50,7 +51,7 @@ func Uninstall(ctx context.Context, owner, repo string) error {
 		return fmt.Errorf("error: Cannot remove dir: %s: \n%w", dir, err)
 	}
 
-	parentDir, err := utils.GetParentDir(dir)
+	parentDir, err := sysutil.GetParentDir(dir)
 	// NOTE: don't want to error out here if it fails
 	if err != nil {
 		return nil

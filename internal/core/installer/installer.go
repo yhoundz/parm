@@ -6,14 +6,18 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"parm/internal/core/uninstaller"
 	"parm/internal/manifest"
-	"parm/internal/uninstaller"
-	"parm/internal/utils"
+	"parm/internal/parmutil"
 	"parm/pkg/progress"
 	"path/filepath"
 
 	"github.com/google/go-github/v74/github"
 )
+
+// TODO: symlink binaries to PATH
+// TODO: write tests/setup docker
+// TODO: update manifest when updating packages
 
 type Installer struct {
 	client *github.RepositoriesService
@@ -32,7 +36,7 @@ func New(cli *github.RepositoriesService) *Installer {
 }
 
 func (in *Installer) Install(ctx context.Context, owner, repo string, opts InstallOptions, hooks *progress.Hooks) error {
-	dest := utils.GetInstallDir(owner, repo)
+	dest := parmutil.GetInstallDir(owner, repo)
 	_, err := os.Stat(dest)
 
 	// if error is something else, ignore it for now and hope it propogates downwards if it's actually serious
@@ -42,7 +46,7 @@ func (in *Installer) Install(ctx context.Context, owner, repo string, opts Insta
 		}
 	}
 
-	dest, err = utils.MakeInstallDir(owner, repo, 0o755)
+	dest, err = parmutil.MakeInstallDir(owner, repo, 0o755)
 	if err != nil {
 		return err
 	}

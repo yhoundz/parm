@@ -1,4 +1,4 @@
-package lister
+package catalog
 
 import (
 	"fmt"

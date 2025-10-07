@@ -5,9 +5,9 @@ package update
 
 import (
 	"fmt"
-	gh "parm/internal/github"
-	"parm/internal/installer"
-	"parm/internal/updater"
+	"parm/internal/core/installer"
+	"parm/internal/core/updater"
+	"parm/internal/gh"
 	"parm/pkg/cmdparser"
 
 	"github.com/spf13/cobra"
@@ -25,7 +25,7 @@ var UpdateCmd = &cobra.Command{
 		if err != nil {
 			fmt.Printf("%s\ncontinuing without api key.\n", err)
 		}
-		client := gh.NewRepoClient(ctx, token)
+		client := gh.New(ctx, token).Repos()
 		inst := installer.New(client)
 		up := updater.New(client, inst)
 		updated := make(map[string]bool)

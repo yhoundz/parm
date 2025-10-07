@@ -6,8 +6,8 @@ package install
 import (
 	"fmt"
 	"io"
-	gh "parm/internal/github"
-	"parm/internal/installer"
+	"parm/internal/core/installer"
+	"parm/internal/gh"
 	"parm/internal/manifest"
 	"parm/pkg/cmdparser"
 	"parm/pkg/cmdx"
@@ -62,7 +62,7 @@ var InstallCmd = &cobra.Command{
 
 		ctx := cmd.Context()
 		token, _ := gh.GetStoredApiKey(viper.GetViper())
-		client := gh.NewRepoClient(ctx, token)
+		client := gh.New(ctx, token).Repos()
 
 		inst := installer.New(client)
 

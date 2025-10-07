@@ -1,4 +1,4 @@
-package utils
+package sysutil
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"github.com/h2non/filetype/types"
 )
 
-func safeJoin(root, name string) (string, error) {
+func SafeJoin(root, name string) (string, error) {
 	cleaned := filepath.Clean(name)
 	target := filepath.Join(root, cleaned)
 
