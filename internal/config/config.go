@@ -14,7 +14,7 @@ type Config struct {
 	GitHubApiTokenFallback string `mapstructure:"github_api_token_fallback"`
 
 	// where to store the packages
-	ParmPkgDirPath string `mapstructure:"parm_pkg_dir_path"`
+	ParmPkgPath string `mapstructure:"parm_pkg_path"`
 
 	// directory added to PATH where symlinked binaries reside
 	ParmBinPath string `mapstructure:"parm_bin_path"`
@@ -24,7 +24,7 @@ var defaultPkgDir = getOrCreateDefaultPkgDir()
 var defaultBinDir = getOrCreateDefaultBinDir()
 var DefaultCfg = &Config{
 	GitHubApiTokenFallback: "",
-	ParmPkgDirPath:         defaultPkgDir,
+	ParmPkgPath:            defaultPkgDir,
 	ParmBinPath:            defaultBinDir,
 }
 

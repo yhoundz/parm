@@ -17,7 +17,7 @@ func MakeInstallDir(owner, repo string, perm os.FileMode) (string, error) {
 }
 
 func GetInstallDir(owner, repo string) string {
-	installPath := config.Cfg.ParmPkgDirPath
+	installPath := config.Cfg.ParmPkgPath
 	dest := filepath.Join(installPath, owner, repo)
 	return dest
 }

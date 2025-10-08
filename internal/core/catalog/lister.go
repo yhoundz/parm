@@ -30,9 +30,9 @@ func GetInstalledPkgInfo() ([]string, PkgListData, error) {
 }
 
 func GetAllPkgManifest() ([]*manifest.Manifest, error) {
-	pkgDirPath := viper.GetViper().GetString("parm_pkg_dir_path")
+	pkgDirPath := viper.GetViper().GetString("parm_pkg_path")
 	if pkgDirPath == "" {
-		return nil, fmt.Errorf("error: parm_pkg_dir_path could not be found")
+		return nil, fmt.Errorf("error: parm_pkg_path could not be found")
 	}
 
 	var mans []*manifest.Manifest

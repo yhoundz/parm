@@ -75,7 +75,8 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 	}
 
 	// TODO: create manifest elsewhere for better separation of concerns?
-	// Return an InstallResult and let the CLI call a manifest writer service.
+	// TODO: Return an InstallResult and let the CLI call a manifest writer service.
+	// will also help with symlinking
 	man, err := manifest.New(owner, repo, rel.GetTagName(), opts.Type, pkgPath)
 	if err != nil {
 		return fmt.Errorf("error: failed to create manifest: \n%w", err)

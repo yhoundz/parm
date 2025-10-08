@@ -61,5 +61,5 @@ var ResetCmd = &cobra.Command{
 }
 
 func init() {
-	ResetCmd.PersistentFlags().BoolVarP(&resetAll, "all", "a", false, "Resets all config values to their defaults.")
+	ResetCmd.Flags().BoolVarP(&resetAll, "all", "a", false, "Resets all config values to their defaults.")
 }

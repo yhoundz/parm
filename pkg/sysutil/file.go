@@ -34,11 +34,11 @@ func GetParentDir(path string) (string, error) {
 
 // checks if a file is a binary executable, and then checks if it's even able to be run by the user.
 func IsValidBinaryExecutable(path string) (bool, error) {
-	kind, err := IsBinaryExecutable(path)
+	isBin, kind, err := IsBinaryExecutable(path)
 	if err != nil {
 		return false, err
 	}
-	if kind == nil {
+	if kind == nil || !isBin {
 		return false, err
 	}
 
@@ -55,26 +55,31 @@ func IsValidBinaryExecutable(path string) (bool, error) {
 }
 
 // uses magic numbers to determine if a file is a binary executable
-func IsBinaryExecutable(path string) (*types.Type, error) {
+func IsBinaryExecutable(path string) (bool, *types.Type, error) {
 	info, err := os.Stat(path)
 	if err != nil {
-		return nil, err
+		return false, nil, err
+	}
+
+	if info.IsDir() {
+		return false, nil, nil
 	}
 
 	// precheck
 	if runtime.GOOS == "windows" {
+		// TODO: check for .msi files?
 		if !strings.HasSuffix(strings.ToLower(info.Name()), ".exe") {
-			return nil, nil
+			return false, nil, nil
 		}
 	} else { // on unix system
 		if info.Mode()&0111 == 0 {
-			return nil, nil
+			return false, nil, nil
 		}
 	}
 
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return false, nil, err
 	}
 	defer file.Close()
 
@@ -82,10 +87,10 @@ func IsBinaryExecutable(path string) (*types.Type, error) {
 	hdr := make([]byte, numBytes)
 	n, err := io.ReadAtLeast(file, hdr, 1)
 	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		return nil, nil
+		return false, nil, nil
 	}
 	if n == 0 {
-		return nil, nil
+		return false, nil, nil
 	}
 
 	kind, _ := filetype.Match(hdr)
@@ -93,11 +98,11 @@ func IsBinaryExecutable(path string) (*types.Type, error) {
 		if kind.Extension == "elf" ||
 			kind.Extension == "exe" ||
 			kind.Extension == "macho" {
-			return &kind, nil
+			return true, &kind, nil
 		}
 	}
 
-	return nil, nil
+	return false, nil, nil
 }
 
 func SymlinkBinToPath(binPath, destPath string) (string, error) {
@@ -114,7 +119,10 @@ func SymlinkBinToPath(binPath, destPath string) (string, error) {
 		return "", err
 	}
 
-	newDestPath := filepath.Join(destPath, filepath.Base(absBinDir))
+	newDestPath, err := filepath.Abs(destPath)
+	if err != nil {
+		return "", err
+	}
 
 	if _, err := os.Lstat(newDestPath); err == nil {
 		if err := os.Remove(newDestPath); err != nil {

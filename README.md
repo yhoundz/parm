@@ -1,28 +1,48 @@
-# Parm 🧀
+<h1 align="center">Parm 🧀</h1>
+<br>
+<h3 align="center">Install any program from your terminal.</h3>
+<br>
 
-Parm is a **pa**ckage/**r**epository **m**anager that allows you to install any program binary from a github release and will manage it for you. It's meant to be lightweight, has zero root access, and requires no dependencies.
+Parm is a **pa**ckage/**r**epository **m**anager that allows you to install any program binary from a github release and will manage it for you. It's designed to be lightweight, has zero root access, and requires no dependencies.
 
 > [!WARNING]
 > Parm is currently in a pre-release state. Expect breaking changes and bugs.
 
 **Table of Contents:**
-1. [Introduction](#introduction)
+1. [Quick Start](#quick-start)
+2. [Introduction](#introduction)
     - [What is Parm?](#what-is-parm)
     - [Motivation](#motivation)
     - [Disclaimers](#disclaimers)
-2. [Pre-requisites](#pre-requisites)
-3. [Installation](#install)
-4. [GitHub Personal Access Token](#adding-a-github-personal-access-token)
-5. [Usage/Documentation](#usage)
-    - [Installing Releases](#installing-releases)
-        - [Installing a Pre-Release](#installing-a-pre-release)
-    - [Updating a Package](#updating-a-package)
-    - [Deleting a Package](#deleting-a-package)
-6. [Contributing](#contributing)
-7. [Acknowledgements](#Acknowledgements)
+3. [Pre-requisites](#pre-requisites)
+4. [Installation](#install)
+5. [GitHub Personal Access Token](#adding-a-github-personal-access-token)
+6. [Usage/Documentation](#usage)
+7. [Contributing](#contributing)
+8. [Acknowledgements](#Acknowledgements)
+
+## Quick Start
+To install Parm on Linux/macOS: run the following command:
+```sh
+# todo, likely something like curl -fsSL <install_script>.sh | sh
+```
+
+For Windows users:
+```ps1
+# todo, something like iex <script>
+```
+
+To use parm:
+```sh
+parm install <owner>/<repo> # installs a package
+parm remove <owner>/<repo> # uninstalls a package
+parm update <owner>/<repo> # to update a package
+```
+
+For more detailed install instructions, see [Installation](#install).
+For more detailed documentation, go to [Usage](#usage) or the [docs][#/docs/docs.md]
 
 ## Introduction
-**TL;DR**: If you like your current package manager, this isn't for you. If not, keep reading or [install](#install) Parm.
 
 ### What is Parm?
 Parm is a cross-platform package manager that allows you to install any program off of GitHub via their REST API. Parm directly downloads binaries provided by GitHub repository releases and includes niceties such as symlinking binaries to PATH and checking for updates.
@@ -90,63 +110,20 @@ echo 'export GH_TOKEN=<your_token_here> >> ~/.bashrc'
 
 ## Usage
 
-### Installing Releases
-To install the latest stable release of a package, run
-```sh
-parm install <owner>/<repo>
-```
+| Command  | Flags | Description |
+| ------------- | -------------- | -------------- |
+| `install` | `--release, --pre-release, --asset` | Installs a package. |
+| `uninstall` |  | Uninstalls a package. |
+| `update` |  | Updates a package. |
+| `list` |  | Lists the currently installed packages. |
+| `config` |  | Prints out the current configuration file as it is in parm's `config.toml` file. |
+| `config set` |  | Sets a `key=value` pair for a configuration setting. |
+| `config reset` | `--all` | Resets a `key=value` config setting back to its default. |
+| `info` | `--get-upstream` | Retrieves information about a certain package. |
+| `search` | `--query` | Searches for available packages to install. |
+| `verify` | `--sha256` | Verifies the correct packages was installed by comparing a hash to the installed package. |
 
-For example:
-```sh
-parm install yhoundz/parm
-```
-
-If you want, you can also specify the full https/ssh link for installation:
-```sh
-parm install https://github.com/yhoundz/parm.git
-```
-or
-```sh
-parm install git@github.com:yhoundz/parm.git
-```
-
-Installing with no flags will automatically install the latest stable release of a package.
-If you want to install a specific version of a package, you can specify with the --release flag:
-```sh
-parm install yhoundz/parm --release v0.1.0
-```
-
-This will install the specific GitHub release assoicated with the release tag.
-You can also use the "@" keyword as a shorthand, as follows:
-```sh
-parm install yhoundz/parm@v0.1.0
-```
-
-#### Installing a Pre-Release
-
-You can install the latest pre-release as follows:
-```sh
-parm install yhoundz/parm --pre-release
-```
-
-### Updating a Package
-
-To update a package, you can run the following command:
-```sh
-parm update <owner>/<repo>
-```
-
-### Deleting a Package
-
-To remove/uninstall a package, you can run the following command:
-```sh
-parm remove <owner1>/<repo1> <owner2>/<repo2> ...
-```
-
-You can also use the `uninstall` command too if you wish; it is functionally the exact same as the `remove command`:
-```sh
-parm uninstall <owner>/<repo> ...
-```
+For more detailed documentation, see the [docs](#/docs/usage.md).
 
 ## Contributing
 Parm is in a very early state, so any and all PRs are welcome. If you want to contribute to a new feature not already on the [roadmap](ROADMAP.md), please [create an issue](https://github.com/yhoundz/parm/issues/new) first, or check if an issue has already been created for it.

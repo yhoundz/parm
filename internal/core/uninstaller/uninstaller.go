@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"parm/internal/config"
 	"parm/internal/manifest"
 	"parm/internal/parmutil"
 	"parm/pkg/sysutil"
@@ -28,12 +29,8 @@ func Uninstall(ctx context.Context, owner, repo string) error {
 
 	var execPaths []string
 	for _, path := range manifest.Executables {
-		if filepath.IsAbs(path) {
-			execPaths = append(execPaths, path)
-		} else {
-			fullPath := filepath.Join(dir, path)
-			execPaths = append(execPaths, fullPath)
-		}
+		fullPath := filepath.Join(dir, path)
+		execPaths = append(execPaths, fullPath)
 	}
 
 	for _, path := range execPaths {
@@ -63,5 +60,17 @@ func Uninstall(ctx context.Context, owner, repo string) error {
 		return nil
 	}
 
+	return nil
+}
+
+func RemoveSymlink(ctx context.Context, owner, repo string) error {
+	symDir := filepath.Join(config.Cfg.ParmBinPath, repo)
+	if _, err := os.Lstat(symDir); err != nil {
+		return err
+	}
+	err := os.Remove(symDir)
+	if err != nil {
+		return nil
+	}
 	return nil
 }

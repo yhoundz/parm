@@ -34,6 +34,11 @@ var RemoveCmd = &cobra.Command{
 				continue
 			}
 
+			err = uninstaller.RemoveSymlink(ctx, owner, repo)
+			if err != nil {
+				fmt.Printf("error: cannot remove symlink for %s/%s:\n%q", owner, repo, err)
+			}
+
 			err = uninstaller.Uninstall(ctx, owner, repo)
 			if err != nil {
 				fmt.Printf("error: cannot uninstall %s: %s\n", pkg, err)

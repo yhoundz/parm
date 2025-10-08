@@ -16,13 +16,12 @@ import (
 	"github.com/google/go-github/v74/github"
 )
 
-// TODO: symlink binaries to PATH
-// TODO: write tests/setup docker
-// TODO: update manifest when updating packages
-// TODO: create install scripts: .sh, .ps1, .fish
 // TODO: when installing, check if dir exists before overwriting it
 // TODO: if download fails for some reason at any point, remove all traces of partially installed dirs
 // TODO: Check for dependencies after installation and bubble them up to the user
+// TODO: write tests/setup docker
+// TODO: update manifest when updating packages
+// TODO: create install scripts: .sh, .ps1, .fish
 // TODO: create section on how to add packages to parm in README.md
 // TODO: make readme prettier w/ html/css + CI/CD badges
 // TODO: restructure README
