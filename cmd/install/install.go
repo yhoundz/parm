@@ -120,20 +120,18 @@ var InstallCmd = &cobra.Command{
 			fmt.Printf("%q\n", err)
 		}
 
-		pathToSymLinkTo := filepath.Join(config.Cfg.ParmBinPath, repo)
 		// TODO: do better with manifest reading, very inefficient right now especially since we just wrote the manifest like 2 lines ago
 		srcPath := parmutil.GetInstallDir(owner, repo)
 		man, err := manifest.Read(srcPath)
 		if err != nil {
 			return err
 		}
+
 		for _, execPath := range man.Executables {
-			var path string
-			if filepath.IsAbs(execPath) {
-				path = execPath
-			} else {
-				path = filepath.Join(srcPath, filepath.Clean(execPath))
-			}
+			path := filepath.Join(srcPath, filepath.Clean(execPath))
+			pathToSymLinkTo := filepath.Join(config.Cfg.ParmBinPath, execPath)
+
+			// TODO: use shims for windows instead?
 			_, err = sysutil.SymlinkBinToPath(path, pathToSymLinkTo)
 			if err != nil {
 				return err
@@ -148,9 +146,9 @@ var InstallCmd = &cobra.Command{
 }
 
 func init() {
-	InstallCmd.PersistentFlags().BoolVarP(&pre_release, "pre-release", "p", false, "Installs the latest pre-release binary, if availabale")
-	InstallCmd.PersistentFlags().StringVarP(&release, "release", "r", "", "Install binary from this release tag")
-	InstallCmd.PersistentFlags().StringVarP(&asset, "asset", "a", "", "Installs a specific asset from a release")
+	InstallCmd.Flags().BoolVarP(&pre_release, "pre-release", "p", false, "Installs the latest pre-release binary, if availabale")
+	InstallCmd.Flags().StringVarP(&release, "release", "r", "", "Install binary from this release tag")
+	InstallCmd.Flags().StringVarP(&asset, "asset", "a", "", "Installs a specific asset from a release")
 
 	InstallCmd.MarkFlagsMutuallyExclusive("release", "pre-release")
 }

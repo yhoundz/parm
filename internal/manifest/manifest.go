@@ -67,6 +67,7 @@ func Read(installDir string) (*Manifest, error) {
 	return &m, err
 }
 
+// TODO: enforce only writing relative paths, not absolute
 func getBinExecutables(installDir string) ([]string, error) {
 	var paths []string
 	scanDir := installDir

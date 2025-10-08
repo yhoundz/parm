@@ -21,5 +21,5 @@ var SearchCmd = &cobra.Command{
 }
 
 func init() {
-	SearchCmd.PersistentFlags().StringVarP(&query, "query", "q", "", "Searches for the exact query string outlined by the GitHub REST API instead of a general search term.")
+	SearchCmd.Flags().StringVarP(&query, "query", "q", "", "Searches for the exact query string outlined by the GitHub REST API instead of a general search term.")
 }

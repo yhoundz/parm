@@ -4,18 +4,21 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package verify
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
+
+var sha256 string
 
 // verifyCmd represents the verify command
 var VerifyCmd = &cobra.Command{
 	Use:   "verify",
 	Short: "A brief description of your command",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("verify called")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return nil
 	},
 }
 
-func init() {}
+func init() {
+	VerifyCmd.Flags().StringVarP(&sha256, "sha256", "s", "", "Sha256 flag")
+	VerifyCmd.MarkFlagRequired("sha256")
+}

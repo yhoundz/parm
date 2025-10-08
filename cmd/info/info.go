@@ -48,5 +48,5 @@ var InfoCmd = &cobra.Command{
 }
 
 func init() {
-	InfoCmd.PersistentFlags().BoolVarP(&getUpstream, "get-upstream", "u", false, "Retrieves the Repository info from the GitHub repository instead of the locally installed package")
+	InfoCmd.Flags().BoolVarP(&getUpstream, "get-upstream", "u", false, "Retrieves the Repository info from the GitHub repository instead of the locally installed package")
 }
