@@ -2,7 +2,6 @@ package sysutil
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -83,17 +82,12 @@ func IsBinaryExecutable(path string) (bool, *types.Type, error) {
 	}
 	defer file.Close()
 
-	const numBytes = 261
-	hdr := make([]byte, numBytes)
-	n, err := io.ReadAtLeast(file, hdr, 1)
-	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		return false, nil, nil
-	}
-	if n == 0 {
-		return false, nil, nil
+	buf, err := os.ReadFile(path)
+	if err != nil {
+		return false, nil, err
 	}
 
-	kind, _ := filetype.Match(hdr)
+	kind, _ := filetype.Match(buf)
 	if kind != types.Unknown {
 		if kind.Extension == "elf" ||
 			kind.Extension == "exe" ||

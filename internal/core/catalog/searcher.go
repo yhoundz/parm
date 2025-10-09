@@ -33,5 +33,11 @@ func SearchRepo(ctx context.Context, search *github.SearchService, opts RepoSear
 		return nil, fmt.Errorf("error: could not search repositories:\n%q", err)
 	}
 
+	// TODO: filter for only repos that have releases
+	// var repos [][2]string
+	//
+	// for _, repo := range res.Repositories {
+	// }
+
 	return res, nil
 }

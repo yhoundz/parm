@@ -6,7 +6,6 @@ package install
 import (
 	"fmt"
 	"io"
-	"parm/internal/config"
 	"parm/internal/core/installer"
 	"parm/internal/gh"
 	"parm/internal/manifest"
@@ -15,7 +14,6 @@ import (
 	"parm/pkg/cmdx"
 	"parm/pkg/progress"
 	"parm/pkg/sysutil"
-	"path/filepath"
 
 	"fortio.org/progressbar"
 	"github.com/spf13/cobra"
@@ -25,6 +23,7 @@ import (
 var pre_release bool
 var release string
 var asset string
+var strict bool
 
 // installCmd represents the install command
 var InstallCmd = &cobra.Command{
@@ -53,7 +52,7 @@ var InstallCmd = &cobra.Command{
 		}
 
 		if err := cmdx.MarkFlagsRequireFlag(cmd, "release", "asset"); err != nil {
-			if err := cmdx.MarkFlagsRequireFlag(cmd, "pre-release", "asset"); err != nil {
+			if err := cmdx.MarkFlagsRequireFlag(cmd, "pre-release", "asset", "strict"); err != nil {
 				return err
 			}
 		}
@@ -111,28 +110,24 @@ var InstallCmd = &cobra.Command{
 			Type:    insType,
 			Version: version,
 			Asset:   asset,
+			Strict:  strict,
 		}
 
 		fmt.Printf("installing %s/%s\n", owner, repo)
 
-		err = inst.Install(ctx, owner, repo, opts, hooks)
+		res, err := inst.Install(ctx, owner, repo, opts, hooks)
 		if err != nil {
 			fmt.Printf("%q\n", err)
 		}
 
-		// TODO: do better with manifest reading, very inefficient right now especially since we just wrote the manifest like 2 lines ago
-		srcPath := parmutil.GetInstallDir(owner, repo)
-		man, err := manifest.Read(srcPath)
-		if err != nil {
-			return err
-		}
+		man := res.Manifest
+		binPaths := man.GetFullExecPaths()
 
-		for _, execPath := range man.Executables {
-			path := filepath.Join(srcPath, filepath.Clean(execPath))
-			pathToSymLinkTo := filepath.Join(config.Cfg.ParmBinPath, execPath)
+		for _, execPath := range binPaths {
+			pathToSymLinkTo := parmutil.GetBinDir(man.Repo)
 
 			// TODO: use shims for windows instead?
-			_, err = sysutil.SymlinkBinToPath(path, pathToSymLinkTo)
+			_, err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)
 			if err != nil {
 				return err
 			}
@@ -147,8 +142,10 @@ var InstallCmd = &cobra.Command{
 
 func init() {
 	InstallCmd.Flags().BoolVarP(&pre_release, "pre-release", "p", false, "Installs the latest pre-release binary, if availabale")
+	InstallCmd.Flags().BoolVarP(&strict, "strict", "s", false, "Only available with the --pre-release flag. Will only install pre-release versions and not stable releases.")
 	InstallCmd.Flags().StringVarP(&release, "release", "r", "", "Install binary from this release tag")
 	InstallCmd.Flags().StringVarP(&asset, "asset", "a", "", "Installs a specific asset from a release")
 
 	InstallCmd.MarkFlagsMutuallyExclusive("release", "pre-release")
+	InstallCmd.MarkFlagsMutuallyExclusive("release", "strict")
 }

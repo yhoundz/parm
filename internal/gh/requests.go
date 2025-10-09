@@ -14,6 +14,7 @@ func GetLatestPreRelease(
 	client *github.RepositoriesService,
 	owner, repo string,
 ) (*github.RepositoryRelease, error) {
+	// WARNING: this doesn't always work, especially if the latest pre-release is not within the past 30 (?) releases, or if maintainer releases versions out of order
 	rels, _, err := client.ListReleases(ctx, owner, repo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not list releases for %s/%s: \n%w", owner, repo, err)
@@ -28,7 +29,7 @@ func GetLatestPreRelease(
 	return nil, nil
 }
 
-func ValidatePreRelease(
+func validatePreRelease(
 	ctx context.Context,
 	client *github.RepositoriesService,
 	owner, repo string,
@@ -46,7 +47,7 @@ func ValidatePreRelease(
 	return false, nil, nil
 }
 
-func ValidateRelease(
+func validateRelease(
 	ctx context.Context,
 	client *github.RepositoriesService,
 	owner, repo, releaseTag string) (bool, *github.RepositoryRelease, error) {
@@ -67,21 +68,21 @@ func ValidateRelease(
 	return false, nil, err
 }
 
-func ResolveRelease(ctx context.Context, client *github.RepositoriesService, owner, repo, version string, preRelease bool) (*github.RepositoryRelease, error) {
-	if preRelease {
-		valid, rel, err := ValidatePreRelease(ctx, client, owner, repo)
-		if err != nil {
-			return nil, fmt.Errorf("err: cannot resolve pre-release on %s/%s: \n%w", owner, repo, err)
-		}
-		if !valid {
-			return nil, fmt.Errorf("error: no valid pre-release found for %s/%s", owner, repo)
-		}
-
-		return rel, nil
+func ResolvePreRelease(ctx context.Context, client *github.RepositoriesService, owner, repo string) (*github.RepositoryRelease, error) {
+	valid, rel, err := validatePreRelease(ctx, client, owner, repo)
+	if err != nil {
+		return nil, fmt.Errorf("err: cannot resolve pre-release on %s/%s: \n%w", owner, repo, err)
+	}
+	if !valid {
+		return nil, fmt.Errorf("error: no valid pre-release found for %s/%s", owner, repo)
 	}
 
+	return rel, nil
+}
+
+func ResolveReleaseByTag(ctx context.Context, client *github.RepositoriesService, owner, repo, version string) (*github.RepositoryRelease, error) {
 	if version != "" {
-		valid, rel, err := ValidateRelease(ctx, client, owner, repo, version)
+		valid, rel, err := validateRelease(ctx, client, owner, repo, version)
 		if err != nil {
 			return nil, fmt.Errorf("error: Cannot resolve release %s on %s/%s", version, owner, repo)
 		}

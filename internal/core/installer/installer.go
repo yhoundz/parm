@@ -24,8 +24,6 @@ import (
 // TODO: create install scripts: .sh, .ps1, .fish
 // TODO: create section on how to add packages to parm in README.md
 // TODO: make readme prettier w/ html/css + CI/CD badges
-// TODO: restructure README
-// TODO: add migrate command if user changes bin or install dir in config
 
 type Installer struct {
 	client *github.RepositoriesService
@@ -35,6 +33,11 @@ type InstallFlags struct {
 	Type    manifest.InstallType
 	Version string
 	Asset   string
+	Strict  bool
+}
+
+type InstallResult struct {
+	Manifest *manifest.Manifest
 }
 
 func New(cli *github.RepositoriesService) *Installer {
@@ -43,33 +46,41 @@ func New(cli *github.RepositoriesService) *Installer {
 	}
 }
 
-func (in *Installer) Install(ctx context.Context, owner, repo string, opts InstallFlags, hooks *progress.Hooks) error {
+func (in *Installer) Install(ctx context.Context, owner, repo string, opts InstallFlags, hooks *progress.Hooks) (*InstallResult, error) {
 	dest := parmutil.GetInstallDir(owner, repo)
 	f, _ := os.Stat(dest)
 
 	// if error is something else, ignore it for now and hope it propogates downwards if it's actually serious
 	if f != nil {
 		if err := uninstaller.Uninstall(ctx, owner, repo); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	dest, err := parmutil.MakeInstallDir(owner, repo, 0o755)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// validate opts and correct them
-	isPre := opts.Type == manifest.PreRelease
-	rel, err := gh.ResolveRelease(ctx, in.client, owner, repo, opts.Version, isPre)
-	if err != nil {
-		return err
-	}
-	if rel.GetPrerelease() && !isPre {
-		opts.Type = manifest.PreRelease
+	var rel *github.RepositoryRelease
+	if opts.Type == manifest.PreRelease && opts.Strict {
+		rel, err = gh.ResolvePreRelease(ctx, in.client, owner, repo)
+	} else {
+		// if type is PreRelease and in non-strict mode, get the latest version, regardless of pre-release or not
+		// therefore, this else branch will be taken if one of the following are true:
+		// if the branch is release
+		// if the branch is pre-release and in non-strict
+		// either way, it will always install the latest release
+		rel, err = gh.ResolveReleaseByTag(ctx, in.client, owner, repo, opts.Version)
+		if err != nil {
+			return nil, err
+		}
+		if rel.GetPrerelease() && opts.Type != manifest.PreRelease {
+			opts.Type = manifest.PreRelease
+		}
 	}
 
-	return in.InstallFromRelease(ctx, dest, owner, repo, rel, opts, hooks)
+	return in.installFromRelease(ctx, dest, owner, repo, rel, opts, hooks)
 }
 
 func downloadTo(ctx context.Context, destPath, url string, hooks *progress.Hooks) error {
@@ -107,6 +118,7 @@ func downloadTo(ctx context.Context, destPath, url string, hooks *progress.Hooks
 	var r io.Reader = resp.Body
 	var closer io.Closer
 
+	// maybe move hooks out of here?
 	if hooks.Decorator != nil {
 		wr := hooks.Decorator(progress.StageDownload, resp.Body, resp.ContentLength)
 		if rc, ok := wr.(io.ReadCloser); ok {

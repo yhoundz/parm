@@ -1,4 +1,4 @@
-## Installing a Release
+# Installing a Release
 To install the latest stable release of a package, run
 ```sh
 parm install <owner>/<repo>
@@ -30,21 +30,25 @@ You can also use the "@" keyword as a shorthand, as follows:
 parm install yhoundz/parm@v0.1.0
 ```
 
-#### Installing a Pre-Release
+## Installing a Pre-Release
 
 You can install the latest pre-release as follows:
 ```sh
 parm install yhoundz/parm --pre-release
 ```
 
-### Updating a Package
+--- 
+
+# Updating a Package
 
 To update a package, you can run the following command:
 ```sh
 parm update <owner>/<repo>
 ```
 
-### Deleting a Package
+---
+
+# Uninstalling a Package
 
 To remove/uninstall a package, you can run the following command:
 ```sh

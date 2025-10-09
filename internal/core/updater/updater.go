@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"parm/internal/core/installer"
+	"parm/internal/gh"
 	"parm/internal/manifest"
 	"parm/internal/parmutil"
 	"parm/pkg/progress"
@@ -13,63 +14,67 @@ import (
 	"github.com/google/go-github/v74/github"
 )
 
+// TODO: modify updater to use new symlinking logic
+
 type Updater struct {
-	client       *github.RepositoriesService
-	relInstaller installer.ReleaseInstaller
+	client    *github.RepositoriesService
+	installer installer.Installer
 }
 
-func New(cli *github.RepositoriesService, rel installer.ReleaseInstaller) *Updater {
+type UpdateResult installer.InstallResult
+
+func New(cli *github.RepositoriesService, rel *installer.Installer) *Updater {
 	return &Updater{
-		client:       cli,
-		relInstaller: rel,
+		client:    cli,
+		installer: *rel,
 	}
 }
 
-func (up *Updater) Update(ctx context.Context, owner, repo string, hooks *progress.Hooks) error {
+func (up *Updater) Update(ctx context.Context, owner, repo string, hooks *progress.Hooks) (*UpdateResult, error) {
 	installDir := parmutil.GetInstallDir(owner, repo)
 	man, err := manifest.Read(installDir)
 
 	if err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("package %s/%s does not exist", owner, repo)
+			return nil, fmt.Errorf("package %s/%s does not exist", owner, repo)
 		}
-		return fmt.Errorf("could not read manifest for %s/%s: \n%w", owner, repo, err)
+		return nil, fmt.Errorf("could not read manifest for %s/%s: \n%w", owner, repo, err)
 	}
+
+	var rel *github.RepositoryRelease
 
 	switch man.InstallType {
-	case manifest.Release, manifest.PreRelease:
-		fmt.Printf("Checking for updates for %s/%s...\n", owner, repo)
-		rel, _, err := up.client.GetLatestRelease(ctx, owner, repo)
-
-		newVer := rel.GetTagName()
-
-		needsUpdate, err := CheckUpdate(man.Version, newVer)
-		if !needsUpdate {
-			fmt.Printf("%s/%s is already up to date (ver %s).\n", owner, repo, man.Version)
-			return nil
-		}
-
-		if err != nil {
-			return fmt.Errorf("could not fetch latest release for %s/%s: \n%w", owner, repo, err)
-		}
-
-		if newVer == man.Version {
-			fmt.Printf("%s/%s@%s is already up to date.\n", owner, repo, man.Version)
-			return nil
-		}
-
-		fmt.Printf("Updates found!\n")
-		fmt.Printf("Updating %s/%s from %s to %s...\n", owner, repo, man.Version, rel.GetTagName())
-		opts := installer.InstallFlags{
-			Type:    man.InstallType,
-			Version: man.Version,
-		}
-		return up.updateRelease(ctx, installDir, man, rel, opts, hooks)
+	case manifest.Release:
+		rel, _, err = up.client.GetLatestRelease(ctx, owner, repo)
+	case manifest.PreRelease:
+		rel, err = gh.GetLatestPreRelease(ctx, up.client, owner, repo)
 	}
-	return nil
+
+	newVer := rel.GetTagName()
+	needsUpdate, err := NeedsUpdate(man.Version, newVer)
+
+	if !needsUpdate {
+		return nil, fmt.Errorf("%s/%s is already up to date (ver %s).\n", owner, repo, man.Version)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch latest release for %s/%s: \n%w", owner, repo, err)
+	}
+
+	opts := installer.InstallFlags{
+		Type:    man.InstallType,
+		Version: newVer,
+	}
+
+	res, err := up.installer.Install(ctx, owner, repo, opts, hooks)
+	if err != nil {
+		return nil, err
+	}
+	actual := UpdateResult(*res)
+	return &actual, nil
 }
 
-func CheckUpdate(currVer, latestVer string) (bool, error) {
+func NeedsUpdate(currVer, latestVer string) (bool, error) {
 	currSemVer, err := semver.NewVersion(currVer)
 	if err != nil {
 		return false, err
@@ -84,22 +89,4 @@ func CheckUpdate(currVer, latestVer string) (bool, error) {
 	}
 
 	return false, nil
-}
-
-func (up *Updater) updateRelease(ctx context.Context,
-	installDir string,
-	man *manifest.Manifest,
-	rel *github.RepositoryRelease,
-	opts installer.InstallFlags,
-	hooks *progress.Hooks) error {
-	owner := man.Owner
-	repo := man.Repo
-
-	if man.Version == rel.GetTagName() {
-		fmt.Printf("%s/%s@%s is already up to date.\n", owner, repo, man.Version)
-		return nil
-	}
-	fmt.Printf("Updating %s/%s from %s to %s...\n", owner, repo, man.Version, rel.GetTagName())
-
-	return up.relInstaller.InstallFromRelease(ctx, installDir, owner, repo, rel, opts, hooks)
 }

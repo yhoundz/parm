@@ -8,7 +8,9 @@ import (
 	"parm/internal/core/installer"
 	"parm/internal/core/updater"
 	"parm/internal/gh"
+	"parm/internal/parmutil"
 	"parm/pkg/cmdparser"
+	"parm/pkg/sysutil"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -49,10 +51,23 @@ var UpdateCmd = &cobra.Command{
 				}
 			}
 
-			// TODO: change this later
-			err = up.Update(ctx, owner, repo, nil)
+			res, err := up.Update(ctx, owner, repo, nil)
 			if err != nil {
 				fmt.Printf("error: failed to update %s/%s\n", owner, repo)
+			}
+
+			man := res.Manifest
+			binPaths := man.GetFullExecPaths()
+
+			for _, execPath := range binPaths {
+				pathToSymLinkTo := parmutil.GetBinDir(man.Repo)
+
+				// TODO: use shims for windows instead?
+				_, err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)
+				if err != nil {
+					fmt.Println("error: could not symlink binary to PATH")
+					continue
+				}
 			}
 		}
 		return nil
