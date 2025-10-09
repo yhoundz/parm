@@ -5,8 +5,11 @@ package search
 
 import (
 	"fmt"
+	"parm/internal/core/catalog"
+	"parm/internal/gh"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var query string
@@ -15,8 +18,33 @@ var query string
 var SearchCmd = &cobra.Command{
 	Use:   "search",
 	Short: "Searches for repositories",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("search called")
+	Args: func(cmd *cobra.Command, args []string) error {
+		if query != "" && len(args) > 0 {
+			return fmt.Errorf("error: cannot have any args with the --query flag.")
+		} else {
+			exp := cobra.ExactArgs(1)
+			return exp(cmd, args)
+		}
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+		token, err := gh.GetStoredApiKey(viper.GetViper())
+		if err != nil {
+			return err
+		}
+		client := gh.New(ctx, token)
+		var opts = catalog.RepoSearchOptions{
+			Key:   nil,
+			Query: nil,
+		}
+		if query != "" {
+			opts.Query = &query
+		} else {
+			opts.Key = &args[0]
+		}
+		// TODO: finish this up
+		_, err = catalog.SearchRepo(ctx, client.Search(), opts)
+		return nil
 	},
 }
 

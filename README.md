@@ -1,9 +1,8 @@
 <h1 align="center">Parm 🧀</h1>
+<h4 align="center">Install any program from your terminal.</h4>
 <br>
-<h3 align="center">Install any program from your terminal.</h3>
-<br>
-
-Parm is a **pa**ckage/**r**epository **m**anager that allows you to install any program binary from a github release and will manage it for you. It's designed to be lightweight, has zero root access, and requires no dependencies.
+Parm is a <strong>pa</strong>ckage/<strong>r</strong>epository <strong>m</strong>anager that allows you to install any program binary from a github release and will manage it for you. It's designed to be lightweight, has zero root access, and requires no dependencies.
+<br><br>
 
 > [!WARNING]
 > Parm is currently in a pre-release state. Expect breaking changes and bugs.
@@ -126,7 +125,7 @@ echo 'export GH_TOKEN=<your_token_here> >> ~/.bashrc'
 For more detailed documentation, see the [docs](#/docs/usage.md).
 
 ## Contributing
-Parm is in a very early state, so any and all PRs are welcome. If you want to contribute to a new feature not already on the [roadmap](ROADMAP.md), please [create an issue](https://github.com/yhoundz/parm/issues/new) first, or check if an issue has already been created for it.
+Parm is in a very early state, so any and all PRs are welcome. If you want to contribute to a new feature not already on the [roadmap](/docs/ROADMAP.md), please [create an issue](https://github.com/yhoundz/parm/issues/new) first, or check if an issue has already been created for it.
 
 Before making a contribution, read over the [contributing guidelines](CONTRIBUTING.md) as well as the [code of conduct](CODE_OF_CONDUCT.md).
 

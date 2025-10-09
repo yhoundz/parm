@@ -3,6 +3,7 @@ package manifest
 import (
 	"encoding/json"
 	"os"
+	"parm/internal/parmutil"
 	"parm/pkg/sysutil"
 	"path/filepath"
 	"time"
@@ -45,6 +46,16 @@ func New(owner, repo, version string, installType InstallType, installDir string
 	}
 	m.Executables = binM
 	return m, nil
+}
+
+func (m *Manifest) GetFullExecPaths() []string {
+	var res []string
+	for _, path := range m.Executables {
+		srcPath := parmutil.GetInstallDir(m.Owner, m.Repo)
+		newPath := filepath.Join(srcPath, path)
+		res = append(res, newPath)
+	}
+	return res
 }
 
 func (m *Manifest) Write(installDir string) error {

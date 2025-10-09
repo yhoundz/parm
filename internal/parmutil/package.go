@@ -21,3 +21,9 @@ func GetInstallDir(owner, repo string) string {
 	dest := filepath.Join(installPath, owner, repo)
 	return dest
 }
+
+func GetBinDir(repoName string) string {
+	binPath := config.Cfg.ParmBinPath
+	dest := filepath.Join(binPath, repoName)
+	return dest
+}

@@ -16,26 +16,22 @@ import (
 	"github.com/google/go-github/v74/github"
 )
 
-type ReleaseInstaller interface {
-	InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallFlags, hooks *progress.Hooks) error
-}
-
 // Does NOT validate the release.
-func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallFlags, hooks *progress.Hooks) error {
+func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallFlags, hooks *progress.Hooks) (*InstallResult, error) {
 	var ass *github.ReleaseAsset
 	var err error
 	if opts.Asset == "" {
 		matches, err := selectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if matches == nil {
 			// TODO: allow users to choose what asset they want installed instead
-			return fmt.Errorf("err: No install matches found")
+			return nil, fmt.Errorf("err: No install matches found")
 		}
 		if len(matches) == 0 {
 			// TODO: allow users to choose match
-			return fmt.Errorf("err: no compatible binary found for release %s", rel.GetTagName())
+			return nil, fmt.Errorf("err: no compatible binary found for release %s", rel.GetTagName())
 		}
 		// if len(matches) > 1 {
 		// 	// TODO: allow users to choose what asset they want installed instead
@@ -46,30 +42,30 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 	} else {
 		ass, err = getAssetByName(rel, opts.Asset)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	dest := filepath.Join(pkgPath, ass.GetName()) // download destination
 	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL(), hooks); err != nil {
-		return fmt.Errorf("error: failed to download asset: \n%w", err)
+		return nil, fmt.Errorf("error: failed to download asset: \n%w", err)
 	}
 
 	switch {
 	case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
 		if err := archive.ExtractTarGz(dest, pkgPath); err != nil {
-			return fmt.Errorf("error: failed to extract tarball: \n%w", err)
+			return nil, fmt.Errorf("error: failed to extract tarball: \n%w", err)
 		}
 		_ = os.Remove(dest)
 	case strings.HasSuffix(dest, ".zip"):
 		if err := archive.ExtractZip(dest, pkgPath); err != nil {
-			return fmt.Errorf("error: failed to extract zip: \n%w", err)
+			return nil, fmt.Errorf("error: failed to extract zip: \n%w", err)
 		}
 		_ = os.Remove(dest)
 	default:
 		if runtime.GOOS != "windows" {
 			if err := os.Chmod(dest, 0o755); err != nil {
-				return fmt.Errorf("failed to make binary executable: \n%w", err)
+				return nil, fmt.Errorf("failed to make binary executable: \n%w", err)
 			}
 		}
 	}
@@ -79,9 +75,15 @@ func (in *Installer) InstallFromRelease(ctx context.Context, pkgPath, owner, rep
 	// will also help with symlinking
 	man, err := manifest.New(owner, repo, rel.GetTagName(), opts.Type, pkgPath)
 	if err != nil {
-		return fmt.Errorf("error: failed to create manifest: \n%w", err)
+		return nil, fmt.Errorf("error: failed to create manifest: \n%w", err)
 	}
-	return man.Write(pkgPath)
+	err = man.Write(pkgPath)
+	if err != nil {
+		return nil, err
+	}
+	return &InstallResult{
+		Manifest: man,
+	}, nil
 }
 
 // gets release asset by name
@@ -174,9 +176,9 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 	})
 
 	minMatch := scoredMatches[0].score
-	if minMatch < minScoreMatch {
-		fmt.Println("warning: selected release asset may not be completely accurate")
-	}
+	// if minMatch < minScoreMatch {
+	// 	fmt.Println("warning: selected release asset may not be completely accurate")
+	// }
 
 	// find top candidate(s)
 	var candidates []*github.ReleaseAsset
@@ -188,7 +190,6 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 		break
 	}
 
-	// fmt.Print(candidates[0])
 	return candidates, nil
 }
 
