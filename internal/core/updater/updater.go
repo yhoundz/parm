@@ -63,7 +63,7 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, hooks *progre
 
 	opts := installer.InstallFlags{
 		Type:    man.InstallType,
-		Version: newVer,
+		Version: &newVer,
 	}
 
 	res, err := up.installer.Install(ctx, owner, repo, opts, hooks)

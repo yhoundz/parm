@@ -71,13 +71,13 @@ I just wanted a single, unified way to manage my installed programs without havi
 
 
 ## Pre-requisites
-1. *(optional)* Must have `ldd` on Linux or `otool` on macOS installed and added to PATH
+1. *(optional)* Must have `objdump`, `grep` on Linux or `otool` on macOS installed and added to PATH
     - Parm may use these tools to search for potential dependencies on installed programs. 
-        - If these tools are not found or if there is an error invoking them, then Parm will fallback to a naive dependency search algorithm instead which may be inaccurate.
-        - It is important to note that Windows machines do not have a similar tool out of the box and have a different linking process, so Parm won't try to resolve dependencies at all on Windows machine at the moment.
-    - Both `ldd` and `otool` should already be installed and added to PATH on your machine. You can check this by running
+        - Parm will not try to search for dependencies on Windows at the moment.
+        - On Linux, `ldd` is not used since some implementations of it may execute the program to find dependencies. This is more accurate than using `objdump` or `readelf`, but poses a bigger security risk given the scope and design of this project.
+    - `objdump`, `grep` and `otool` should already be installed and added to PATH on your machine. You can check this by running
     ```sh
-    which ldd
+    which objdump grep
     ```
     or
     ```sh
@@ -111,21 +111,19 @@ echo 'export GH_TOKEN=<your_token_here> >> ~/.bashrc'
 
 | Command  | Flags | Description |
 | ------------- | -------------- | -------------- |
-| `install` | `--release, --pre-release, --asset` | Installs a package. |
+| `install` | `--release, --pre-release, --asset, --strict, --no-verify` | Installs a package. |
 | `uninstall` |  | Uninstalls a package. |
 | `update` |  | Updates a package. |
 | `list` |  | Lists the currently installed packages. |
-| `config` |  | Prints out the current configuration file as it is in parm's `config.toml` file. |
+| `config` |  | Prints out the current config in parm's `config.toml` file. |
 | `config set` |  | Sets a `key=value` pair for a configuration setting. |
 | `config reset` | `--all` | Resets a `key=value` config setting back to its default. |
 | `info` | `--get-upstream` | Retrieves information about a certain package. |
-| `search` | `--query` | Searches for available packages to install. |
-| `verify` | `--sha256` | Verifies the correct packages was installed by comparing a hash to the installed package. |
 
 For more detailed documentation, see the [docs](#/docs/usage.md).
 
 ## Contributing
-Parm is in a very early state, so any and all PRs are welcome. If you want to contribute to a new feature not already on the [roadmap](/docs/ROADMAP.md), please [create an issue](https://github.com/yhoundz/parm/issues/new) first, or check if an issue has already been created for it.
+Parm is in a very early state, so any and all PRs are welcome. If you want to contribute to a new feature not already on the [roadmap](/docs/roadmap.md), please [create an issue](https://github.com/yhoundz/parm/issues/new) first, or check if an issue has already been created for it.
 
 Before making a contribution, read over the [contributing guidelines](CONTRIBUTING.md) as well as the [code of conduct](CODE_OF_CONDUCT.md).
 

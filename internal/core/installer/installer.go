@@ -13,10 +13,10 @@ import (
 	"parm/pkg/progress"
 	"path/filepath"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v74/github"
 )
 
-// TODO: when installing, check if dir exists before overwriting it
 // TODO: if download fails for some reason at any point, remove all traces of partially installed dirs
 // TODO: Check for dependencies after installation and bubble them up to the user
 // TODO: write tests/setup docker
@@ -30,10 +30,11 @@ type Installer struct {
 }
 
 type InstallFlags struct {
-	Type    manifest.InstallType
-	Version string
-	Asset   string
-	Strict  bool
+	Type        manifest.InstallType
+	Version     *string
+	Asset       *string
+	Strict      bool
+	VerifyLevel uint8
 }
 
 type InstallResult struct {
@@ -63,19 +64,32 @@ func (in *Installer) Install(ctx context.Context, owner, repo string, opts Insta
 	}
 
 	var rel *github.RepositoryRelease
-	if opts.Type == manifest.PreRelease && opts.Strict {
-		rel, err = gh.ResolvePreRelease(ctx, in.client, owner, repo)
+	if opts.Type == manifest.PreRelease {
+		rel, _ = gh.ResolvePreRelease(ctx, in.client, owner, repo)
+		if !opts.Strict {
+			// expensive!
+			relStable, err := gh.ResolveReleaseByTag(ctx, in.client, owner, repo, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			// TODO: abstract elsewhere cuz it's similar to updater.NeedsUpdate
+			currVer, _ := semver.NewVersion(rel.GetTagName())
+			newVer, _ := semver.NewVersion(relStable.GetTagName())
+			if newVer.GreaterThan(currVer) {
+				rel = relStable
+			}
+		}
 	} else {
-		// if type is PreRelease and in non-strict mode, get the latest version, regardless of pre-release or not
-		// therefore, this else branch will be taken if one of the following are true:
-		// if the branch is release
-		// if the branch is pre-release and in non-strict
-		// either way, it will always install the latest release
 		rel, err = gh.ResolveReleaseByTag(ctx, in.client, owner, repo, opts.Version)
 		if err != nil {
 			return nil, err
 		}
-		if rel.GetPrerelease() && opts.Type != manifest.PreRelease {
+
+		// we get to this point if the user installs a pre-release using the --release flag
+		// e.g. if the user runs "parm install yhoundz/parm-e2e --release v1.0.1-beta"
+		// correct the release channel to use pre-release instead to match user intent
+		if rel.GetPrerelease() {
 			opts.Type = manifest.PreRelease
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"parm/internal/core/verify"
 	"parm/internal/manifest"
 	"parm/pkg/archive"
 	"parm/pkg/progress"
@@ -20,7 +21,7 @@ import (
 func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, repo string, rel *github.RepositoryRelease, opts InstallFlags, hooks *progress.Hooks) (*InstallResult, error) {
 	var ass *github.ReleaseAsset
 	var err error
-	if opts.Asset == "" {
+	if opts.Asset == nil {
 		matches, err := selectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
 		if err != nil {
 			return nil, err
@@ -40,7 +41,7 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 		ass = matches[0]
 
 	} else {
-		ass, err = getAssetByName(rel, opts.Asset)
+		ass, err = getAssetByName(rel, *opts.Asset)
 		if err != nil {
 			return nil, err
 		}
@@ -49,6 +50,17 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 	dest := filepath.Join(pkgPath, ass.GetName()) // download destination
 	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL(), hooks); err != nil {
 		return nil, fmt.Errorf("error: failed to download asset: \n%w", err)
+	}
+
+	// TODO: change based on actual verify-level
+	if opts.VerifyLevel > 0 {
+		ok, gen, err := verify.VerifyLevel1(dest, *ass.Digest)
+		if err != nil {
+			return nil, fmt.Errorf("error: could not verify checksum:\n%q", err)
+		}
+		if !ok {
+			return nil, fmt.Errorf("fatal: checksum invalid:\n	had %s\n	wanted %s", *gen, *ass.Digest)
+		}
 	}
 
 	switch {

@@ -80,14 +80,15 @@ func ResolvePreRelease(ctx context.Context, client *github.RepositoriesService, 
 	return rel, nil
 }
 
-func ResolveReleaseByTag(ctx context.Context, client *github.RepositoriesService, owner, repo, version string) (*github.RepositoryRelease, error) {
-	if version != "" {
-		valid, rel, err := validateRelease(ctx, client, owner, repo, version)
+// Retrieves a GitHub RepositoryRelease. If provided version string is nil, then return the latest stable release
+func ResolveReleaseByTag(ctx context.Context, client *github.RepositoriesService, owner, repo string, version *string) (*github.RepositoryRelease, error) {
+	if version != nil {
+		valid, rel, err := validateRelease(ctx, client, owner, repo, *version)
 		if err != nil {
-			return nil, fmt.Errorf("error: Cannot resolve release %s on %s/%s", version, owner, repo)
+			return nil, fmt.Errorf("error: Cannot resolve release %s on %s/%s", *version, owner, repo)
 		}
 		if !valid {
-			return nil, fmt.Errorf("error: Release %s not valid, \n%w", version, err)
+			return nil, fmt.Errorf("error: Release %s not valid, \n%w", *version, err)
 		}
 		return rel, nil
 	} else {
