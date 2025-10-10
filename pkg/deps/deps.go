@@ -52,23 +52,35 @@ func GetMissingLibs(ctx context.Context, owner, repo string) ([]string, error) {
 
 }
 
-/*
-naive implementation of "ldd" on unix systems. may not be
-completely accurate.
-*/
 func getMissingLibsLinux(ctx context.Context, binPath string) ([]string, error) {
-	ldd := "ldd"
-	if err := HasExternalDep(ldd); err != nil {
+	objdump := "objdump"
+	grep := "grep"
+
+	if err := HasExternalDep(objdump); err != nil {
+		return getMissingLibsFallBack(binPath)
+	}
+	if err := HasExternalDep(grep); err != nil {
 		return getMissingLibsFallBack(binPath)
 	}
 
-	cmd := exec.CommandContext(ctx, ldd, binPath)
-	out, err := cmd.Output()
+	objdumpCmd := exec.CommandContext(ctx, objdump, "-p", binPath)
+	grepCmd := exec.CommandContext(ctx, grep, "NEEDED")
+	pipe, err := objdumpCmd.StdoutPipe()
 	if err != nil {
 		return getMissingLibsFallBack(binPath)
 	}
 
-	deps, err := parseDepCmdUnix(out)
+	var out bytes.Buffer
+	grepCmd.Stdin = pipe
+	grepCmd.Stdout = &out
+
+	objdumpCmd.Start()
+	grepCmd.Start()
+
+	objdumpCmd.Wait()
+	grepCmd.Wait()
+
+	deps, err := parseDepCmdUnix(out.Bytes())
 	if err != nil {
 		return getMissingLibsFallBack(binPath)
 	}

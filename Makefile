@@ -11,7 +11,6 @@ GOARCH ?= amd64
 # The binary name and output location
 BINARY_NAME = parm
 OUTPUT_DIR = ./bin
-VERSION = v0.0.0
 
 # Make sure the output directory exists
 .PHONY: $(OUTPUT_DIR)

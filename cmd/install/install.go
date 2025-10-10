@@ -24,6 +24,11 @@ var pre_release bool
 var release string
 var asset string
 var strict bool
+var no_verify bool
+
+// var sha256 string
+// var verify int16
+// const PROVIDE_CHECKSUM_LEVEL = 2
 
 // installCmd represents the install command
 var InstallCmd = &cobra.Command{
@@ -57,6 +62,15 @@ var InstallCmd = &cobra.Command{
 			}
 		}
 
+		// if err := cmdx.MarkFlagsRequireFlag(cmd, "verify", "sha256"); err != nil {
+		// 	return err
+		// }
+		// if cmd.Flags().Changed("verify") && verify >= PROVIDE_CHECKSUM_LEVEL {
+		// 	if !cmd.Flags().Changed("sha256") || sha256 == "" {
+		// 		return err
+		// 	}
+		// }
+
 		return nil
 	},
 	Args: cobra.ExactArgs(1),
@@ -81,17 +95,17 @@ var InstallCmd = &cobra.Command{
 		}
 
 		var insType manifest.InstallType
-		var version string
+		var version *string
 		if release != "" {
 			insType = manifest.Release
-			version = release
+			version = &release
 		} else if pre_release {
 			insType = manifest.PreRelease
 			// INFO: do nothing, populate version later
-			version = ""
+			version = nil
 		} else {
 			insType = manifest.Release
-			version = ""
+			version = nil
 		}
 
 		pb := progressbar.NewBar()
@@ -106,11 +120,25 @@ var InstallCmd = &cobra.Command{
 			Callback: nil,
 		}
 
+		var ass *string
+		if asset == "" {
+			ass = nil
+		} else {
+			ass = &asset
+		}
+
 		opts := installer.InstallFlags{
 			Type:    insType,
 			Version: version,
-			Asset:   asset,
+			Asset:   ass,
 			Strict:  strict,
+			VerifyLevel: func() uint8 {
+				if no_verify {
+					return 0
+				}
+				// TODO: change to actual verify-level once implemented
+				return 1
+			}(),
 		}
 
 		fmt.Printf("installing %s/%s\n", owner, repo)
@@ -141,11 +169,16 @@ var InstallCmd = &cobra.Command{
 }
 
 func init() {
-	InstallCmd.Flags().BoolVarP(&pre_release, "pre-release", "p", false, "Installs the latest pre-release binary, if availabale")
+	InstallCmd.Flags().BoolVarP(&pre_release, "pre-release", "p", false, "Installs the latest pre-release binary, if available")
 	InstallCmd.Flags().BoolVarP(&strict, "strict", "s", false, "Only available with the --pre-release flag. Will only install pre-release versions and not stable releases.")
-	InstallCmd.Flags().StringVarP(&release, "release", "r", "", "Install binary from this release tag")
-	InstallCmd.Flags().StringVarP(&asset, "asset", "a", "", "Installs a specific asset from a release")
+	InstallCmd.Flags().BoolVarP(&no_verify, "no-verify", "n", false, "Skips integrity check")
+	InstallCmd.Flags().StringVarP(&release, "release", "r", "", "Install binary from this release tag.")
+	InstallCmd.Flags().StringVarP(&asset, "asset", "a", "", "Installs a specific asset from a release.")
 
 	InstallCmd.MarkFlagsMutuallyExclusive("release", "pre-release")
 	InstallCmd.MarkFlagsMutuallyExclusive("release", "strict")
+
+	// InstallCmd.Flags().Int16VarP(&verify, "verify", "v", 1, "Enables sha256 checksum verification.")
+	// InstallCmd.Flags().StringVarP(&sha256, "sha256", "h", "", "Takes in a sha256 hash.")
+	// InstallCmd.MarkFlagsMutuallyExclusive("verify", "no-verify")
 }
