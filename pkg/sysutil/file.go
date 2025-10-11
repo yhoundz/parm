@@ -99,36 +99,34 @@ func IsBinaryExecutable(path string) (bool, *types.Type, error) {
 	return false, nil, nil
 }
 
-func SymlinkBinToPath(binPath, destPath string) (string, error) {
+func SymlinkBinToPath(binPath, destPath string) error {
 	isBin, err := IsValidBinaryExecutable(binPath)
 	if err != nil {
-		return "", err
+		return err
 	}
 	if !isBin {
-		return "", fmt.Errorf("error: provided dir is not a binary")
+		return fmt.Errorf("error: provided dir is not a binary")
 	}
 
-	absBinDir, err := filepath.Abs(binPath)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	newDestPath, err := filepath.Abs(destPath)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	if _, err := os.Lstat(newDestPath); err == nil {
-		if err := os.Remove(newDestPath); err != nil {
-			return "", fmt.Errorf("failed to remove existing symlink at %s\n%w", newDestPath, err)
+	if _, err := os.Lstat(destPath); err == nil {
+		if err := os.Remove(destPath); err != nil {
+			return fmt.Errorf("failed to remove existing symlink at %s\n%w", destPath, err)
 		}
 	} else if !os.IsNotExist(err) {
-		return "", fmt.Errorf("failed to check destination path: \n%w", err)
+		return fmt.Errorf("failed to check destination path: \n%w", err)
 	}
 
-	if err := os.Symlink(absBinDir, newDestPath); err != nil {
-		return "", err
+	if err := os.Symlink(binPath, destPath); err != nil {
+		return err
 	}
 
-	return newDestPath, nil
+	return nil
 }

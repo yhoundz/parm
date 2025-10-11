@@ -12,6 +12,7 @@ import (
 )
 
 // TODO: when version management is added?, have an option to remove a specific version
+// remove concurrently?
 func Uninstall(ctx context.Context, owner, repo string) error {
 	dir := parmutil.GetInstallDir(owner, repo)
 	fi, err := os.Stat(dir)

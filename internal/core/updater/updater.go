@@ -23,6 +23,10 @@ type Updater struct {
 
 type UpdateResult installer.InstallResult
 
+type UpdateFlags struct {
+	Strict bool
+}
+
 func New(cli *github.RepositoriesService, rel *installer.Installer) *Updater {
 	return &Updater{
 		client:    cli,
@@ -30,7 +34,8 @@ func New(cli *github.RepositoriesService, rel *installer.Installer) *Updater {
 	}
 }
 
-func (up *Updater) Update(ctx context.Context, owner, repo string, hooks *progress.Hooks) (*UpdateResult, error) {
+// TODO: update concurrently?
+func (up *Updater) Update(ctx context.Context, owner, repo string, flags *UpdateFlags, hooks *progress.Hooks) (*UpdateResult, error) {
 	installDir := parmutil.GetInstallDir(owner, repo)
 	man, err := manifest.Read(installDir)
 
@@ -62,8 +67,11 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, hooks *progre
 	}
 
 	opts := installer.InstallFlags{
-		Type:    man.InstallType,
-		Version: &newVer,
+		Type:        man.InstallType,
+		Version:     &newVer,
+		Asset:       nil,
+		Strict:      flags.Strict,
+		VerifyLevel: 0,
 	}
 
 	res, err := up.installer.Install(ctx, owner, repo, opts, hooks)

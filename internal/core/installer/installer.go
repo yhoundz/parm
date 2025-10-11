@@ -20,7 +20,6 @@ import (
 // TODO: if download fails for some reason at any point, remove all traces of partially installed dirs
 // TODO: Check for dependencies after installation and bubble them up to the user
 // TODO: write tests/setup docker
-// TODO: update manifest when updating packages
 // TODO: create install scripts: .sh, .ps1, .fish
 // TODO: create section on how to add packages to parm in README.md
 // TODO: make readme prettier w/ html/css + CI/CD badges
@@ -48,19 +47,16 @@ func New(cli *github.RepositoriesService) *Installer {
 }
 
 func (in *Installer) Install(ctx context.Context, owner, repo string, opts InstallFlags, hooks *progress.Hooks) (*InstallResult, error) {
+	// TODO: get installDir outside of install?
 	dest := parmutil.GetInstallDir(owner, repo)
 	f, _ := os.Stat(dest)
+	var err error
 
 	// if error is something else, ignore it for now and hope it propogates downwards if it's actually serious
 	if f != nil {
 		if err := uninstaller.Uninstall(ctx, owner, repo); err != nil {
 			return nil, err
 		}
-	}
-
-	dest, err := parmutil.MakeInstallDir(owner, repo, 0o755)
-	if err != nil {
-		return nil, err
 	}
 
 	var rel *github.RepositoryRelease

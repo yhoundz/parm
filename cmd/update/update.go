@@ -16,6 +16,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+var strict bool
+
 // updateCmd represents the update command
 var UpdateCmd = &cobra.Command{
 	Use:   "update <owner>/<repo>",
@@ -51,7 +53,11 @@ var UpdateCmd = &cobra.Command{
 				}
 			}
 
-			res, err := up.Update(ctx, owner, repo, nil)
+			flags := updater.UpdateFlags{
+				Strict: strict,
+			}
+
+			res, err := up.Update(ctx, owner, repo, &flags, nil)
 			if err != nil {
 				fmt.Printf("error: failed to update %s/%s\n", owner, repo)
 			}
@@ -63,7 +69,7 @@ var UpdateCmd = &cobra.Command{
 				pathToSymLinkTo := parmutil.GetBinDir(man.Repo)
 
 				// TODO: use shims for windows instead?
-				_, err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)
+				err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)
 				if err != nil {
 					fmt.Println("error: could not symlink binary to PATH")
 					continue
@@ -74,4 +80,6 @@ var UpdateCmd = &cobra.Command{
 	},
 }
 
-func init() {}
+func init() {
+	UpdateCmd.Flags().BoolVarP(&strict, "strict", "s", false, "Only available on pre-release channels. Will only install pre-release versions and not stable releases, even if there exists a stable version more up-to-date than a pre-release.")
+}

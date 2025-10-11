@@ -7,6 +7,7 @@ import (
 	"os"
 	"parm/internal/core/verify"
 	"parm/internal/manifest"
+	"parm/internal/parmutil"
 	"parm/pkg/archive"
 	"parm/pkg/progress"
 	"path/filepath"
@@ -26,10 +27,6 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 		if err != nil {
 			return nil, err
 		}
-		if matches == nil {
-			// TODO: allow users to choose what asset they want installed instead
-			return nil, fmt.Errorf("err: No install matches found")
-		}
 		if len(matches) == 0 {
 			// TODO: allow users to choose match
 			return nil, fmt.Errorf("err: no compatible binary found for release %s", rel.GetTagName())
@@ -39,7 +36,6 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 		// 	return nil
 		// }
 		ass = matches[0]
-
 	} else {
 		ass, err = getAssetByName(rel, *opts.Asset)
 		if err != nil {
@@ -47,7 +43,14 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 		}
 	}
 
-	dest := filepath.Join(pkgPath, ass.GetName()) // download destination
+	tmpDir, err := parmutil.MakeStagingDir(owner, repo)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: Cleanup() instead
+	defer os.RemoveAll(tmpDir)
+
+	dest := filepath.Join(tmpDir, ass.GetName()) // download destination
 	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL(), hooks); err != nil {
 		return nil, fmt.Errorf("error: failed to download asset: \n%w", err)
 	}
@@ -65,15 +68,13 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 
 	switch {
 	case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
-		if err := archive.ExtractTarGz(dest, pkgPath); err != nil {
+		if err := archive.ExtractTarGz(dest, tmpDir); err != nil {
 			return nil, fmt.Errorf("error: failed to extract tarball: \n%w", err)
 		}
-		_ = os.Remove(dest)
 	case strings.HasSuffix(dest, ".zip"):
-		if err := archive.ExtractZip(dest, pkgPath); err != nil {
+		if err := archive.ExtractZip(dest, tmpDir); err != nil {
 			return nil, fmt.Errorf("error: failed to extract zip: \n%w", err)
 		}
-		_ = os.Remove(dest)
 	default:
 		if runtime.GOOS != "windows" {
 			if err := os.Chmod(dest, 0o755); err != nil {
@@ -82,17 +83,25 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 		}
 	}
 
+	_ = os.Remove(dest)
+
 	// TODO: create manifest elsewhere for better separation of concerns?
 	// TODO: Return an InstallResult and let the CLI call a manifest writer service.
 	// will also help with symlinking
-	man, err := manifest.New(owner, repo, rel.GetTagName(), opts.Type, pkgPath)
+	man, err := manifest.New(owner, repo, rel.GetTagName(), opts.Type, tmpDir)
 	if err != nil {
 		return nil, fmt.Errorf("error: failed to create manifest: \n%w", err)
 	}
-	err = man.Write(pkgPath)
+	err = man.Write(tmpDir)
 	if err != nil {
 		return nil, err
 	}
+
+	if _, err := parmutil.PromoteStagingDir(pkgPath, tmpDir); err != nil {
+		return nil, err
+	}
+	tmpDir = ""
+
 	return &InstallResult{
 		Manifest: man,
 	}, nil
