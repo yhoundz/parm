@@ -27,10 +27,6 @@ var asset string
 var strict bool
 var no_verify bool
 
-// var sha256 string
-// var verify int16
-// const PROVIDE_CHECKSUM_LEVEL = 2
-
 // installCmd represents the install command
 var InstallCmd = &cobra.Command{
 	Use:   "install <owner>/<repo>@[release-tag]",
@@ -65,15 +61,6 @@ var InstallCmd = &cobra.Command{
 				return err
 			}
 		}
-
-		// if err := cmdx.MarkFlagsRequireFlag(cmd, "verify", "sha256"); err != nil {
-		// 	return err
-		// }
-		// if cmd.Flags().Changed("verify") && verify >= PROVIDE_CHECKSUM_LEVEL {
-		// 	if !cmd.Flags().Changed("sha256") || sha256 == "" {
-		// 		return err
-		// 	}
-		// }
 
 		return nil
 	},
@@ -150,10 +137,20 @@ var InstallCmd = &cobra.Command{
 
 		res, err := inst.Install(ctx, owner, repo, opts, hooks)
 		if err != nil {
+			parentDir, _ := sysutil.GetParentDir(res.InstallPath)
+			_ = parmutil.Cleanup(parentDir)
 			fmt.Printf("%q\n", err)
 		}
 
-		man := res.Manifest
+		man, err := manifest.New(owner, repo, res.Version, opts.Type, res.InstallPath)
+		if err != nil {
+			return fmt.Errorf("error: failed to create manifest: \n%w", err)
+		}
+		err = man.Write(res.InstallPath)
+		if err != nil {
+			return err
+		}
+
 		binPaths := man.GetFullExecPaths()
 
 		for _, execPath := range binPaths {
@@ -171,15 +168,16 @@ var InstallCmd = &cobra.Command{
 			if len(deps) > 0 {
 				fmt.Printf("required dependencies found for %s/%s:\n", owner, repo)
 				for _, dp := range deps {
-					fmt.Println(dp)
+					fmt.Println("\t" + dp)
 				}
+				fmt.Println("Note: this is PURELY informational, and does not necessarily mean that your machine doesn't have these dependencies.")
 			}
 		}
 
 		fmt.Println()
 		// TODO: output for symlinking
 
-		return err
+		return nil
 	},
 }
 
@@ -192,8 +190,4 @@ func init() {
 
 	InstallCmd.MarkFlagsMutuallyExclusive("release", "pre-release")
 	InstallCmd.MarkFlagsMutuallyExclusive("release", "strict")
-
-	// InstallCmd.Flags().Int16VarP(&verify, "verify", "v", 1, "Enables sha256 checksum verification.")
-	// InstallCmd.Flags().StringVarP(&sha256, "sha256", "h", "", "Takes in a sha256 hash.")
-	// InstallCmd.MarkFlagsMutuallyExclusive("verify", "no-verify")
 }

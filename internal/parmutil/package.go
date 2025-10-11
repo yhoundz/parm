@@ -60,9 +60,17 @@ func PromoteStagingDir(final, staging string) (string, error) {
 // dir should be the owner dir, at $PKG_ROOT/owner/
 // TODO: fix this mess
 func Cleanup(dir string) error {
+	if dir == "" {
+		// fail silently
+		return nil
+	}
+
 	var fi os.FileInfo
 	var err error
 	if fi, err = os.Stat(dir); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return err
 	}
 	if !fi.IsDir() {
