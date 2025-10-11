@@ -11,14 +11,14 @@
 1. [Quick Start](#quick-start)
 2. [Introduction](#introduction)
     - [What is Parm?](#what-is-parm)
-    - [Motivation](#motivation)
     - [Disclaimers](#disclaimers)
 3. [Pre-requisites](#pre-requisites)
 4. [Installation](#install)
 5. [GitHub Personal Access Token](#adding-a-github-personal-access-token)
 6. [Usage/Documentation](#usage)
 7. [Contributing](#contributing)
-8. [Acknowledgements](#Acknowledgements)
+8. [Adding Packages to Parm](#adding-packages-to-parm)
+9. [Acknowledgements](#Acknowledgements)
 
 ## Quick Start
 To install Parm on Linux/macOS: run the following command:
@@ -39,7 +39,7 @@ parm update <owner>/<repo> # to update a package
 ```
 
 For more detailed install instructions, see [Installation](#install).
-For more detailed documentation, go to [Usage](#usage) or the [docs][#/docs/docs.md]
+For more detailed documentation, go to [Usage](#usage) or the [docs](#/docs/docs.md)
 
 ## Introduction
 
@@ -116,12 +116,30 @@ parm config set github_api_token_fallback=<token>
 | `config reset` | `--all` | Resets a `key=value` config setting back to its default. |
 | `info` | `--get-upstream` | Retrieves information about a certain package. |
 
-For more detailed documentation, see the [docs](#/docs/usage.md).
+For more detailed documentation, see the [docs](/docs/usage.md).
 
 ## Contributing
 Parm is in a very early state, so any and all PRs are welcome. If you want to contribute to a new feature not already on the [roadmap](/docs/roadmap.md), please [create an issue](https://github.com/yhoundz/parm/issues/new) first, or check if an issue has already been created for it.
 
 Before making a contribution, read over the [contributing guidelines](CONTRIBUTING.md) as well as the [code of conduct](CODE_OF_CONDUCT.md).
+
+## Adding Packages to Parm
+If you want to make your Github Repo to be installable via Parm, ensure the following:
+- Your repository is PUBLIC.
+- Your repository has at least ONE release with an associated release tag.
+- Your repository release tag names follow semver (semantic versioning).
+- Your repository is meant to be run on Windows, macOS, or Linux.
+- Your repository release assets actually contain binaries
+	- This is important, since some GitHub repositories don't actually do this (e.g. tmux/tmux only provides source code in their releases).
+
+That's it! Your program is now compatible with Parm. To ensure maximized compatibility, I strongly recommend the following:
+- Asset names must follow the convention: <program-name>-<OS-name>-<arch-name>.<file-extension>
+	- For example, "parm-linux-amd64.tar.gz" follows this convention.
+- Ensure that your program has no external dependencies, or requires no dependencies that aren't usually pre-installed on most users' machines.
+	- This is because Parm's dependency resolution is very weak right now, due to how the program was designed, and how it's quite difficult to find dependencies programmatically without being given them explicitly (like how other package managers do this).
+	- As a rule of thumb, if your program is statically linked, you should be good to go.
+
+Parm tries its best to adhere to current conventions of open-source software when parsing repositories. If there's something I'm missing, please [create an issue](https://github.com/yhoundz/parm/issues/new).
 
 ## Acknowledgements
 Parm was created using the [Go programming language](https://go.dev/) and the [cobra](https://cobra.dev/) CLI framework.

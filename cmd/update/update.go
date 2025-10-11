@@ -8,9 +8,11 @@ import (
 	"parm/internal/core/installer"
 	"parm/internal/core/updater"
 	"parm/internal/gh"
+	"parm/internal/manifest"
 	"parm/internal/parmutil"
 	"parm/pkg/cmdparser"
 	"parm/pkg/sysutil"
+	"slices"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,6 +25,20 @@ var UpdateCmd = &cobra.Command{
 	Use:   "update <owner>/<repo>",
 	Short: "Updates a package",
 	Long:  `Updates a package to the latest available version.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		for i, arg := range args {
+			owner, repo, err := cmdparser.ParseRepoRef(arg)
+			if err != nil {
+				owner, repo, err = cmdparser.ParseGithubUrlPattern(arg)
+				if err != nil {
+					args = slices.Delete(args, i, i+1)
+					fmt.Printf("error: package %s not found, skipping...\n", arg)
+					continue
+				}
+				args[i] = fmt.Sprintf("%s/%s", owner, repo)
+			}
+		}
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 		token, err := gh.GetStoredApiKey(viper.GetViper())
@@ -33,6 +49,9 @@ var UpdateCmd = &cobra.Command{
 		inst := installer.New(client)
 		up := updater.New(client, inst)
 		updated := make(map[string]bool)
+		flags := updater.UpdateFlags{
+			Strict: strict,
+		}
 
 		for _, pkg := range args {
 			if _, ok := updated[pkg]; ok {
@@ -41,28 +60,27 @@ var UpdateCmd = &cobra.Command{
 			}
 			updated[pkg] = true
 
-			var owner, repo string
-			var err error
+			// guaranteed to work now
+			owner, repo, _ := cmdparser.ParseRepoRef(pkg)
 
-			owner, repo, err = cmdparser.ParseRepoRef(pkg)
-			if err != nil {
-				owner, repo, err = cmdparser.ParseGithubUrlPattern(pkg)
-				if err != nil {
-					fmt.Printf("%s\n", err)
-					continue
-				}
-			}
-
-			flags := updater.UpdateFlags{
-				Strict: strict,
-			}
+			parentDir, _ := sysutil.GetParentDir(parmutil.GetInstallDir(owner, repo))
 
 			res, err := up.Update(ctx, owner, repo, &flags, nil)
 			if err != nil {
+				_ = parmutil.Cleanup(parentDir)
 				fmt.Printf("error: failed to update %s/%s\n", owner, repo)
+				continue
 			}
 
-			man := res.Manifest
+			old := res.OldManifest
+			man, err := manifest.New(owner, repo, res.Version, old.InstallType, res.InstallPath)
+			if err != nil {
+				return fmt.Errorf("error: failed to create manifest: \n%w", err)
+			}
+			err = man.Write(res.InstallPath)
+			if err != nil {
+				return err
+			}
 			binPaths := man.GetFullExecPaths()
 
 			for _, execPath := range binPaths {

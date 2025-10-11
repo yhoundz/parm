@@ -17,8 +17,6 @@ import (
 	"github.com/google/go-github/v74/github"
 )
 
-// TODO: if download fails for some reason at any point, remove all traces of partially installed dirs
-// TODO: Check for dependencies after installation and bubble them up to the user
 // TODO: write tests/setup docker
 // TODO: create install scripts: .sh, .ps1, .fish
 // TODO: create section on how to add packages to parm in README.md
@@ -37,7 +35,8 @@ type InstallFlags struct {
 }
 
 type InstallResult struct {
-	Manifest *manifest.Manifest
+	InstallPath string
+	Version     string
 }
 
 func New(cli *github.RepositoriesService) *Installer {

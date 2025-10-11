@@ -21,7 +21,10 @@ type Updater struct {
 	installer installer.Installer
 }
 
-type UpdateResult installer.InstallResult
+type UpdateResult struct {
+	OldManifest *manifest.Manifest
+	*installer.InstallResult
+}
 
 type UpdateFlags struct {
 	Strict bool
@@ -53,6 +56,21 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, flags *Update
 		rel, _, err = up.client.GetLatestRelease(ctx, owner, repo)
 	case manifest.PreRelease:
 		rel, err = gh.GetLatestPreRelease(ctx, up.client, owner, repo)
+		// TODO: DRY @installer.go
+		if !flags.Strict {
+			// expensive!
+			relStable, _, err := up.client.GetLatestRelease(ctx, owner, repo)
+			if err != nil {
+				return nil, err
+			}
+
+			// TODO: abstract elsewhere cuz it's similar to updater.NeedsUpdate
+			currV, _ := semver.NewVersion(rel.GetTagName())
+			newV, _ := semver.NewVersion(relStable.GetTagName())
+			if newV.GreaterThan(currV) {
+				rel = relStable
+			}
+		}
 	}
 
 	newVer := rel.GetTagName()
@@ -78,7 +96,10 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, flags *Update
 	if err != nil {
 		return nil, err
 	}
-	actual := UpdateResult(*res)
+	actual := UpdateResult{
+		OldManifest:   man,
+		InstallResult: res,
+	}
 	return &actual, nil
 }
 

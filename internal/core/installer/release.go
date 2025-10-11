@@ -6,7 +6,6 @@ import (
 	"math"
 	"os"
 	"parm/internal/core/verify"
-	"parm/internal/manifest"
 	"parm/internal/parmutil"
 	"parm/pkg/archive"
 	"parm/pkg/progress"
@@ -50,14 +49,14 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 	// TODO: Cleanup() instead
 	defer os.RemoveAll(tmpDir)
 
-	dest := filepath.Join(tmpDir, ass.GetName()) // download destination
-	if err := downloadTo(ctx, dest, ass.GetBrowserDownloadURL(), hooks); err != nil {
+	archivePath := filepath.Join(tmpDir, ass.GetName()) // download destination
+	if err := downloadTo(ctx, archivePath, ass.GetBrowserDownloadURL(), hooks); err != nil {
 		return nil, fmt.Errorf("error: failed to download asset: \n%w", err)
 	}
 
 	// TODO: change based on actual verify-level
 	if opts.VerifyLevel > 0 {
-		ok, gen, err := verify.VerifyLevel1(dest, *ass.Digest)
+		ok, gen, err := verify.VerifyLevel1(archivePath, *ass.Digest)
 		if err != nil {
 			return nil, fmt.Errorf("error: could not verify checksum:\n%q", err)
 		}
@@ -67,43 +66,37 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 	}
 
 	switch {
-	case strings.HasSuffix(dest, ".tar.gz"), strings.HasSuffix(dest, ".tgz"):
-		if err := archive.ExtractTarGz(dest, tmpDir); err != nil {
+	case strings.HasSuffix(archivePath, ".tar.gz"), strings.HasSuffix(archivePath, ".tgz"):
+		if err := archive.ExtractTarGz(archivePath, tmpDir); err != nil {
 			return nil, fmt.Errorf("error: failed to extract tarball: \n%w", err)
 		}
-	case strings.HasSuffix(dest, ".zip"):
-		if err := archive.ExtractZip(dest, tmpDir); err != nil {
+	case strings.HasSuffix(archivePath, ".zip"):
+		if err := archive.ExtractZip(archivePath, tmpDir); err != nil {
 			return nil, fmt.Errorf("error: failed to extract zip: \n%w", err)
 		}
 	default:
 		if runtime.GOOS != "windows" {
-			if err := os.Chmod(dest, 0o755); err != nil {
+			if err := os.Chmod(archivePath, 0o755); err != nil {
 				return nil, fmt.Errorf("failed to make binary executable: \n%w", err)
 			}
 		}
 	}
 
-	_ = os.Remove(dest)
+	_ = os.Remove(archivePath)
 
 	// TODO: create manifest elsewhere for better separation of concerns?
 	// TODO: Return an InstallResult and let the CLI call a manifest writer service.
 	// will also help with symlinking
-	man, err := manifest.New(owner, repo, rel.GetTagName(), opts.Type, tmpDir)
-	if err != nil {
-		return nil, fmt.Errorf("error: failed to create manifest: \n%w", err)
-	}
-	err = man.Write(tmpDir)
-	if err != nil {
-		return nil, err
-	}
 
-	if _, err := parmutil.PromoteStagingDir(pkgPath, tmpDir); err != nil {
+	finalDir, err := parmutil.PromoteStagingDir(pkgPath, tmpDir)
+	if err != nil {
 		return nil, err
 	}
 	tmpDir = ""
 
 	return &InstallResult{
-		Manifest: man,
+		InstallPath: finalDir,
+		Version:     rel.GetTagName(),
 	}, nil
 }
 
