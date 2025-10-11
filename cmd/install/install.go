@@ -12,6 +12,7 @@ import (
 	"parm/internal/parmutil"
 	"parm/pkg/cmdparser"
 	"parm/pkg/cmdx"
+	"parm/pkg/deps"
 	"parm/pkg/progress"
 	"parm/pkg/sysutil"
 
@@ -44,7 +45,6 @@ var InstallCmd = &cobra.Command{
 			return fmt.Errorf("cannot resolve git repository from input: %s", args[0])
 		}
 
-		// TODO: if tag is a pre-release tag, use the pre-release release channel
 		if tag != "" {
 			confFlags := []string{"release", "pre-release"}
 			for _, flag := range confFlags {
@@ -54,6 +54,10 @@ var InstallCmd = &cobra.Command{
 			}
 			cmd.Flags().Set("release", tag)
 			args[0] = owner + "/" + repo
+		}
+
+		if !cmd.Flags().Changed("release") && !cmd.Flags().Changed("pre-release") {
+			cmd.Flags().Set("release", "")
 		}
 
 		if err := cmdx.MarkFlagsRequireFlag(cmd, "release", "asset"); err != nil {
@@ -104,6 +108,7 @@ var InstallCmd = &cobra.Command{
 			// INFO: do nothing, populate version later
 			version = nil
 		} else {
+			// release == ""
 			insType = manifest.Release
 			version = nil
 		}
@@ -155,9 +160,19 @@ var InstallCmd = &cobra.Command{
 			pathToSymLinkTo := parmutil.GetBinDir(man.Repo)
 
 			// TODO: use shims for windows instead?
-			_, err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)
+			err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)
 			if err != nil {
 				return err
+			}
+			deps, err := deps.GetMissingLibs(ctx, execPath)
+			if err != nil {
+				return err
+			}
+			if len(deps) > 0 {
+				fmt.Printf("required dependencies found for %s/%s:\n", owner, repo)
+				for _, dp := range deps {
+					fmt.Println(dp)
+				}
 			}
 		}
 

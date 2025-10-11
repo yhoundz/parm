@@ -1,10 +1,10 @@
-<h1 align="center">Parm 🧀</h1>
-<h4 align="center">Install any program from your terminal.</h4>
-<br>
-Parm is a <strong>pa</strong>ckage/<strong>r</strong>epository <strong>m</strong>anager that allows you to install any program binary from a github release and will manage it for you. It's designed to be lightweight, has zero root access, and requires no dependencies.
-<br><br>
+<div align="center">
+	<h1 align="center">🧀 Parm 🧀</h1>
+	<h4 align="center">Install any program from your terminal.</h4>
+	<br>
+</div>
 
-> [!WARNING]
+> [!IMPORTANT]
 > Parm is currently in a pre-release state. Expect breaking changes and bugs.
 
 **Table of Contents:**
@@ -46,21 +46,12 @@ For more detailed documentation, go to [Usage](#usage) or the [docs][#/docs/docs
 ### What is Parm?
 Parm is a cross-platform package manager that allows you to install any program off of GitHub via their REST API. Parm directly downloads binaries provided by GitHub repository releases and includes niceties such as symlinking binaries to PATH and checking for updates.
 
-This means that Parm:
+This means that Parm
 
 - has zero root access & zero required dependencies
 - requires no additional package maintainers
 - receives new versions upstream instantly.
 - is incredibly lightweight
-
-### Motivation
-My builtin package manager (apt) often has a lot of outdated packages. As such, if I wanted to install a recent release, I would have to either build it from source, use homebrew, or find some alternative installation method. While they're all acceptable solutions, I felt they were:
-
-- Too cumbersome (in the case of building from source)
-- Hard to work with (like homebrew, which can be difficult to install any other version except the latest release version. Even then, the version you want may not even be available)
-- Non-standardized (in the case of alternative install methods, such as esoteric install scripts)
-
-I just wanted a single, unified way to manage my installed programs without having to deal with stale versions on my OS package manager or having to installing packages in a non-standardized way.
 
 ### Disclaimers
 > [!CAUTION]
@@ -104,7 +95,12 @@ echo 'export GH_TOKEN=<your_token_here> >> ~/.bashrc'
 - You can also substitute `~/.bashrc` with your shell environment of choice (e.g. `~/.zshrc`)
 
 3. Parm will automatically use your token from your shell's environment variable.
-4. If Parm does not detect your token from your shell, you can set a fallback in the `github_api_token_fallback` in your config, which will be in `$XDG_CONFIG_HOME/parm/config.toml` 
+4. If Parm does not detect your token from your shell, you can set a fallback in the `github_api_token_fallback` in your config, which will be in `$XDG_CONFIG_HOME/parm/config.toml`
+
+To use the `github_api_token_fallback` instead, run the following command (with parm installed):
+```sh
+parm config set github_api_token_fallback=<token>
+```
 5. If no token is found, it will default to non-authenticated GitHub REST API usage, which defaults to 60 requests/hr.
 
 ## Usage
@@ -113,7 +109,7 @@ echo 'export GH_TOKEN=<your_token_here> >> ~/.bashrc'
 | ------------- | -------------- | -------------- |
 | `install` | `--release, --pre-release, --asset, --strict, --no-verify` | Installs a package. |
 | `uninstall` |  | Uninstalls a package. |
-| `update` |  | Updates a package. |
+| `update` | `--strict` | Updates a package. |
 | `list` |  | Lists the currently installed packages. |
 | `config` |  | Prints out the current config in parm's `config.toml` file. |
 | `config set` |  | Sets a `key=value` pair for a configuration setting. |

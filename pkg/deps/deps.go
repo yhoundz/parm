@@ -11,8 +11,8 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"parm/internal/parmutil"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 )
@@ -29,13 +29,8 @@ func HasExternalDep(dep string) error {
 	return nil
 }
 
-func GetMissingLibs(ctx context.Context, owner, repo string) ([]string, error) {
-	binPath := parmutil.GetInstallDir(owner, repo)
+func GetMissingLibs(ctx context.Context, binPath string) ([]string, error) {
 	if _, err := os.Stat(binPath); err != nil {
-		return nil, err
-	}
-
-	if dyn, err := isDynamicLinked(binPath); err != nil || !dyn {
 		return nil, err
 	}
 
@@ -49,98 +44,36 @@ func GetMissingLibs(ctx context.Context, owner, repo string) ([]string, error) {
 	default:
 		return getMissingLibsFallBack(binPath)
 	}
-
 }
 
+// uses objdump to find dynamically linked libs
 func getMissingLibsLinux(ctx context.Context, binPath string) ([]string, error) {
 	objdump := "objdump"
-	grep := "grep"
-
 	if err := HasExternalDep(objdump); err != nil {
 		return getMissingLibsFallBack(binPath)
 	}
-	if err := HasExternalDep(grep); err != nil {
-		return getMissingLibsFallBack(binPath)
-	}
 
-	objdumpCmd := exec.CommandContext(ctx, objdump, "-p", binPath)
-	grepCmd := exec.CommandContext(ctx, grep, "NEEDED")
-	pipe, err := objdumpCmd.StdoutPipe()
+	out, err := exec.CommandContext(ctx, objdump, "-p", "--", binPath).Output()
 	if err != nil {
 		return getMissingLibsFallBack(binPath)
 	}
 
-	var out bytes.Buffer
-	grepCmd.Stdin = pipe
-	grepCmd.Stdout = &out
-
-	objdumpCmd.Start()
-	grepCmd.Start()
-
-	objdumpCmd.Wait()
-	grepCmd.Wait()
-
-	deps, err := parseDepCmdUnix(out.Bytes())
-	if err != nil {
-		return getMissingLibsFallBack(binPath)
+	var deps []string
+	reg := regexp.MustCompile(`^\s*NEEDED\s+(.+)$`)
+	r := bytes.NewReader(out)
+	sc := bufio.NewScanner(r)
+	for sc.Scan() {
+		line := sc.Text()
+		if match := reg.FindStringSubmatch(line); len(match) == 2 {
+			trim := strings.TrimSpace(match[1])
+			deps = append(deps, trim)
+		}
 	}
+
 	return deps, nil
 }
 
-func isDynamicLinked(binPath string) (bool, error) {
-	switch runtime.GOOS {
-	case "windows":
-		return false, nil
-	case "darwin":
-		file, err := macho.Open(binPath)
-		defer file.Close()
-
-		if err != nil {
-			return false, fmt.Errorf("error: could not open macho binary:\n%w", err)
-		}
-
-	case "linux":
-		file, err := elf.Open(binPath)
-		defer file.Close()
-
-		if err != nil {
-			return false, fmt.Errorf("error: could not open linux binary:\n%w", err)
-		}
-
-		for _, ph := range file.Progs {
-			if ph.Type == elf.PT_INTERP {
-				return true, nil
-			}
-		}
-	default:
-		return false, fmt.Errorf("error: unsupported system")
-	}
-	return false, nil
-}
-
-func parseDepCmdUnix(output []byte) ([]string, error) {
-	var missingDeps []string
-	r := bytes.NewReader(output)
-	scanner := bufio.NewScanner(r)
-
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if !strings.Contains(line, "=> not found") {
-			continue
-		}
-
-		parts := strings.Fields(line)
-		if len(parts) > 0 {
-			missingDeps = append(missingDeps, parts[0])
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-	return missingDeps, nil
-}
-
+// uses otool to find dynamically linked libs
 func getMissingLibsDarwin(ctx context.Context, binPath string) ([]string, error) {
 	otool := "otool"
 	if err := HasExternalDep(otool); err != nil {
@@ -153,10 +86,33 @@ func getMissingLibsDarwin(ctx context.Context, binPath string) ([]string, error)
 		return getMissingLibsFallBack(binPath)
 	}
 
-	deps, err := parseDepCmdUnix(out)
-	if err != nil {
-		return getMissingLibsFallBack(binPath)
+	var deps []string
+	r := bytes.NewReader(out)
+	sc := bufio.NewScanner(r)
+	first := true
+	for sc.Scan() {
+		line := strings.TrimSpace(sc.Text())
+		if first {
+			first = false
+			continue
+		}
+
+		if line == "" {
+			continue
+		}
+
+		// skip fat headers
+		isFat := strings.HasSuffix(line, ":") && strings.Contains(line, "(architecture")
+		if isFat {
+			continue
+		}
+
+		if i := strings.Index(line, " ("); i > 0 {
+			name := strings.TrimSpace(line[:i])
+			deps = append(deps, name)
+		}
 	}
+
 	return deps, nil
 }
 
@@ -172,7 +128,7 @@ func getMissingLibsFallBack(path string) ([]string, error) {
 		if err != nil {
 			continue
 		}
-		if hasLib {
+		if !hasLib {
 			libs = append(libs, dep)
 		}
 	}
