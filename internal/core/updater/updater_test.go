@@ -78,3 +78,13 @@ func TestNeedsUpdate(t *testing.T) {
 		}
 	}
 }
+
+func TestNeedsUpdateErrors(t *testing.T) {
+	// invalid semver should error
+	if _, err := NeedsUpdate("not-semver", "1.0.0"); err == nil {
+		t.Fatalf("expected error for invalid current version")
+	}
+	if _, err := NeedsUpdate("1.0.0", "also-bad"); err == nil {
+		t.Fatalf("expected error for invalid latest version")
+	}
+}
