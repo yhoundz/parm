@@ -88,7 +88,7 @@ func ResolveReleaseByTag(ctx context.Context, client *github.RepositoriesService
 			return nil, fmt.Errorf("error: Cannot resolve release %s on %s/%s", *version, owner, repo)
 		}
 		if !valid {
-			return nil, fmt.Errorf("error: Release %s not valid, \n%w", *version, err)
+			return nil, fmt.Errorf("error: Release %s not valid", *version)
 		}
 		return rel, nil
 	} else {

@@ -108,14 +108,6 @@ func SymlinkBinToPath(binPath, destPath string) error {
 		return fmt.Errorf("error: provided dir is not a binary")
 	}
 
-	if err != nil {
-		return err
-	}
-
-	if err != nil {
-		return err
-	}
-
 	if _, err := os.Lstat(destPath); err == nil {
 		if err := os.Remove(destPath); err != nil {
 			return fmt.Errorf("failed to remove existing symlink at %s\n%w", destPath, err)

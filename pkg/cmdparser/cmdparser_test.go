@@ -124,3 +124,15 @@ func TestStringToString(t *testing.T) {
 		}
 	}
 }
+
+func TestBuildGitLink(t *testing.T) {
+	owner := "foo"
+	repo := "bar"
+	h, s := BuildGitLink(owner, repo)
+	if h != "https://github.com/foo/bar.git" {
+		t.Fatalf("unexpected https link: %s", h)
+	}
+	if s != "git@github.com:foo/bar.git" {
+		t.Fatalf("unexpected ssh link: %s", s)
+	}
+}
