@@ -63,15 +63,17 @@ var UpdateCmd = &cobra.Command{
 			// guaranteed to work now
 			owner, repo, _ := cmdparser.ParseRepoRef(pkg)
 
-			parentDir, _ := sysutil.GetParentDir(parmutil.GetInstallDir(owner, repo))
+			installPath := parmutil.GetInstallDir(owner, repo)
+			parentDir, _ := sysutil.GetParentDir(installPath)
 
-			res, err := up.Update(ctx, owner, repo, &flags, nil)
+			res, err := up.Update(ctx, owner, repo, installPath, &flags, nil)
 			if err != nil {
 				_ = parmutil.Cleanup(parentDir)
 				fmt.Printf("error: failed to update %s/%s\n", owner, repo)
 				continue
 			}
 
+			// Write new manifest
 			old := res.OldManifest
 			man, err := manifest.New(owner, repo, res.Version, old.InstallType, res.InstallPath)
 			if err != nil {
@@ -81,8 +83,9 @@ var UpdateCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			binPaths := man.GetFullExecPaths()
 
+			// Symlinked executables to PATH
+			binPaths := man.GetFullExecPaths()
 			for _, execPath := range binPaths {
 				pathToSymLinkTo := parmutil.GetBinDir(man.Repo)
 

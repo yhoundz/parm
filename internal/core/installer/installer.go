@@ -9,7 +9,6 @@ import (
 	"parm/internal/core/uninstaller"
 	"parm/internal/gh"
 	"parm/internal/manifest"
-	"parm/internal/parmutil"
 	"parm/pkg/progress"
 	"path/filepath"
 
@@ -45,10 +44,9 @@ func New(cli *github.RepositoriesService) *Installer {
 	}
 }
 
-func (in *Installer) Install(ctx context.Context, owner, repo string, opts InstallFlags, hooks *progress.Hooks) (*InstallResult, error) {
+func (in *Installer) Install(ctx context.Context, owner, repo string, installPath string, opts InstallFlags, hooks *progress.Hooks) (*InstallResult, error) {
 	// TODO: get installDir outside of install?
-	dest := parmutil.GetInstallDir(owner, repo)
-	f, _ := os.Stat(dest)
+	f, _ := os.Stat(installPath)
 	var err error
 
 	// if error is something else, ignore it for now and hope it propogates downwards if it's actually serious
@@ -89,7 +87,7 @@ func (in *Installer) Install(ctx context.Context, owner, repo string, opts Insta
 		}
 	}
 
-	return in.installFromRelease(ctx, dest, owner, repo, rel, opts, hooks)
+	return in.installFromRelease(ctx, installPath, owner, repo, rel, opts, hooks)
 }
 
 func downloadTo(ctx context.Context, destPath, url string, hooks *progress.Hooks) error {
