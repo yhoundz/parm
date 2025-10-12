@@ -17,8 +17,7 @@ import (
 )
 
 // TODO: write tests/setup docker
-// TODO: create install scripts: .sh, .ps1, .fish
-// TODO: create section on how to add packages to parm in README.md
+// TODO: create install scripts: .ps1, .fish
 // TODO: make readme prettier w/ html/css + CI/CD badges
 
 type Installer struct {
@@ -45,7 +44,6 @@ func New(cli *github.RepositoriesService) *Installer {
 }
 
 func (in *Installer) Install(ctx context.Context, owner, repo string, installPath string, opts InstallFlags, hooks *progress.Hooks) (*InstallResult, error) {
-	// TODO: get installDir outside of install?
 	f, _ := os.Stat(installPath)
 	var err error
 

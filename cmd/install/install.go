@@ -178,7 +178,6 @@ var InstallCmd = &cobra.Command{
 		}
 
 		fmt.Println()
-		// TODO: output for symlinking
 
 		return nil
 	},
