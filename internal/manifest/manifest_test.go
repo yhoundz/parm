@@ -22,9 +22,10 @@ func TestNew(t *testing.T) {
 
 	// Create a simple executable file
 	content := []byte{0x7f, 0x45, 0x4c, 0x46} // ELF magic
-	if runtime.GOOS == "darwin" {
+	switch runtime.GOOS {
+	case "darwin":
 		content = []byte{0xcf, 0xfa, 0xed, 0xfe} // Mach-O
-	} else if runtime.GOOS == "windows" {
+	case "windows":
 		content = []byte{0x4d, 0x5a} // PE
 	}
 	os.WriteFile(binPath, content, 0755)
@@ -198,9 +199,10 @@ func TestGetBinExecutables(t *testing.T) {
 	}
 
 	content := []byte{0x7f, 0x45, 0x4c, 0x46} // ELF magic
-	if runtime.GOOS == "darwin" {
+	switch runtime.GOOS {
+	case "darwin":
 		content = []byte{0xcf, 0xfa, 0xed, 0xfe}
-	} else if runtime.GOOS == "windows" {
+	case "windows":
 		content = []byte{0x4d, 0x5a}
 	}
 	os.WriteFile(binPath, content, 0755)

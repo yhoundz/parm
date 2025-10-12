@@ -34,7 +34,9 @@ For Windows users:
 To use parm:
 ```sh
 parm install <owner>/<repo> # installs a package
+
 parm remove <owner>/<repo> # uninstalls a package
+
 parm update <owner>/<repo> # to update a package
 ```
 

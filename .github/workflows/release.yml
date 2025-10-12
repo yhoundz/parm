@@ -1,0 +1,46 @@
+name: release
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Ensure packaging tools
+        shell: bash
+        run: |
+          for tool in zip; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              need_install=1
+            fi
+          done
+          if [ "${need_install:-}" = "1" ]; then
+            sudo apt-get update
+            sudo apt-get install -y zip
+          fi
+
+      - name: Build cross-platform artifacts with embedded version
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: make release
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            bin/parm-linux-amd64.tar.gz
+            bin/parm-darwin-amd64.tar.gz
+            bin/parm-windows-amd64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
