@@ -64,3 +64,6 @@ build-windows: | $(OUTPUT_DIR)
 # Clean up build artifacts
 clean:
 	rm -rf $(OUTPUT_DIR)
+
+format:
+	gofmt -w .

@@ -123,7 +123,7 @@ For more detailed documentation, see the [docs](/docs/usage.md).
 ## Contributing
 Parm is in a very early state, so any and all PRs are welcome. If you want to contribute to a new feature not already on the [roadmap](/docs/roadmap.md), please [create an issue](https://github.com/yhoundz/parm/issues/new) first, or check if an issue has already been created for it.
 
-Before making a contribution, read over the [contributing guidelines](CONTRIBUTING.md) as well as the [code of conduct](CODE_OF_CONDUCT.md).
+Before making a contribution, read over the [contributing guidelines](.github/CONTRIBUTING.md) as well as the [code of conduct](.github/CODE_OF_CONDUCT.md).
 
 ## Adding Packages to Parm
 If you want to make your Github Repo to be installable via Parm, ensure the following:
