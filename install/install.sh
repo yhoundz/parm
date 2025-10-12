@@ -161,10 +161,21 @@ if [ -n "${need_add:-}" ]; then
   fi
 fi
 
+# pick a profile regardless of PATH logic
+if [ -f "$HOME/.zshrc" ]; then
+  profile="$HOME/.zshrc"
+elif [ -f "$HOME/.bashrc" ]; then
+  profile="$HOME/.bashrc"
+elif [ -f "$HOME/.profile" ]; then
+  profile="$HOME/.profile"
+else
+  profile="$HOME/.profile"
+fi
+
 if [ -n "${GITHUB_TOKEN:-}" ]; then
   if [ "${WRITE_TOKEN:-}" = "1" ]; then
     echo 'export GITHUB_TOKEN='"$GITHUB_TOKEN" >> "$profile"
-    echo "Wrote GITHUB_TOKEN to $(basename "$profile"). Open a new shell to use it."
+	echo "Wrote GITHUB_TOKEN to $(basename "$profile"). Open a new shell or run source $HOME/$(basename "$profile")"
   else
     echo "Tip: persist your token:"
     echo "  echo 'export GITHUB_TOKEN=…' >> $profile"
