@@ -84,7 +84,7 @@ http_download() {
 }
 
 latest_tag="$(http_get "https://api.github.com/repos/yhoundz/parm/releases/latest" \
-  | sed -n 's/.*\"tag_name\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p' | head -n1)"
+  | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
 [ -n "$latest_tag" ] || { echo "error: could not resolve latest version" >&2; exit 1; }
 
 try_url() {
