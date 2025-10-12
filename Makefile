@@ -20,10 +20,10 @@ $(OUTPUT_DIR):
 
 # Default target (build all platforms and create tarballs/zips)
 all: build
-release: build-linux build-darwin build-windows
+release: release-linux release-darwin release-windows
 
 build: | $(OUTPUT_DIR)
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)-$(GOOS)-$(GOARCH)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)
 
 debug: | $(OUTPUT_DIR)
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="$(DEBUG_FLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)
@@ -33,33 +33,32 @@ test:
 	@echo "Running tests..."
 	go test ./...
 
-# TODO: include setting release global variables and versioning
 # Build and create tarball for Linux
-build-linux: | $(OUTPUT_DIR)
+release-linux: | $(OUTPUT_DIR)
 	@echo "Building for Linux..."
-	GOOS=linux GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)-linux-amd64
+	GOOS=linux GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)
 	@echo "Creating tarball for Linux..."
-	tar -czvf $(OUTPUT_DIR)/$(BINARY_NAME)-linux-amd64.tar.gz -C $(OUTPUT_DIR) $(BINARY_NAME)-linux-amd64
+	tar -czvf $(OUTPUT_DIR)/$(BINARY_NAME)-linux-amd64.tar.gz -C $(OUTPUT_DIR) $(BINARY_NAME)
 	@echo "Deleting binary for Linux..."
-	rm -f $(OUTPUT_DIR)/$(BINARY_NAME)-linux-amd64
+	rm -f $(OUTPUT_DIR)/$(BINARY_NAME)
 
 # Build and create tarball for macOS (Darwin)
-build-darwin: | $(OUTPUT_DIR)
+release-darwin: | $(OUTPUT_DIR)
 	@echo "Building for macOS..."
-	GOOS=darwin GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-amd64
+	GOOS=darwin GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)
 	@echo "Creating tarball for macOS..."
-	tar -czvf $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-amd64.tar.gz -C $(OUTPUT_DIR) $(BINARY_NAME)-darwin-amd64
+	tar -czvf $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-amd64.tar.gz -C $(OUTPUT_DIR) $(BINARY_NAME)
 	@echo "Deleting binary for macOS..."
-	rm -f $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-amd64
+	rm -f $(OUTPUT_DIR)/$(BINARY_NAME)
 
 # Build and create zip file for Windows
-build-windows: | $(OUTPUT_DIR)
+release-windows: | $(OUTPUT_DIR)
 	@echo "Building for Windows..."
-	GOOS=windows GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)-windows-amd64.exe
+	GOOS=windows GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME).exe
 	@echo "Creating zip file for Windows..."
-	zip -r $(OUTPUT_DIR)/$(BINARY_NAME)-windows-amd64.zip $(OUTPUT_DIR)/$(BINARY_NAME)-windows-amd64.exe
+	zip -r $(OUTPUT_DIR)/$(BINARY_NAME)-windows-amd64.zip $(OUTPUT_DIR)/$(BINARY_NAME).exe
 	@echo "Deleting binary for Windows..."
-	rm -f $(OUTPUT_DIR)/$(BINARY_NAME)-windows-amd64.exe
+	rm -f $(OUTPUT_DIR)/$(BINARY_NAME).exe
 
 # Clean up build artifacts
 clean:
