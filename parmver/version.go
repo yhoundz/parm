@@ -41,7 +41,7 @@ func init() {
 	chstr := ver.Prerelease()
 	var channel Channel
 	switch chstr {
-	case "stable":
+	case "stable", "":
 		channel = Stable
 	case "dev":
 		channel = Dev
