@@ -151,7 +151,7 @@ If you want to make your Github Repo to be installable via Parm, ensure the foll
 	- This is important, since some GitHub repositories don't actually do this (e.g. tmux/tmux only provides source code in their releases).
 
 That's it! Your program is now compatible with Parm. To ensure maximized compatibility, I strongly recommend the following:
-- Asset names must follow the convention: <program-name>-<OS-name>-<arch-name>.<file-extension>
+- Asset names must follow the convention: \<program-name>-\<OS-name>-\<arch-name>.\<file-extension>
 	- For example, "parm-linux-amd64.tar.gz" follows this convention.
 - Ensure that your program has no external dependencies, or requires no dependencies that aren't usually pre-installed on most users' machines.
 	- This is because Parm's dependency resolution is very weak right now, due to how the program was designed, and how it's quite difficult to find dependencies programmatically without being given them explicitly (like how other package managers do this).
