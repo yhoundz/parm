@@ -42,7 +42,9 @@ jobs:
         with:
           files: |
             bin/parm-linux-amd64.tar.gz
+            bin/parm-linux-arm64.tar.gz
             bin/parm-darwin-amd64.tar.gz
+            bin/parm-darwin-arm64.tar.gz
             bin/parm-windows-amd64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
