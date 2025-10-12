@@ -258,10 +258,10 @@ func createTestZip(t *testing.T, path string, files map[string]string) {
 		t.Fatal(err)
 	}
 	defer f.Close()
-	
+
 	zw := zip.NewWriter(f)
 	defer zw.Close()
-	
+
 	for name, content := range files {
 		// Create file header with proper permissions
 		fh := &zip.FileHeader{
@@ -269,7 +269,7 @@ func createTestZip(t *testing.T, path string, files map[string]string) {
 			Method: zip.Deflate,
 		}
 		fh.SetMode(0644) // Set readable permissions
-		
+
 		fw, err := zw.CreateHeader(fh)
 		if err != nil {
 			t.Fatal(err)
