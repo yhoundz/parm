@@ -29,13 +29,10 @@
 ## Quick Start
 To install Parm on Linux/macOS: run the following command:
 ```sh
-# todo, likely something like curl -fsSL <install_script>.sh | sh
+curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/install/install.sh | sh
 ```
 
-For Windows users:
-```ps1
-# todo, something like iex <script>
-```
+Windows is currently not fully supported, but will be coming soon. You can install the binaries manually in the releases tab.
 
 To use parm:
 ```sh
@@ -85,7 +82,17 @@ This means that Parm
 2. *(optional)* Must have a **free** GitHub personal access token with access to PUBLIC repositories. Go [here](#adding-a-github-personal-access-token) to find out how to add an access token.
 
 ## Install
-TODO
+To install Parm on Linux/macOS: run the following command:
+```sh
+curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/install/install.sh | sh
+```
+
+You can also set the `GITHUB_TOKEN` option to use your GitHub API Key to bypass rate limits:
+```sh
+GITHUB_TOKEN=<YOUR_TOKEN> curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/install/install.sh | sh
+```
+
+Windows is currently not fully supported, but will be coming soon. You can install the binaries manually in the releases tab.
 
 ## Adding a GitHub Personal Access Token
 > [!IMPORTANT]

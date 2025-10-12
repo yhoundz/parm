@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-set -euo pipefail
+set -eu
 
 # Minimal installer for parm (Linux/macOS). Installs latest release.
 # Installs to OS-appropriate data dir and adds <prefix>/bin to PATH.
