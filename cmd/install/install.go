@@ -27,6 +27,8 @@ var asset string
 var strict bool
 var no_verify bool
 
+var NewProvider = gh.New
+
 // installCmd represents the install command
 var InstallCmd = &cobra.Command{
 	Use:   "install <owner>/<repo>@[release-tag]",
@@ -70,7 +72,7 @@ var InstallCmd = &cobra.Command{
 
 		ctx := cmd.Context()
 		token, _ := gh.GetStoredApiKey(viper.GetViper())
-		client := gh.New(ctx, token).Repos()
+		client := NewProvider(ctx, token).Repos()
 
 		inst := installer.New(client)
 

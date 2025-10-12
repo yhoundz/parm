@@ -14,6 +14,8 @@ import (
 
 var query string
 
+var NewProvider = gh.New
+
 // searchCmd represents the search command
 var SearchCmd = &cobra.Command{
 	Use:   "search",
@@ -32,7 +34,7 @@ var SearchCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		client := gh.New(ctx, token)
+		client := NewProvider(ctx, token)
 		var opts = catalog.RepoSearchOptions{
 			Key:   nil,
 			Query: nil,

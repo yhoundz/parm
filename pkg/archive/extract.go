@@ -98,14 +98,14 @@ func ExtractZip(srcPath, destPath string) error {
 		}
 
 		if f.FileInfo().IsDir() {
-			os.MkdirAll(fpath, f.Mode())
+			os.MkdirAll(fpath, 0o755)
 		} else {
 			var fdir string
 			if lastIndex := strings.LastIndex(fpath, string(os.PathSeparator)); lastIndex > -1 {
 				fdir = fpath[:lastIndex]
 			}
 
-			err = os.MkdirAll(fdir, f.Mode())
+			err = os.MkdirAll(fdir, 0o755)
 			if err != nil {
 				return err
 			}

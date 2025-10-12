@@ -15,6 +15,8 @@ import (
 
 var getUpstream bool
 
+var NewProvider = gh.New
+
 var InfoCmd = &cobra.Command{
 	Use:   "info <owner>/<repo>",
 	Short: "Prints out information about a package",
@@ -26,7 +28,7 @@ var InfoCmd = &cobra.Command{
 		if err != nil {
 			fmt.Printf("%s\ncontinuing without api key", err)
 		}
-		client := gh.New(ctx, token).Repos()
+		client := NewProvider(ctx, token).Repos()
 		var owner, repo string
 
 		owner, repo, err = cmdparser.ParseRepoRef(pkg)

@@ -22,9 +22,26 @@ type client struct {
 func (cli *client) Repos() *github.RepositoriesService { return cli.c.Repositories }
 func (cli *client) Search() *github.SearchService      { return cli.c.Search }
 
-func New(ctx context.Context, token string) Provider {
-	var hc *http.Client = nil
-	if token != "" {
+type Option func(*clientOptions)
+
+type clientOptions struct {
+	hc *http.Client
+}
+
+func WithHTTPClient(hc *http.Client) Option {
+	return func(c *clientOptions) {
+		c.hc = hc
+	}
+}
+
+func New(ctx context.Context, token string, opts ...Option) Provider {
+	var cliOpts clientOptions
+	for _, opt := range opts {
+		opt(&cliOpts)
+	}
+
+	hc := cliOpts.hc
+	if hc == nil && token != "" {
 		src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 		hc = oauth2.NewClient(ctx, src)
 	}

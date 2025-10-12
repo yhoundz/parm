@@ -56,12 +56,15 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 
 	// TODO: change based on actual verify-level
 	if opts.VerifyLevel > 0 {
+		if ass.Digest == nil {
+			return nil, fmt.Errorf("error: no upstream digest available for %q; re-run with --no-verify", ass.GetName())
+		}
 		ok, gen, err := verify.VerifyLevel1(archivePath, *ass.Digest)
 		if err != nil {
 			return nil, fmt.Errorf("error: could not verify checksum:\n%q", err)
 		}
 		if !ok {
-			return nil, fmt.Errorf("fatal: checksum invalid:\n	had %s\n	wanted %s", *gen, *ass.Digest)
+			return nil, fmt.Errorf("fatal: checksum invalid:\n\thad %s\n\twanted %s", *gen, *ass.Digest)
 		}
 	}
 

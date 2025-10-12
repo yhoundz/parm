@@ -26,7 +26,9 @@ build: | $(OUTPUT_DIR)
 debug: | $(OUTPUT_DIR)
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="$(DEBUG_FLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)
 
+.PHONY: test
 test:
+	@echo "Running tests..."
 	go test ./...
 
 # TODO: include setting release global variables and versioning

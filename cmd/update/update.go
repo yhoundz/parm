@@ -20,6 +20,8 @@ import (
 
 var strict bool
 
+var NewProvider = gh.New
+
 // updateCmd represents the update command
 var UpdateCmd = &cobra.Command{
 	Use:   "update <owner>/<repo>",
@@ -45,7 +47,7 @@ var UpdateCmd = &cobra.Command{
 		if err != nil {
 			fmt.Printf("%s\ncontinuing without api key.\n", err)
 		}
-		client := gh.New(ctx, token).Repos()
+		client := NewProvider(ctx, token).Repos()
 		inst := installer.New(client)
 		up := updater.New(client, inst)
 		updated := make(map[string]bool)
