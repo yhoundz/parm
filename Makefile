@@ -1,7 +1,8 @@
 # Makefile
 
 # Define default Go build flags
-LDFLAGS = -s -w
+VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null || echo v0.0.0-dev)
+LDFLAGS = -s -w -X 'parm/parmver.StringVersion=$(VERSION)'
 DEBUG_FLAGS =
 
 # Set GoOS and GoARCH (can override in command line)
@@ -18,7 +19,8 @@ $(OUTPUT_DIR):
 	mkdir -p $(OUTPUT_DIR)
 
 # Default target (build all platforms and create tarballs/zips)
-all: build-linux build-darwin build-windows
+all: build
+release: build-linux build-darwin build-windows
 
 build: | $(OUTPUT_DIR)
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)-$(GOOS)-$(GOARCH)
