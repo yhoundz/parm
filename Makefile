@@ -33,22 +33,32 @@ test:
 	@echo "Running tests..."
 	go test ./...
 
-# Build and create tarball for Linux
+# Build and create tarball for Linux (amd64 + arm64)
 release-linux: | $(OUTPUT_DIR)
-	@echo "Building for Linux..."
-	GOOS=linux GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)
-	@echo "Creating tarball for Linux..."
+	@echo "Building for Linux amd64..."
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)
+	@echo "Creating tarball for Linux amd64..."
 	tar -czvf $(OUTPUT_DIR)/$(BINARY_NAME)-linux-amd64.tar.gz -C $(OUTPUT_DIR) $(BINARY_NAME)
-	@echo "Deleting binary for Linux..."
 	rm -f $(OUTPUT_DIR)/$(BINARY_NAME)
 
-# Build and create tarball for macOS (Darwin)
+	@echo "Building for Linux arm64..."
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)
+	@echo "Creating tarball for Linux arm64..."
+	tar -czvf $(OUTPUT_DIR)/$(BINARY_NAME)-linux-arm64.tar.gz -C $(OUTPUT_DIR) $(BINARY_NAME)
+	rm -f $(OUTPUT_DIR)/$(BINARY_NAME)
+
+# Build and create tarball for macOS (amd64 + arm64)
 release-darwin: | $(OUTPUT_DIR)
-	@echo "Building for macOS..."
-	GOOS=darwin GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)
-	@echo "Creating tarball for macOS..."
+	@echo "Building for macOS amd64..."
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)
+	@echo "Creating tarball for macOS amd64..."
 	tar -czvf $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-amd64.tar.gz -C $(OUTPUT_DIR) $(BINARY_NAME)
-	@echo "Deleting binary for macOS..."
+	rm -f $(OUTPUT_DIR)/$(BINARY_NAME)
+
+	@echo "Building for macOS arm64..."
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="$(LDFLAGS)" -o $(OUTPUT_DIR)/$(BINARY_NAME)
+	@echo "Creating tarball for macOS arm64..."
+	tar -czvf $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-arm64.tar.gz -C $(OUTPUT_DIR) $(BINARY_NAME)
 	rm -f $(OUTPUT_DIR)/$(BINARY_NAME)
 
 # Build and create zip file for Windows

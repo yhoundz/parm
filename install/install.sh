@@ -4,6 +4,7 @@ set -eu
 # Minimal installer for parm (Linux/macOS). Installs latest release.
 # Installs to OS-appropriate data dir and adds <prefix>/bin to PATH.
 # Optional: GITHUB_TOKEN to avoid API rate limiting.
+# Optional: Use WRITE_TOKEN=1 to write the API key to the shell profile
 
 need_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "error: need $1" >&2; exit 1; }; }
 need_cmd uname
@@ -157,6 +158,17 @@ if [ -n "${need_add:-}" ]; then
   # Fish note (no file edits)
   if [ "$sh_name" = "fish" ]; then
     echo "note: for fish, run: fish_add_path \"$bin_dir\"" >&2
+  fi
+fi
+
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+  if [ "${WRITE_TOKEN:-}" = "1" ]; then
+    echo 'export GITHUB_TOKEN='"$GITHUB_TOKEN" >> "$profile"
+    echo "Wrote GITHUB_TOKEN to $(basename "$profile"). Open a new shell to use it."
+  else
+    echo "Tip: persist your token:"
+    echo "  echo 'export GITHUB_TOKEN=…' >> $profile"
+    echo "  or: parm config set github_api_token_fallback=…"
   fi
 fi
 
