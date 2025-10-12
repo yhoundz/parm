@@ -135,7 +135,8 @@ var InstallCmd = &cobra.Command{
 
 		fmt.Printf("installing %s/%s\n", owner, repo)
 
-		res, err := inst.Install(ctx, owner, repo, opts, hooks)
+		installPath := parmutil.GetInstallDir(owner, repo)
+		res, err := inst.Install(ctx, owner, repo, installPath, opts, hooks)
 		if err != nil {
 			parentDir, _ := sysutil.GetParentDir(res.InstallPath)
 			_ = parmutil.Cleanup(parentDir)

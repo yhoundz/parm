@@ -62,13 +62,13 @@ This means that Parm
 
 
 ## Pre-requisites
-1. *(optional)* Must have `objdump`, `grep` on Linux or `otool` on macOS installed and added to PATH
+1. *(optional)* Must have `objdump` on Linux or `otool` on macOS installed and added to PATH
     - Parm may use these tools to search for potential dependencies on installed programs. 
         - Parm will not try to search for dependencies on Windows at the moment.
         - On Linux, `ldd` is not used since some implementations of it may execute the program to find dependencies. This is more accurate than using `objdump` or `readelf`, but poses a bigger security risk given the scope and design of this project.
-    - `objdump`, `grep` and `otool` should already be installed and added to PATH on your machine. You can check this by running
+    - `objdump` and `otool` should already be installed and added to PATH on your machine. You can check this by running
     ```sh
-    which objdump grep
+    which objdump
     ```
     or
     ```sh

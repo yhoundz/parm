@@ -38,7 +38,7 @@ func New(cli *github.RepositoriesService, rel *installer.Installer) *Updater {
 }
 
 // TODO: update concurrently?
-func (up *Updater) Update(ctx context.Context, owner, repo string, flags *UpdateFlags, hooks *progress.Hooks) (*UpdateResult, error) {
+func (up *Updater) Update(ctx context.Context, owner, repo string, installPath string, flags *UpdateFlags, hooks *progress.Hooks) (*UpdateResult, error) {
 	installDir := parmutil.GetInstallDir(owner, repo)
 	man, err := manifest.Read(installDir)
 
@@ -64,7 +64,7 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, flags *Update
 				return nil, err
 			}
 
-			// TODO: abstract elsewhere cuz it's similar to updater.NeedsUpdate
+			// TODO: abstract elsewhere cuz it's similar to updater.NeedsUpdate?
 			currV, _ := semver.NewVersion(rel.GetTagName())
 			newV, _ := semver.NewVersion(relStable.GetTagName())
 			if newV.GreaterThan(currV) {
@@ -92,7 +92,7 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, flags *Update
 		VerifyLevel: 0,
 	}
 
-	res, err := up.installer.Install(ctx, owner, repo, opts, hooks)
+	res, err := up.installer.Install(ctx, owner, repo, installPath, opts, hooks)
 	if err != nil {
 		return nil, err
 	}
