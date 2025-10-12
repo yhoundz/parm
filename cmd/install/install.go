@@ -15,6 +15,7 @@ import (
 	"parm/pkg/deps"
 	"parm/pkg/progress"
 	"parm/pkg/sysutil"
+	"path/filepath"
 
 	"fortio.org/progressbar"
 	"github.com/spf13/cobra"
@@ -157,7 +158,7 @@ var InstallCmd = &cobra.Command{
 		binPaths := man.GetFullExecPaths()
 
 		for _, execPath := range binPaths {
-			pathToSymLinkTo := parmutil.GetBinDir(man.Repo)
+			pathToSymLinkTo := parmutil.GetBinDir(filepath.Base(execPath))
 
 			// TODO: use shims for windows instead?
 			err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)
