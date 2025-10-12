@@ -129,56 +129,53 @@ mv -f "$src" "$bin_dir/parm"
 
 echo "Installed: $bin_dir/parm"
 
-# Ensure <prefix>/bin in PATH
-ensure_line='export PATH="'"$bin_dir"':$PATH"'
-case ":$PATH:" in
-  *:"$bin_dir":*) need_add="" ;;
-  *) need_add="1" ;;
-esac
-
-if [ -n "${need_add:-}" ]; then
-  sh_name="$(basename "${SHELL:-}")"
-  case "$sh_name" in
-    bash) profile="$HOME/.bashrc" ;;
-    zsh)  profile="$HOME/.zshrc" ;;
-    ksh)  profile="$HOME/.kshrc" ;;
-    *)    profile="$HOME/.profile" ;;
-  esac
-
-  if [ -f "$profile" ]; then
-    if ! grep -qs "$bin_dir" "$profile"; then
-      printf "\n# Added by parm installer\n%s\n" "$ensure_line" >> "$profile"
-      echo "Added $bin_dir to PATH in $(basename "$profile"). Open a new shell to use it."
-    fi
+# Pick a profile once (used for PATH and optional token persistence)
+if [ -z "${profile:-}" ]; then
+  if [ -f "$HOME/.zshrc" ]; then
+    profile="$HOME/.zshrc"
+  elif [ -f "$HOME/.bashrc" ]; then
+    profile="$HOME/.bashrc"
+  elif [ -f "$HOME/.profile" ]; then
+    profile="$HOME/.profile"
   else
-    printf "%s\n" "$ensure_line" > "$profile"
-    echo "Created $(basename "$profile") and added PATH. Open a new shell to use it."
-  fi
-
-  # Fish note (no file edits)
-  if [ "$sh_name" = "fish" ]; then
-    echo "note: for fish, run: fish_add_path \"$bin_dir\"" >&2
+    profile="$HOME/.profile"
   fi
 fi
 
-# pick a profile regardless of PATH logic
-if [ -f "$HOME/.zshrc" ]; then
-  profile="$HOME/.zshrc"
-elif [ -f "$HOME/.bashrc" ]; then
-  profile="$HOME/.bashrc"
-elif [ -f "$HOME/.profile" ]; then
-  profile="$HOME/.profile"
-else
-  profile="$HOME/.profile"
+# Ensure <prefix>/bin is in PATH; avoid duplicates by checking env and profile content
+ensure_line='export PATH="'"$bin_dir"':$PATH"'
+
+need_add_env=1
+case ":$PATH:" in
+  *:"$bin_dir":*) need_add_env=0 ;;
+esac
+
+need_add_profile=1
+if [ -f "$profile" ]; then
+  if grep -qs "$bin_dir" "$profile"; then
+    need_add_profile=0
+  fi
+fi
+
+if [ "$need_add_env" -eq 1 ] || [ "$need_add_profile" -eq 1 ]; then
+  if [ ! -f "$profile" ]; then
+    printf "%s\n" "$ensure_line" > "$profile"
+    echo "Created $(basename "$profile") and added PATH. Open a new shell to use it."
+  else
+    if [ "$need_add_profile" -eq 1 ]; then
+      printf "\n# Added by parm installer\n%s\n" "$ensure_line" >> "$profile"
+      echo "Added $bin_dir to PATH in $(basename "$profile"). Open a new shell to use it."
+    fi
+  fi
 fi
 
 if [ -n "${GITHUB_TOKEN:-}" ]; then
   if [ "${WRITE_TOKEN:-}" = "1" ]; then
-    echo 'export GITHUB_TOKEN='"$GITHUB_TOKEN" >> "$profile"
-	echo "Wrote GITHUB_TOKEN to $(basename "$profile"). Open a new shell or run source $HOME/$(basename "$profile")"
+    echo "export GITHUB_TOKEN=$GITHUB_TOKEN" >> "$profile"
+    echo "Wrote GITHUB_TOKEN to $(basename "$profile"). Open a new shell or run: . \"$profile\""
   else
-    echo "Tip: persist your token:"
-    echo "  echo 'export GITHUB_TOKEN=…' >> $profile"
+    echo "Add your GitHub API Key to your shell profile via the following:"
+    echo "  echo 'export GITHUB_TOKEN=…' >> \"$profile\""
     echo "  or: parm config set github_api_token_fallback=…"
   fi
 fi
