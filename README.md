@@ -1,15 +1,10 @@
 <div align="center">
 	<h1 align="center">🧀 Parm 🧀</h1>
 	<h4 align="center">Install any program from your terminal.</h4>
-	<a href="https://www.gnu.org/licenses/gpl-3.0">
-		<img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt = "License: GPL v3"
-	</a>
-	<a href="https://github.com/yhoundz/parm/actions/workflows/ci.yml">
-    	<img src="https://github.com/yhoundz/parm/actions/workflows/ci.yml/badge.svg?branch=master" alt="ci">
-	</a>
-	<a href="https://github.com/yhoundz/parm/actions/workflows/release.yml">
-    	<img src="https://github.com/yhoundz/parm/actions/workflows/release.yml/badge.svg" alt="release">
-	</a>
+	<a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
+	<img alt="GitHub Release" src="https://img.shields.io/github/v/release/yhoundz/parm">
+	<a href="https://github.com/yhoundz/parm/actions/workflows/ci.yml"><img src="https://github.com/yhoundz/parm/actions/workflows/ci.yml/badge.svg?branch=master" alt="ci"></a>
+	<a href="https://github.com/yhoundz/parm/actions/workflows/release.yml"><img src="https://github.com/yhoundz/parm/actions/workflows/release.yml/badge.svg" alt="release"></a>
 	<br>
 </div>
 
