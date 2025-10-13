@@ -71,10 +71,10 @@ func (c Channel) String() string {
 func (v Version) String() string {
 	switch v.channel {
 	case Dev:
-		return fmt.Sprintf("%d.%d.%d-%s", v.major, v.minor, v.patch, v.channel.String())
+		return fmt.Sprintf("v%d.%d.%d-%s", v.major, v.minor, v.patch, v.channel.String())
 	case Stable:
-		return fmt.Sprintf("%d.%d.%d", v.major, v.minor, v.patch)
+		return fmt.Sprintf("v%d.%d.%d", v.major, v.minor, v.patch)
 	default:
-		return fmt.Sprintf("%d.%d.%d-%s", v.major, v.minor, v.patch, Unknown.String())
+		return fmt.Sprintf("v%d.%d.%d-%s", v.major, v.minor, v.patch, Unknown.String())
 	}
 }

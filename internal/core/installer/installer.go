@@ -16,10 +16,6 @@ import (
 	"github.com/google/go-github/v74/github"
 )
 
-// TODO: write tests/setup docker
-// TODO: create install scripts: .ps1, .fish
-// TODO: make readme prettier w/ html/css + CI/CD badges
-
 type Installer struct {
 	client *github.RepositoriesService
 }

@@ -47,7 +47,7 @@ For more detailed documentation, go to [Usage](#usage) or the [docs](#/docs/docs
 ## Introduction
 
 ### What is Parm?
-Parm is a cross-platform package manager that allows you to install any program off of GitHub via their REST API. Parm directly downloads binaries provided by GitHub repository releases and includes niceties such as symlinking binaries to PATH and checking for updates.
+Parm is a cross-platform binary installer with a package manager-esque workflow. It allows you to install any program off of GitHub via their REST API. Parm directly downloads binaries provided by GitHub repository releases and includes niceties such as symlinking binaries to PATH and checking for updates.
 
 This means that Parm
 
@@ -60,9 +60,11 @@ This means that Parm
 > [!CAUTION]
 > Parm uses the GitHub REST API to find and install packages. Theoretically, this means you can install any program off of GitHub, so ***YOU*** are responsible for the packages you install, since I don't maintain a registry of vetted packages.
 
-> [!NOTE]
-> Parm is *not* intended to replace your system/OS-level package manager (think apt, pacman, or anything that can install low-level libraries, tools, or services). In general, it is closer to programs like homebrew, as it is meant to install more high-level, user-facing applications such as neovim.
+> [!WARNING]
+> Unlike most package managers, Parm does NOT automatically resolve/install dependencies for you. This is a limitation of GitHub and the program's design. The current behavior is to use a tool such as `objdump` or `otool` to search for dynamically linked dependencies and tell you about them, but there is no way to automatically install them as of right now.
 
+> [!NOTE]
+> Parm is *not* intended to replace your system/OS-level package manager (think apt, pacman, or anything that can install low-level libraries, tools, or services). In general, it is designed to be a complement to your current package manager, as it is meant to install more high-level, user-facing applications.
 
 ## Pre-requisites
 1. *(optional)* Must have `objdump` on Linux or `otool` on macOS installed and added to PATH
@@ -87,7 +89,12 @@ curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/install/install
 
 You can also set the `GITHUB_TOKEN` option to use your GitHub API Key to bypass rate limits:
 ```sh
-GITHUB_TOKEN=<YOUR_TOKEN> curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/install/install.sh | sh
+GITHUB_TOKEN=YOUR_TOKEN curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/install/install.sh | sh
+```
+
+In addition, you can also specify that the `GITHUB_TOKEN` you pass in will the same token you want to use for Parm by setting `WRITE_TOKEN=1`
+```sh
+GITHUB_TOKEN=YOUR_TOKEN WRITE_TOKEN=1 curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/install/install.sh | sh
 ```
 
 Windows is currently not fully supported, but will be coming soon. You can install the binaries manually in the releases tab.
@@ -161,3 +168,7 @@ While not the direct inspirations for Parm, here are some projects that helped s
 - [homebrew](https://brew.sh/)
 - [asdf](https://asdf-vm.com/)
 - [lazy.nvim](https://lazy.folke.io/).
+
+Similar projects:
+- [ubi](https://github.com/houseabsolute/ubi)
+- [eget](https://github.com/zyedidia/eget)

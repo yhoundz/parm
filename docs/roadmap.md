@@ -21,9 +21,11 @@ Below are a list of planned features and improvements:
 		* User-provided hash gets compared to upstream pre-download
 		* Generated hash gets compared to upstream post-download (pre-extraction)
 		* Computed hash of untarred/unzipped files gets compared to upstream post-extraction (this is moreso a file integrity check more than a security check)
+- Create .ps1 and .fish install scripts.
 
 ### General Improvements
 - Vetting/replacing AI-generated tests with better ones, more test coverage.
+- Create containerized tests via Docker.
 - Refactor CLI commands to be generated via a method, not statically
 - Logging to a file, both informational and error logging.
 	- Replacing fmt.Println(), logging instead which will write to stdout and a file

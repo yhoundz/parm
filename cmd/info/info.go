@@ -13,6 +13,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+// TODO: get rid of all this NewProvider bs and replace with a factory pattern
+// TODO: don't retrive package info from GitHub if it doesn't have any releases.
+// TODO: don't error out if trying to retrieve package info locally if the package doesn't exist.
+
 var getUpstream bool
 
 var NewProvider = gh.New
