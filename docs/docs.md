@@ -4,7 +4,7 @@
 > Since Parm is in such an early state, the documentation is a Work In Progress. See [CONTRIBUTING.md](../.github/CONTRIBUTING.md)
 
 ## For Users
-- [Usage](#usage.md)
+- [Usage](usage.md)
 
 ## For Developers
-- [Roadmap](#roadmap.md)
+- [Roadmap](roadmap.md)
