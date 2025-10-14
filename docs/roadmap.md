@@ -31,6 +31,7 @@ Below are a list of planned features and improvements:
 	- Replacing fmt.Println(), logging instead which will write to stdout and a file
 - Implement GraphQL (githubv4) support
 - Caching API calls or expensive operations (like listing installed packages)
+- Use golangci-lint in CI/CD pipeline
 
 ## Planned for Later Versions
 - Better version management: Entails being able to install multiple versions at once and switching between them easily.
