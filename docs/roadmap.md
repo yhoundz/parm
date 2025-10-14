@@ -1,5 +1,8 @@
 # Roadmap
 
+> [!IMPORTANT]
+> [Here](https://github.com/users/yhoundz/projects/2) is the GitHub Projects related to Parm. I will try to keep this file and the Projects board in sync with each other, but there are no promises regarding that. Assume if that item is *not* on the GitHub Projects, then it is not being worked on, or there are no plans to work on it.
+
 Parm is still in a very early state, and breaking changes are to be expected. Additionally, a lot of features may not be implemented yet, or working as expected. If you would like to propose a new feature, [create a new issue](https://github.com/yhoundz/parm/issues/new).
 
 Below are a list of planned features and improvements:
@@ -31,6 +34,7 @@ Below are a list of planned features and improvements:
 	- Replacing fmt.Println(), logging instead which will write to stdout and a file
 - Implement GraphQL (githubv4) support
 - Caching API calls or expensive operations (like listing installed packages)
+- Use golangci-lint in CI/CD pipeline
 
 ## Planned for Later Versions
 - Better version management: Entails being able to install multiple versions at once and switching between them easily.
@@ -40,6 +44,7 @@ Below are a list of planned features and improvements:
 	- The current solution is to parse the output of `objdump` and `otool -L`, but their outputs are designed to be human-readable and not machine-readable. Implementing this would mitigate that.
 	- Better dependency resolution; implement an algorithm mimicking the linker's shared library searching algorithm to only find dependencies that are NOT currently on the user's system.
 - Allow users to be able to choose which asset to release if a direct match isn't found.
+- "doctor" command to verify everything works as intended.
 
 ## To be Determined
 - Add migrate command if user changes bin or install dir in config.
