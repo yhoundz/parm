@@ -23,12 +23,12 @@ func SafeJoin(root, name string) (string, error) {
 }
 
 func GetParentDir(path string) (string, error) {
-	pth, err := filepath.Abs(path)
-	if err != nil {
-		return "", err
+	abs := filepath.IsAbs(path)
+	if !abs {
+		return "", fmt.Errorf("filepath must be absolute.")
 	}
 
-	return filepath.Dir(pth), nil
+	return filepath.Dir(path), nil
 }
 
 // checks if a file is a binary executable, and then checks if it's even able to be run by the user.
