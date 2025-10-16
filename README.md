@@ -27,7 +27,7 @@
 ## Quick Start
 To install Parm on Linux/macOS: run the following command:
 ```sh
-curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/install/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/scripts/install.sh | sh
 ```
 
 Windows is currently not fully supported, but will be coming soon. You can install the binaries manually in the releases tab.
@@ -84,17 +84,17 @@ This means that Parm
 ## Install
 To install Parm on Linux/macOS: run the following command:
 ```sh
-curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/install/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/scripts/install.sh | sh
 ```
 
 You can also set the `GITHUB_TOKEN` option to use your GitHub API Key to bypass rate limits:
 ```sh
-GITHUB_TOKEN=YOUR_TOKEN curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/install/install.sh | sh
+GITHUB_TOKEN=YOUR_TOKEN curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/scripts/install.sh | sh
 ```
 
 In addition, you can also specify that the `GITHUB_TOKEN` you pass in will the same token you want to use for Parm by setting `WRITE_TOKEN=1`
 ```sh
-GITHUB_TOKEN=YOUR_TOKEN WRITE_TOKEN=1 curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/install/install.sh | sh
+GITHUB_TOKEN=YOUR_TOKEN WRITE_TOKEN=1 curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/scripts/install.sh | sh
 ```
 
 Windows is currently not fully supported, but will be coming soon. You can install the binaries manually in the releases tab.

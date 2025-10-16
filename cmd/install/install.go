@@ -141,9 +141,17 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 			installPath := parmutil.GetInstallDir(owner, repo)
 			res, err := inst.Install(ctx, owner, repo, installPath, opts, hooks)
 			if err != nil {
-				parentDir, _ := sysutil.GetParentDir(res.InstallPath)
-				_ = parmutil.Cleanup(parentDir)
-				fmt.Printf("%q\n", err)
+				if res == nil {
+					return err
+				}
+				parentDir, cErr := sysutil.GetParentDir(res.InstallPath)
+				if cErr == nil {
+					err = parmutil.Cleanup(parentDir)
+					if err != nil {
+						return err
+					}
+				}
+				return err
 			}
 
 			man, err := manifest.New(owner, repo, res.Version, opts.Type, res.InstallPath)
