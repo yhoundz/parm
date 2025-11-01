@@ -6,6 +6,7 @@ package update
 import (
 	"fmt"
 	"parm/internal/cmdutil"
+	"parm/internal/core/catalog"
 	"parm/internal/core/installer"
 	"parm/internal/core/updater"
 	"parm/internal/gh"
@@ -28,6 +29,22 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 		Short: "Updates a package",
 		Long:  `Updates a package to the latest available version.`,
 		PreRun: func(cmd *cobra.Command, args []string) {
+			if len(args) == 0 {
+				mans, err := catalog.GetAllPkgManifest()
+				if err != nil {
+					fmt.Println("failed to retrieve packages")
+					return
+				}
+				if len(mans) == 0 {
+					fmt.Println("no packages to update")
+					return
+				}
+				for _, man := range mans {
+					pair := fmt.Sprintf("%s/%s", man.Owner, man.Repo)
+					args = append(args, pair)
+				}
+				return
+			}
 			for i, arg := range args {
 				owner, repo, err := cmdparser.ParseRepoRef(arg)
 				if err != nil {
