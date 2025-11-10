@@ -4,6 +4,7 @@ Copyright © 2025 Alexander Wang
 package update
 
 import (
+	"context"
 	"fmt"
 	"parm/internal/cmdutil"
 	"parm/internal/core/catalog"
@@ -14,14 +15,15 @@ import (
 	"parm/internal/parmutil"
 	"parm/pkg/cmdparser"
 	"parm/pkg/sysutil"
-	"slices"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
+	type argsKey struct{}
 	var strict bool
+	var aKey argsKey
 
 	// updateCmd represents the update command
 	var updateCmd = &cobra.Command{
@@ -29,6 +31,8 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 		Short: "Updates a package",
 		Long:  `Updates a package to the latest available version.`,
 		PreRun: func(cmd *cobra.Command, args []string) {
+			var normArgs []string
+
 			if len(args) == 0 {
 				mans, err := catalog.GetAllPkgManifest()
 				if err != nil {
@@ -39,27 +43,43 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 					fmt.Println("no packages to update")
 					return
 				}
-				for _, man := range mans {
+
+				var newArgs []string = make([]string, len(mans))
+				for i, man := range mans {
 					pair := fmt.Sprintf("%s/%s", man.Owner, man.Repo)
-					args = append(args, pair)
+					newArgs[i] = pair
 				}
-				return
-			}
-			for i, arg := range args {
-				owner, repo, err := cmdparser.ParseRepoRef(arg)
-				if err != nil {
-					owner, repo, err = cmdparser.ParseGithubUrlPattern(arg)
+				normArgs = newArgs
+			} else {
+				ignored := make(map[string]bool)
+
+				// remove duplicates and incorrectly formatted or nonexistent packages
+				for _, arg := range args {
+					owner, repo, err := cmdparser.ParseRepoRef(arg)
 					if err != nil {
-						args = slices.Delete(args, i, i+1)
-						fmt.Printf("error: package %s not found, skipping...\n", arg)
+						owner, repo, err = cmdparser.ParseGithubUrlPattern(arg)
+						if err != nil {
+							ignored[arg] = true
+							fmt.Printf("error: package %s not found, skipping...\n", arg)
+							continue
+						}
+					}
+					if _, ok := ignored[arg]; ok {
+						// already updated package
 						continue
 					}
-					args[i] = fmt.Sprintf("%s/%s", owner, repo)
+					parsed := fmt.Sprintf("%s/%s", owner, repo)
+					normArgs = append(normArgs, parsed)
+					ignored[arg] = true
 				}
 			}
+			ctx := context.WithValue(cmd.Context(), aKey, normArgs)
+			cmd.SetContext(ctx)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
+			args, _ := ctx.Value(aKey).([]string)
+
 			token, err := gh.GetStoredApiKey(viper.GetViper())
 			if err != nil {
 				fmt.Printf("%s\ncontinuing without api key.\n", err)
@@ -67,18 +87,11 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 			client := f.Provider(ctx, token).Repos()
 			inst := installer.New(client)
 			up := updater.New(client, inst)
-			updated := make(map[string]bool)
 			flags := updater.UpdateFlags{
 				Strict: strict,
 			}
 
 			for _, pkg := range args {
-				if _, ok := updated[pkg]; ok {
-					// already updated package
-					continue
-				}
-				updated[pkg] = true
-
 				// guaranteed to work now
 				owner, repo, _ := cmdparser.ParseRepoRef(pkg)
 
@@ -88,7 +101,7 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 				res, err := up.Update(ctx, owner, repo, installPath, &flags, nil)
 				if err != nil {
 					_ = parmutil.Cleanup(parentDir)
-					fmt.Printf("error: failed to update %s/%s\n", owner, repo)
+					fmt.Printf("error: failed to update %s/%s:\n\t%q \n", owner, repo, err)
 					continue
 				}
 
