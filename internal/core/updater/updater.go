@@ -46,7 +46,7 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, installPath s
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("package %s/%s does not exist", owner, repo)
 		}
-		return nil, fmt.Errorf("could not read manifest for %s/%s: \n%w", owner, repo, err)
+		return nil, fmt.Errorf("could not read manifest for %s/%s: %w", owner, repo, err)
 	}
 
 	var rel *github.RepositoryRelease
@@ -77,11 +77,11 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, installPath s
 	needsUpdate, err := NeedsUpdate(man.Version, newVer)
 
 	if !needsUpdate {
-		return nil, fmt.Errorf("%s/%s is already up to date (ver %s).\n", owner, repo, man.Version)
+		return nil, fmt.Errorf("%s/%s is already up to date (ver %s).", owner, repo, man.Version)
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch latest release for %s/%s: \n%w", owner, repo, err)
+		return nil, fmt.Errorf("could not fetch latest release for %s/%s: %w", owner, repo, err)
 	}
 
 	opts := installer.InstallFlags{
