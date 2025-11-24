@@ -13,9 +13,9 @@
 
 **Table of Contents:**
 1. [Introduction](#introduction)
-2. [Quick Start](#quick-start)
     - [What is Parm?](#what-is-parm)
     - [Disclaimers](#disclaimers)
+2. [Quick Start](#quick-start)
 3. [Pre-requisites](#pre-requisites)
 4. [Installation](#install)
 5. [GitHub Personal Access Token](#adding-a-github-personal-access-token)
@@ -101,6 +101,8 @@ GITHUB_TOKEN=YOUR_TOKEN WRITE_TOKEN=1 curl -fsSL https://raw.githubusercontent.c
 ```
 
 Windows is currently not fully supported, but will be coming soon. You can install the binaries manually in the releases tab.
+
+To update parm, just run the install script again. I recommend not setting the `GITHUB_TOKEN` or the `WRITE_TOKEN` options if updated.
 
 ## Adding a GitHub Personal Access Token
 > [!IMPORTANT]
