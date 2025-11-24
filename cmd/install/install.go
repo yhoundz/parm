@@ -18,9 +18,10 @@ import (
 	"parm/pkg/sysutil"
 	"path/filepath"
 
-	"fortio.org/progressbar"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/vbauerster/mpb/v8"
+	"github.com/vbauerster/mpb/v8/decor"
 )
 
 func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
@@ -103,14 +104,33 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 				version = nil
 			}
 
-			pb := progressbar.NewBar()
+			pb := mpb.New(mpb.WithWidth(60))
 
+			var bar *mpb.Bar
 			hooks := &progress.Hooks{
 				Decorator: func(stage progress.Stage, r io.Reader, total int64) io.Reader {
 					if stage != progress.StageDownload {
 						return r
 					}
-					return progressbar.NewAutoReader(pb, r, total)
+					if bar != nil {
+						return bar.ProxyReader(r)
+					}
+					bar = pb.AddBar(total,
+						mpb.PrependDecorators(
+							// decor.Name("downloading"),
+							decor.Percentage(decor.WCSyncSpace),
+						),
+						mpb.AppendDecorators(
+							decor.OnComplete(
+								decor.EwmaETA(decor.ET_STYLE_GO, 60), "done",
+							),
+							decor.Name(" "),
+							decor.EwmaSpeed(decor.SizeB1024(0), "% .2f", 60),
+							decor.Name(" "),
+							decor.Elapsed(decor.ET_STYLE_GO, decor.WC{W: 5}),
+						),
+					)
+					return bar.ProxyReader(r)
 				},
 				Callback: nil,
 			}
@@ -140,6 +160,7 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 
 			installPath := parmutil.GetInstallDir(owner, repo)
 			res, err := inst.Install(ctx, owner, repo, installPath, opts, hooks)
+			pb.Wait()
 			if err != nil {
 				if res == nil {
 					return err
