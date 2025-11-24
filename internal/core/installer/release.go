@@ -85,8 +85,6 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 		}
 	}
 
-	_ = os.Remove(archivePath)
-
 	// TODO: create manifest elsewhere for better separation of concerns?
 	// TODO: Return an InstallResult and let the CLI call a manifest writer service.
 	// will also help with symlinking
