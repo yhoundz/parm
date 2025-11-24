@@ -37,6 +37,7 @@ This means that Parm
 - is incredibly lightweight
 
 ### Demo
+![Parm demo](#/assets/demo.gif)
 
 ### Disclaimers
 > [!CAUTION]
