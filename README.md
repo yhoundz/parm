@@ -12,8 +12,8 @@
 > Parm is currently in a pre-release state. Expect breaking changes and bugs.
 
 **Table of Contents:**
-1. [Quick Start](#quick-start)
-2. [Introduction](#introduction)
+1. [Introduction](#introduction)
+2. [Quick Start](#quick-start)
     - [What is Parm?](#what-is-parm)
     - [Disclaimers](#disclaimers)
 3. [Pre-requisites](#pre-requisites)
@@ -23,6 +23,30 @@
 7. [Contributing](#contributing)
 8. [Adding Packages to Parm](#adding-packages-to-parm)
 9. [Acknowledgements](#Acknowledgements)
+
+## Introduction
+
+### What is Parm?
+Parm is a cross-platform binary installer with a package manager-esque workflow. It allows you to install any program off of GitHub via their REST API. Parm directly downloads binaries provided by GitHub repository releases and includes niceties such as symlinking binaries to PATH and checking for updates.
+
+This means that Parm
+
+- has zero root access & zero required dependencies
+- requires no additional package maintainers
+- receives new versions upstream instantly.
+- is incredibly lightweight
+
+### Demo
+
+### Disclaimers
+> [!CAUTION]
+> Parm uses the GitHub REST API to find and install packages. Theoretically, this means you can install any program off of GitHub, so ***YOU*** are responsible for the packages you install, since I don't maintain a registry of vetted packages.
+
+> [!WARNING]
+> Unlike most package managers, Parm does NOT automatically resolve/install dependencies for you. This is a limitation of GitHub and the program's design. The current behavior is to use a tool such as `objdump` or `otool` to search for dynamically linked dependencies and tell you about them, but there is no way to automatically install them as of right now.
+
+> [!NOTE]
+> Parm is *not* intended to replace your system/OS-level package manager (think apt, pacman, or anything that can install low-level libraries, tools, or services). In general, it is designed to be a complement to your current package manager, as it is meant to install more high-level, user-facing applications.
 
 ## Quick Start
 To install Parm on Linux/macOS: run the following command:
@@ -43,28 +67,6 @@ parm update <owner>/<repo> # to update a package
 
 For more detailed install instructions, see [Installation](#install).
 For more detailed documentation, go to [Usage](#usage) or the [docs](#/docs/docs.md)
-
-## Introduction
-
-### What is Parm?
-Parm is a cross-platform binary installer with a package manager-esque workflow. It allows you to install any program off of GitHub via their REST API. Parm directly downloads binaries provided by GitHub repository releases and includes niceties such as symlinking binaries to PATH and checking for updates.
-
-This means that Parm
-
-- has zero root access & zero required dependencies
-- requires no additional package maintainers
-- receives new versions upstream instantly.
-- is incredibly lightweight
-
-### Disclaimers
-> [!CAUTION]
-> Parm uses the GitHub REST API to find and install packages. Theoretically, this means you can install any program off of GitHub, so ***YOU*** are responsible for the packages you install, since I don't maintain a registry of vetted packages.
-
-> [!WARNING]
-> Unlike most package managers, Parm does NOT automatically resolve/install dependencies for you. This is a limitation of GitHub and the program's design. The current behavior is to use a tool such as `objdump` or `otool` to search for dynamically linked dependencies and tell you about them, but there is no way to automatically install them as of right now.
-
-> [!NOTE]
-> Parm is *not* intended to replace your system/OS-level package manager (think apt, pacman, or anything that can install low-level libraries, tools, or services). In general, it is designed to be a complement to your current package manager, as it is meant to install more high-level, user-facing applications.
 
 ## Pre-requisites
 1. *(optional)* Must have `objdump` on Linux or `otool` on macOS installed and added to PATH
