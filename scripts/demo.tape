@@ -4,7 +4,7 @@ Set LineHeight 1.6
 Require parm
 Output assets/demo.gif
 
-Set FontSize 16
+Set FontSize 24
 Set TypingSpeed 60ms
 Set Width 1440
 Set Height 960
