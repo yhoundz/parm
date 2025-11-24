@@ -5,9 +5,7 @@ on:
       - 'v*'
 
 jobs:
-  build-and-release:
-    permissions:
-      contents: write
+  setup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,11 +30,32 @@ jobs:
             sudo apt-get install -y zip
           fi
 
-      - name: Build cross-platform artifacts with embedded version
+  build:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      matrix:
+        include:
+          - name: linux
+            make_target: release-linux
+          - name: windows
+            make_target: release-windows
+          - name: darwin
+            make_target: release-darwin
+
+    name: build-${{ matrix.name }}
+    steps:
+      - name: Build ${{ matrix.name }} artifacts
         env:
           VERSION: ${{ github.ref_name }}
-        run: make release
+        run: make ${{ matrix.make_target }}
 
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:

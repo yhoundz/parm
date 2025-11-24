@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,6 +30,17 @@ jobs:
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-gomod-
 
+  test:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Test
+        run: make test
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
       - name: Verify formatting
         run: |
           out=$(gofmt -l .)
@@ -40,5 +51,7 @@ jobs:
       - name: Vet
         run: go vet ./...
 
-      - name: Test
-        run: make test
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.6
