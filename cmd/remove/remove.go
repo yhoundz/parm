@@ -36,7 +36,7 @@ func NewRemoveCmd(f *cmdutil.Factory) *cobra.Command {
 					continue
 				}
 
-				err = uninstaller.RemoveSymlink(ctx, owner, repo)
+				err = uninstaller.RemovePkgSymlinks(ctx, owner, repo)
 				if err != nil {
 					fmt.Printf("error: cannot remove symlink for %s/%s:\n%q", owner, repo, err)
 				}

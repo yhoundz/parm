@@ -64,7 +64,7 @@ func Uninstall(ctx context.Context, owner, repo string) error {
 	return nil
 }
 
-func RemoveSymlink(ctx context.Context, owner, repo string) error {
+func RemovePkgSymlinks(ctx context.Context, owner, repo string) error {
 	man, err := manifest.Read(parmutil.GetInstallDir(owner, repo))
 	if err != nil {
 		return err
