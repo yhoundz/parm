@@ -91,7 +91,9 @@ func GetPackageInfo(ctx context.Context, client *github.RepositoriesService, own
 	pkgPath := parmutil.GetInstallDir(owner, repo)
 	_, err := os.Stat(pkgPath)
 	if err != nil {
-		return info, fmt.Errorf("error: there was an error accessing %s:\n%w", pkgPath, err)
+		return info, fmt.Errorf(`couldn't access %s:
+%w or %s/%s doesn't exist.
+Try using the --get-upstream flag`, pkgPath, err, owner, repo)
 	}
 	man, err := manifest.Read(pkgPath)
 	if err != nil {
