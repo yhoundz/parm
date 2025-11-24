@@ -65,13 +65,19 @@ func Uninstall(ctx context.Context, owner, repo string) error {
 }
 
 func RemoveSymlink(ctx context.Context, owner, repo string) error {
-	symDir := filepath.Join(config.Cfg.ParmBinPath, repo)
-	if _, err := os.Lstat(symDir); err != nil {
+	man, err := manifest.Read(parmutil.GetInstallDir(owner, repo))
+	if err != nil {
 		return err
 	}
-	err := os.Remove(symDir)
-	if err != nil {
-		return nil
+	exDirs := man.GetFullExecPaths()
+
+	for _, dir := range exDirs {
+		binPath := filepath.Join(config.Cfg.ParmBinPath, filepath.Base(dir))
+		if _, err := os.Lstat(binPath); err != nil {
+			return err
+		}
+		_ = os.Remove(binPath) // continue if there's an error
 	}
+
 	return nil
 }
