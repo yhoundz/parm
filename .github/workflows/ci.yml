@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  setup:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,18 +29,19 @@ jobs:
             ~/.cache/go-build
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-gomod-
-
-  test:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
       - name: Test
         run: make test
 
   lint:
     runs-on: ubuntu-latest
-    needs: setup
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
       - name: Verify formatting
         run: |
           out=$(gofmt -l .)
