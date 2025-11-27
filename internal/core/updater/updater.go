@@ -65,18 +65,18 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, installPath s
 			}
 
 			// TODO: abstract elsewhere cuz it's similar to updater.NeedsUpdate?
-			currV, _ := semver.NewVersion(rel.GetTagName())
-			newV, _ := semver.NewVersion(relStable.GetTagName())
-			if newV.GreaterThan(currV) {
+			currVer, _ := semver.NewVersion(rel.GetTagName())
+			stableVer, _ := semver.NewVersion(relStable.GetTagName())
+			if stableVer.GreaterThan(currVer) {
 				rel = relStable
 			}
 		}
 	}
 
 	newVer := rel.GetTagName()
-	needsUpdate, err := NeedsUpdate(man.Version, newVer)
 
-	if !needsUpdate {
+	// only need to check for equality
+	if man.Version == newVer {
 		return nil, fmt.Errorf("%s/%s is already up to date (ver %s).", owner, repo, man.Version)
 	}
 
@@ -101,21 +101,4 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, installPath s
 		InstallResult: res,
 	}
 	return &actual, nil
-}
-
-func NeedsUpdate(currVer, latestVer string) (bool, error) {
-	currSemVer, err := semver.NewVersion(currVer)
-	if err != nil {
-		return false, err
-	}
-	latestSemVer, err := semver.NewVersion(latestVer)
-	if err != nil {
-		return false, err
-	}
-
-	if latestSemVer.GreaterThan(currSemVer) {
-		return true, nil
-	}
-
-	return false, nil
 }
