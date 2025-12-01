@@ -77,7 +77,7 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, installPath s
 
 	// only need to check for equality
 	if man.Version == newVer {
-		return nil, fmt.Errorf("%s/%s is already up to date (ver %s).", owner, repo, man.Version)
+		return nil, fmt.Errorf("%s/%s is already up to date (ver %s)", owner, repo, man.Version)
 	}
 
 	if err != nil {

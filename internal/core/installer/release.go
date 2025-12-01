@@ -93,7 +93,6 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 	if err != nil {
 		return nil, err
 	}
-	tmpDir = ""
 
 	return &InstallResult{
 		InstallPath: finalDir,
@@ -152,7 +151,8 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 	const goosMatch = 11
 	const goarchMatch = 7
 	const prefMatch = 3 // actually a multiplier for preference match
-	const minScoreMatch = goosMatch + goarchMatch
+	// INFO: to be used later when adding interactive install.
+	// const minScoreMatch = goosMatch + goarchMatch
 
 	for i := range scoredMatches {
 		a := &scoredMatches[i]
@@ -165,8 +165,8 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 		}
 
 		for j, ext := range extPref {
-			var mult float64 = float64(prefMatch) * float64((len(extPref) - j))
-			var multRounded int = int(math.Round(mult))
+			var mult = float64(prefMatch) * float64((len(extPref) - j))
+			var multRounded = int(math.Round(mult))
 			if strings.HasSuffix(name, ext) {
 				a.score += multRounded
 			}

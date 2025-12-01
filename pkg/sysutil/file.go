@@ -25,7 +25,7 @@ func SafeJoin(root, name string) (string, error) {
 func GetParentDir(path string) (string, error) {
 	abs := filepath.IsAbs(path)
 	if !abs {
-		return "", fmt.Errorf("filepath must be absolute.")
+		return "", fmt.Errorf("filepath must be absolute")
 	}
 
 	return filepath.Dir(path), nil
