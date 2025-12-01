@@ -44,7 +44,7 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 					return
 				}
 
-				var newArgs []string = make([]string, len(mans))
+				var newArgs = make([]string, len(mans))
 				for i, man := range mans {
 					pair := fmt.Sprintf("%s/%s", man.Owner, man.Repo)
 					newArgs[i] = pair

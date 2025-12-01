@@ -100,12 +100,12 @@ func TestGetPackageInfo_Upstream(t *testing.T) {
 		t.Fatal("UpstreamInfo should not be nil")
 	}
 
-	if info.UpstreamInfo.Stars != 100 {
-		t.Errorf("Stars = %v, want 100", info.UpstreamInfo.Stars)
+	if info.Stars != 100 {
+		t.Errorf("Stars = %v, want 100", info.Stars)
 	}
 
-	if info.UpstreamInfo.License != "MIT" {
-		t.Errorf("License = %v, want MIT", info.UpstreamInfo.License)
+	if info.License != "MIT" {
+		t.Errorf("License = %v, want MIT", info.License)
 	}
 
 	if info.DownstreamInfo != nil {
