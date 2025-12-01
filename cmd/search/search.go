@@ -22,7 +22,7 @@ func NewSearchCmd(f *cmdutil.Factory) *cobra.Command {
 		Short: "Searches for repositories",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if query != "" && len(args) > 0 {
-				return fmt.Errorf("error: cannot have any args with the --query flag.")
+				return fmt.Errorf("cannot have any args with the --query flag")
 			} else {
 				exp := cobra.ExactArgs(1)
 				return exp(cmd, args)
@@ -45,7 +45,7 @@ func NewSearchCmd(f *cmdutil.Factory) *cobra.Command {
 				opts.Key = &args[0]
 			}
 			// TODO: finish this up
-			_, err = catalog.SearchRepo(ctx, client.Search(), opts)
+			_, _ = catalog.SearchRepo(ctx, client.Search(), opts)
 			return nil
 		},
 	}

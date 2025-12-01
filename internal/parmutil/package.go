@@ -87,7 +87,7 @@ func Cleanup(dir string) error {
 		}
 	}
 
-	dr, err = os.ReadDir(dir)
+	dr, _ = os.ReadDir(dir)
 	if len(dr) == 0 {
 		_ = os.Remove(dir)
 	}
