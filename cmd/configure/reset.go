@@ -55,7 +55,7 @@ func NewResetCmd(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if resetAllFlag && len(args) > 0 {
-				return fmt.Errorf("error: no arguments accepted when using the --all flag.")
+				return fmt.Errorf("no arguments accepted when using the --all flag")
 			}
 			return nil
 		},

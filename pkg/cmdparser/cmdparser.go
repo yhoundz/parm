@@ -17,7 +17,7 @@ func ParseRepoRef(ref string) (owner string, repo string, err error) {
 	if matches := ownerRepoPattern.FindStringSubmatch(ref); matches != nil {
 		return matches[1], matches[2], nil
 	}
-	return "", "", fmt.Errorf("Cannot validate owner/repository link: %q", ref)
+	return "", "", fmt.Errorf("cannot validate owner/repository link: %q", ref)
 }
 
 // specifically parsing tag args
@@ -25,7 +25,7 @@ func ParseRepoReleaseRef(ref string) (owner string, repo string, release string,
 	if matches := ownerRepoTagPattern.FindStringSubmatch(ref); matches != nil {
 		return matches[1], matches[2], matches[3], nil
 	}
-	return "", "", "", fmt.Errorf("Cannot validate owner/repository link: %q", ref)
+	return "", "", "", fmt.Errorf("cannot validate owner/repository link: %q", ref)
 }
 
 // general purpose
@@ -36,7 +36,7 @@ func ParseGithubUrlPattern(ref string) (owner string, repo string, err error) {
 			return owner, repo, nil
 		}
 	}
-	return "", "", fmt.Errorf("Cannot validate owner/repository link: %q", ref)
+	return "", "", fmt.Errorf("cannot validate owner/repository link: %q", ref)
 }
 
 // specifically parsing tag args
@@ -47,7 +47,7 @@ func ParseGithubUrlPatternWithRelease(ref string) (owner string, repo string, re
 			return owner, repo, tag, nil
 		}
 	}
-	return "", "", "", fmt.Errorf("Cannot validate owner/repository link: %q", ref)
+	return "", "", "", fmt.Errorf("cannot validate owner/repository link: %q", ref)
 }
 
 func BuildGitLink(owner string, repo string) (httpsLink string, sshLink string) {
