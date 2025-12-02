@@ -156,7 +156,11 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 				}(),
 			}
 
-			fmt.Printf("installing %s/%s\n", owner, repo)
+			if opts.Version == nil {
+				fmt.Printf("installing %s/%s::latest\n", owner, repo)
+			} else {
+				fmt.Printf("installing %s/%s::%s\n", owner, repo, *opts.Version)
+			}
 
 			installPath := parmutil.GetInstallDir(owner, repo)
 			res, err := inst.Install(ctx, owner, repo, installPath, opts, hooks)

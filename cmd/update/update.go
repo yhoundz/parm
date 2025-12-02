@@ -128,6 +128,7 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 						continue
 					}
 				}
+				fmt.Printf("Updated %s/%s from %s to %s.", owner, repo, old.Version, res.Version)
 			}
 			return nil
 		},
