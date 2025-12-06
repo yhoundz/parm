@@ -45,6 +45,7 @@ func NewRemoveCmd(f *cmdutil.Factory) *cobra.Command {
 				if err != nil {
 					fmt.Printf("error: cannot uninstall %s: %s\n", pkg, err)
 				}
+				fmt.Printf("* Successfully uninstalled %s/%s\n", owner, repo)
 			}
 		},
 	}
