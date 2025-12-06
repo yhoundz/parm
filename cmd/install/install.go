@@ -157,9 +157,9 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if opts.Version == nil {
-				fmt.Printf("installing %s/%s::latest\n", owner, repo)
+				fmt.Printf("Installing %s/%s::latest\n", owner, repo)
 			} else {
-				fmt.Printf("installing %s/%s::%s\n", owner, repo, *opts.Version)
+				fmt.Printf("Installing %s/%s::%s\n", owner, repo, *opts.Version)
 			}
 
 			installPath := parmutil.GetInstallDir(owner, repo)
