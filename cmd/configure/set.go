@@ -24,8 +24,11 @@ func NewSetCmd(f *cmdutil.Factory) *cobra.Command {
 				if err != nil {
 					return err
 				}
+
+				old := viper.Get(k)
 				viper.Set(k, v)
-				fmt.Printf("Set %s = %s\n", k, v)
+
+				fmt.Printf("Set %s from %s to %s\n", k, old, v)
 			}
 
 			if err := viper.WriteConfig(); err != nil {
