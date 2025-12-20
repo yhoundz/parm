@@ -40,12 +40,9 @@ fi
 
 log "Releasing version: $VERSION"
 
-# Auto commit and push uncommitted changes
+# Check for uncommitted changes
 if [[ -n "$(git status --porcelain)" ]]; then
-    log "Committing uncommitted changes..."
-    git add -A
-    git commit -m "chore: prepare release $VERSION"
-    git push origin HEAD
+    error "You have uncommitted changes. Please commit or stash them first."
 fi
 
 # Check if tag already exists
@@ -53,10 +50,15 @@ if git rev-parse "$VERSION" >/dev/null 2>&1; then
     error "Tag $VERSION already exists"
 fi
 
+# Create and push tag first (so make can pick up the version)
+log "Creating git tag: $VERSION"
+git tag -a "$VERSION" -m "Release $VERSION"
+git push origin "$VERSION"
+
 # Build all platforms
 log "Building release artifacts..."
 make clean
-make release
+VERSION="$VERSION" make release
 
 # Verify artifacts exist
 ARTIFACTS=(
@@ -74,11 +76,6 @@ done
 log "All artifacts built successfully"
 ls -lh bin/
 
-# Create and push tag
-log "Creating git tag: $VERSION"
-git tag -a "$VERSION" -m "Release $VERSION"
-git push origin "$VERSION"
-
 # Create GitHub release
 log "Creating GitHub release..."
 RELEASE_NOTES="Release $VERSION
@@ -94,6 +91,7 @@ curl -fsSL https://raw.githubusercontent.com/aleister1102/parm/master/scripts/in
 
 gh release create "$VERSION" \
     "${ARTIFACTS[@]}" \
+    --repo aleister1102/parm \
     --title "$VERSION" \
     --notes "$RELEASE_NOTES"
 
