@@ -76,7 +76,7 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 			token, _ := gh.GetStoredApiKey(viper.GetViper())
 			client := f.Provider(ctx, token).Repos()
 
-			inst := installer.New(client)
+			inst := installer.New(client, token)
 
 			var owner, repo string
 			var err error

@@ -64,14 +64,10 @@ func IsBinaryExecutable(path string) (bool, *types.Type, error) {
 		return false, nil, nil
 	}
 
-	// precheck
+	// precheck for Windows only - requires .exe extension
 	if runtime.GOOS == "windows" {
 		// TODO: check for .msi files?
 		if !strings.HasSuffix(strings.ToLower(info.Name()), ".exe") {
-			return false, nil, nil
-		}
-	} else { // on unix system
-		if info.Mode()&0111 == 0 {
 			return false, nil, nil
 		}
 	}
@@ -106,6 +102,13 @@ func SymlinkBinToPath(binPath, destPath string) error {
 	}
 	if !isBin {
 		return fmt.Errorf("error: provided dir is not a binary")
+	}
+
+	// Ensure the binary has execute permissions
+	if runtime.GOOS != "windows" {
+		if err := os.Chmod(binPath, 0o755); err != nil {
+			return fmt.Errorf("failed to set execute permission on %s\n%w", binPath, err)
+		}
 	}
 
 	if _, err := os.Lstat(destPath); err == nil {

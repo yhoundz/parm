@@ -50,7 +50,17 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 	defer os.RemoveAll(tmpDir)
 
 	archivePath := filepath.Join(tmpDir, ass.GetName()) // download destination
-	if err := downloadTo(ctx, archivePath, ass.GetBrowserDownloadURL(), hooks); err != nil {
+
+	// Use API URL for authenticated downloads (required for private repos)
+	// Format: https://api.github.com/repos/{owner}/{repo}/releases/assets/{asset_id}
+	downloadURL := ass.GetBrowserDownloadURL()
+	token := in.token
+	if token != "" {
+		// For private repos, use the API endpoint instead of browser download URL
+		downloadURL = ass.GetURL()
+	}
+
+	if err := downloadTo(ctx, archivePath, downloadURL, token, hooks); err != nil {
 		return nil, fmt.Errorf("error: failed to download asset: \n%w", err)
 	}
 

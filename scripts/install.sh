@@ -5,11 +5,10 @@ set -eu
 # Installs to OS-appropriate data dir and adds <prefix>/bin to PATH.
 # Optional: GITHUB_TOKEN to avoid API rate limiting.
 # Optional: Use WRITE_TOKEN=1 to write the API key to the shell profile
+# Optional: Use UNINSTALL=1 to remove parm and all installed packages
 
 need_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "error: need $1" >&2; exit 1; }; }
 need_cmd uname
-need_cmd tar
-{ command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1; } || { echo "error: need curl or wget" >&2; exit 1; }
 
 OS="$(uname -s)"
 ARCH="$(uname -m)"
@@ -19,6 +18,37 @@ case "$OS" in
   Darwin) os="darwin" ;;
   *) echo "error: unsupported OS: $OS" >&2; exit 1 ;;
 esac
+
+# Resolve data prefix (install prefix) per config.go
+case "$OS" in
+  Linux)
+    if [ -n "${XDG_DATA_HOME:-}" ]; then
+      prefix="${XDG_DATA_HOME%/}/parm"
+    else
+      prefix="${HOME}/.local/share/parm"
+    fi
+    ;;
+  Darwin)
+    prefix="${HOME}/Library/Application Support/parm"
+    ;;
+esac
+
+# Handle uninstall
+if [ "${UNINSTALL:-}" = "1" ]; then
+  echo "Uninstalling parm..."
+  rm -rf "$prefix"
+  if [ -n "${XDG_CONFIG_HOME:-}" ]; then
+    rm -rf "${XDG_CONFIG_HOME%/}/parm"
+  else
+    rm -rf "${HOME}/.config/parm"
+  fi
+  echo "Removed parm data and config directories."
+  echo "Note: You may want to remove the PATH entry from your shell profile manually."
+  exit 0
+fi
+
+{ command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1; } || { echo "error: need curl or wget" >&2; exit 1; }
+need_cmd tar
 
 case "$ARCH" in
   x86_64|amd64) arch="amd64" ;;
@@ -84,7 +114,7 @@ http_download() {
   fi
 }
 
-latest_tag="$(http_get "https://api.github.com/repos/yhoundz/parm/releases/latest" \
+latest_tag="$(http_get "https://api.github.com/repos/aleister1102/parm/releases/latest" \
   | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
 [ -n "$latest_tag" ] || { echo "error: could not resolve latest version" >&2; exit 1; }
 
@@ -98,8 +128,8 @@ archive="$tmpdir/parm.tar.gz"
 
 # macOS: try arm64 first; if 404, try amd64 (Rosetta)
 if [ "$os" = "darwin" ] && [ "$arch" = "arm64" ]; then
-  url_arm64="https://github.com/yhoundz/parm/releases/download/${latest_tag}/parm-darwin-arm64.tar.gz"
-  url_amd64="https://github.com/yhoundz/parm/releases/download/${latest_tag}/parm-darwin-amd64.tar.gz"
+  url_arm64="https://github.com/aleister1102/parm/releases/download/${latest_tag}/parm-darwin-arm64.tar.gz"
+  url_amd64="https://github.com/aleister1102/parm/releases/download/${latest_tag}/parm-darwin-amd64.tar.gz"
   if try_url "$url_arm64" "$archive"; then
     :
   elif try_url "$url_amd64" "$archive"; then
@@ -110,7 +140,7 @@ if [ "$os" = "darwin" ] && [ "$arch" = "arm64" ]; then
   fi
 else
   asset="parm-${os}-${arch}.tar.gz"
-  url="https://github.com/yhoundz/parm/releases/download/${latest_tag}/${asset}"
+  url="https://github.com/aleister1102/parm/releases/download/${latest_tag}/${asset}"
   http_download "$url" "$archive" || { echo "error: download failed" >&2; exit 1; }
 fi
 
@@ -185,4 +215,9 @@ if "$bin_dir/parm" --version >/dev/null 2>&1; then
   "$bin_dir/parm" --version
 fi
 
-echo "Done."
+# Verify installation
+if command -v parm >/dev/null 2>&1; then
+  echo "Done. Parm is ready to use."
+else
+  echo "Done. Open a new shell or run: . \"$profile\""
+fi

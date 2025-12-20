@@ -48,18 +48,26 @@ jobs:
           VERSION: ${{ github.ref_name }}
         run: make ${{ matrix.make_target }}
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-artifacts
+          path: bin/*
+
   release:
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
-          fetch-depth: 0
-          fetch-tags: true
+          path: bin
+          merge-multiple: true
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
+      - name: List artifacts
+        run: ls -la bin/
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2

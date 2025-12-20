@@ -18,6 +18,7 @@ import (
 
 type Installer struct {
 	client *github.RepositoriesService
+	token  string // GitHub token for private repo access
 }
 
 type InstallFlags struct {
@@ -33,9 +34,10 @@ type InstallResult struct {
 	Version     string
 }
 
-func New(cli *github.RepositoriesService) *Installer {
+func New(cli *github.RepositoriesService, token string) *Installer {
 	return &Installer{
 		client: cli,
+		token:  token,
 	}
 }
 
@@ -84,10 +86,19 @@ func (in *Installer) Install(ctx context.Context, owner, repo string, installPat
 	return in.installFromRelease(ctx, installPath, owner, repo, rel, opts, hooks)
 }
 
-func downloadTo(ctx context.Context, destPath, url string, hooks *progress.Hooks) error {
+// downloadTo downloads a file from the given URL to destPath.
+// If token is provided, it will be used for authentication (required for private repos).
+func downloadTo(ctx context.Context, destPath, url, token string, hooks *progress.Hooks) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
+	}
+
+	// Add authentication header for private repo access
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+		// GitHub API requires Accept header for asset downloads
+		req.Header.Set("Accept", "application/octet-stream")
 	}
 
 	resp, err := http.DefaultClient.Do(req)

@@ -85,7 +85,7 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 				fmt.Printf("%s\ncontinuing without api key.\n", err)
 			}
 			client := f.Provider(ctx, token).Repos()
-			inst := installer.New(client)
+			inst := installer.New(client, token)
 			up := updater.New(client, inst)
 			flags := updater.UpdateFlags{
 				Strict: strict,
