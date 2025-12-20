@@ -50,7 +50,15 @@ func ExtractTarGz(srcPath, destPath string) error {
 			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 				return err
 			}
-			out, err := os.OpenFile(target, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, fs.FileMode(hdr.Mode))
+			// Extract only permission bits from tar header mode
+			mode := fs.FileMode(hdr.Mode) & 0o777
+			// Ensure executables remain executable (at least 0o755 for owner)
+			if mode&0o100 != 0 {
+				mode |= 0o755
+			} else if mode == 0 {
+				mode = 0o644
+			}
+			out, err := os.OpenFile(target, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)
 			if err != nil {
 				return err
 			}
@@ -109,14 +117,21 @@ func ExtractZip(srcPath, destPath string) error {
 			if err != nil {
 				return err
 			}
-			f, err := os.OpenFile(
-				fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			// Extract only permission bits and ensure executables remain executable
+			mode := f.Mode() & 0o777
+			if mode&0o100 != 0 {
+				mode |= 0o755
+			} else if mode == 0 {
+				mode = 0o644
+			}
+			outFile, err := os.OpenFile(
+				fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
 			if err != nil {
 				return err
 			}
-			defer f.Close()
+			defer outFile.Close()
 
-			_, err = io.Copy(f, rc)
+			_, err = io.Copy(outFile, rc)
 			if err != nil {
 				return err
 			}
