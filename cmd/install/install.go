@@ -191,7 +191,8 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 			binPaths := man.GetFullExecPaths()
 
 			for _, execPath := range binPaths {
-				pathToSymLinkTo := parmutil.GetBinDir(filepath.Base(execPath))
+				cleanName := sysutil.CleanBinaryName(filepath.Base(execPath))
+				pathToSymLinkTo := parmutil.GetBinDir(cleanName)
 
 				// TODO: use shims for windows instead?
 				err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)

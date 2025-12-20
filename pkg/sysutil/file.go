@@ -95,6 +95,71 @@ func IsBinaryExecutable(path string) (bool, *types.Type, error) {
 	return false, nil, nil
 }
 
+// CleanBinaryName strips common platform/architecture suffixes from binary names
+// e.g., "nuclei-linux-amd64" -> "nuclei", "tool_darwin_arm64" -> "tool"
+func CleanBinaryName(name string) string {
+	if name == "" {
+		return name
+	}
+
+	// Common platform identifiers to strip (order matters - check longer patterns first)
+	platforms := []string{
+		// Combined long patterns first
+		"x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl",
+		"x86_64-apple-darwin", "aarch64-apple-darwin",
+		"x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu",
+		"unknown-linux-gnu", "unknown-linux-musl",
+		"apple-darwin", "pc-windows",
+		// Architecture names
+		"amd64", "x86_64", "x64", "arm64", "aarch64", "386", "i386", "x86", "armv7", "armv6", "armhf",
+		// OS names
+		"linux", "darwin", "macos", "mac", "osx", "windows", "win", "win64", "win32",
+	}
+
+	result := name
+
+	// Remove file extension first if present (but not for extensionless binaries)
+	ext := filepath.Ext(result)
+	if ext == ".exe" {
+		result = strings.TrimSuffix(result, ext)
+	}
+
+	// Keep stripping platform suffixes until no more can be removed
+	changed := true
+	for changed {
+		changed = false
+		for _, p := range platforms {
+			// Match patterns like -linux-amd64, _linux_amd64, -linux, _amd64, etc.
+			suffixes := []string{
+				"-" + p,
+				"_" + p,
+				"." + p,
+			}
+			for _, suffix := range suffixes {
+				if strings.HasSuffix(strings.ToLower(result), strings.ToLower(suffix)) {
+					newResult := result[:len(result)-len(suffix)]
+					if newResult != "" { // Don't strip if it would result in empty string
+						result = newResult
+						changed = true
+					}
+				}
+			}
+		}
+	}
+
+	// If we stripped everything or result is empty, return original
+	if result == "" {
+		return name
+	}
+
+	// Restore .exe extension on Windows
+	if runtime.GOOS == "windows" && ext == ".exe" {
+		result += ext
+	}
+
+	return result
+}
+
 func SymlinkBinToPath(binPath, destPath string) error {
 	isBin, err := IsValidBinaryExecutable(binPath)
 	if err != nil {
