@@ -65,3 +65,18 @@ func GetStoredApiKey(v *viper.Viper) (string, error) {
 
 	return tok, nil
 }
+
+// IsRepositoryPublic checks if a repository is public by attempting to access it without authentication
+func IsRepositoryPublic(ctx context.Context, client *github.RepositoriesService, owner, repo string) (bool, error) {
+	repo_obj, resp, err := client.Get(ctx, owner, repo)
+	if err != nil {
+		// If we get a 404, the repo doesn't exist or is private
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return false, nil
+		}
+		return false, err
+	}
+
+	// Check if the repository is private
+	return !repo_obj.GetPrivate(), nil
+}

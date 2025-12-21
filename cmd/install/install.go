@@ -73,10 +73,6 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 			pkg := args[0]
 
 			ctx := cmd.Context()
-			token, _ := gh.GetStoredApiKey(viper.GetViper())
-			client := f.Provider(ctx, token).Repos()
-
-			inst := installer.New(client, token)
 
 			var owner, repo string
 			var err error
@@ -88,6 +84,25 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 					return err
 				}
 			}
+
+			// Try to get API key, but don't fail if it's not available
+			token, _ := gh.GetStoredApiKey(viper.GetViper())
+
+			// Create a temporary client to check if repo is public
+			tempClient := f.Provider(ctx, "").Repos()
+			isPublic, err := gh.IsRepositoryPublic(ctx, tempClient, owner, repo)
+			if err != nil {
+				return fmt.Errorf("error: cannot determine repository visibility: %w", err)
+			}
+
+			// If repo is private and we don't have a token, fail
+			if !isPublic && token == "" {
+				return fmt.Errorf("error: api key not found\n\nThis repository is private. Set a GitHub token:\n  export GITHUB_TOKEN=$(gh auth token)")
+			}
+
+			client := f.Provider(ctx, token).Repos()
+
+			inst := installer.New(client, token)
 
 			var insType manifest.InstallType
 			var version *string
