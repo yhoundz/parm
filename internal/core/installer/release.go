@@ -139,7 +139,7 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 		"arm":   {"armv7", "armv6", "armhf", "armv7l"},
 	}
 
-	extPref := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".AppImage"}
+	extPref := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".appimage"}
 	if goos == "windows" {
 		extPref = []string{".zip", ".exe", ".msi", ".bin"}
 	}
@@ -167,23 +167,25 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 	for i := range scoredMatches {
 		a := &scoredMatches[i]
 		name := a.asset.GetName()
-		if containsAny(name, gooses[goos]) {
+		lowerName := strings.ToLower(name)
+
+		if containsAny(lowerName, gooses[goos]) {
 			a.score += goosMatch
 		}
-		if containsAny(name, goarchs[goarch]) {
+		if containsAny(lowerName, goarchs[goarch]) {
 			a.score += goarchMatch
 		}
 
 		for j, ext := range extPref {
 			var mult = float64(prefMatch) * float64((len(extPref) - j))
 			var multRounded = int(math.Round(mult))
-			if strings.HasSuffix(name, ext) {
+			if strings.HasSuffix(lowerName, ext) {
 				a.score += multRounded
 			}
 		}
 
 		for j, m := range scoreMods {
-			if strings.Contains(name, j) {
+			if strings.Contains(lowerName, j) {
 				a.score += m
 			}
 		}

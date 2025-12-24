@@ -118,11 +118,11 @@ func TestSelectReleaseAsset_NoMatch(t *testing.T) {
 
 func TestSelectReleaseAsset_AlternativeNames(t *testing.T) {
 	assets := []*github.ReleaseAsset{
-		{Name: github.Ptr("app-macos-x86_64.tar.gz")},
-		{Name: github.Ptr("app-linux-x86_64.tar.gz")},
+		{Name: github.Ptr("app-MacOS-X86_64.tar.gz")},
+		{Name: github.Ptr("app-Linux-X86_64.tar.gz")},
 	}
 
-	// Test alternative OS/arch names
+	// Test alternative OS/arch names with capitalization
 	matches, err := selectReleaseAsset(assets, "darwin", "amd64")
 	if err != nil {
 		t.Fatalf("selectReleaseAsset() error: %v", err)
@@ -132,9 +132,9 @@ func TestSelectReleaseAsset_AlternativeNames(t *testing.T) {
 		t.Fatal("selectReleaseAsset() returned no matches")
 	}
 
-	// Should match "macos" and "x86_64"
-	if matches[0].GetName() != "app-macos-x86_64.tar.gz" {
-		t.Errorf("selectReleaseAsset() = %v, want app-macos-x86_64.tar.gz", matches[0].GetName())
+	// Should match "MacOS" (case-insensitive) and "X86_64"
+	if matches[0].GetName() != "app-MacOS-X86_64.tar.gz" {
+		t.Errorf("selectReleaseAsset() = %v, want app-MacOS-X86_64.tar.gz", matches[0].GetName())
 	}
 }
 
