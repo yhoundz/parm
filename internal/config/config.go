@@ -29,7 +29,7 @@ var DefaultCfg = &Config{
 }
 
 func setEnvVars(v *viper.Viper) {
-	v.BindEnv("github_api_token", "PARM_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN")
+	_ = v.BindEnv("github_api_token", "PARM_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN")
 }
 
 func setConfigDefaults(v *viper.Viper) error {

@@ -82,7 +82,7 @@ func TestUpdate_Success(t *testing.T) {
 		Strict: false,
 	}
 
-	result, err := updater.Update(ctx, "owner", "repo", installPath, flags, nil)
+	result, err := updater.Update(ctx, "owner", "repo", installPath, m, flags, nil)
 	if err != nil {
 		t.Fatalf("Update() error: %v", err)
 	}
@@ -139,31 +139,9 @@ func TestUpdate_AlreadyUpToDate(t *testing.T) {
 		Strict: false,
 	}
 
-	_, err := updater.Update(ctx, "owner", "repo", installPath, flags, nil)
+	_, err := updater.Update(ctx, "owner", "repo", installPath, m, flags, nil)
 	if err == nil {
 		t.Error("Update() should return error when already up to date")
-	}
-}
-
-func TestUpdate_PackageNotInstalled(t *testing.T) {
-	tmpDir := t.TempDir()
-	config.Cfg.ParmPkgPath = tmpDir
-
-	mockedHTTPClient := mock.NewMockedHTTPClient()
-	client := github.NewClient(mockedHTTPClient)
-	inst := installer.New(client.Repositories)
-	updater := New(client.Repositories, inst)
-
-	ctx := context.Background()
-	installPath := filepath.Join(tmpDir, "owner", "nonexistent")
-
-	flags := &UpdateFlags{
-		Strict: false,
-	}
-
-	_, err := updater.Update(ctx, "owner", "nonexistent", installPath, flags, nil)
-	if err == nil {
-		t.Error("Update() should return error for non-installed package")
 	}
 }
 
@@ -241,7 +219,7 @@ func TestUpdate_PreReleaseChannel(t *testing.T) {
 		Strict: false,
 	}
 
-	result, err := updater.Update(ctx, "owner", "repo", installPath, flags, nil)
+	result, err := updater.Update(ctx, "owner", "repo", installPath, m, flags, nil)
 	if err != nil {
 		t.Fatalf("Update() error: %v", err)
 	}
@@ -309,7 +287,7 @@ func TestUpdate_StrictPreRelease(t *testing.T) {
 		Strict: true,
 	}
 
-	result, err := updater.Update(ctx, "owner", "repo", installPath, flags, nil)
+	result, err := updater.Update(ctx, "owner", "repo", installPath, m, flags, nil)
 	if err != nil {
 		t.Fatalf("Update() error: %v", err)
 	}

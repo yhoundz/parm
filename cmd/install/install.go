@@ -52,12 +52,12 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 						return fmt.Errorf("cannot use @version shorthand with the --%s flag", flag)
 					}
 				}
-				cmd.Flags().Set("release", tag)
+				_ = cmd.Flags().Set("release", tag)
 				args[0] = owner + "/" + repo
 			}
 
 			if !cmd.Flags().Changed("release") && !cmd.Flags().Changed("pre-release") {
-				cmd.Flags().Set("release", "")
+				_ = cmd.Flags().Set("release", "")
 			}
 
 			if err := cmdx.MarkFlagsRequireFlag(cmd, "release", "asset"); err != nil {

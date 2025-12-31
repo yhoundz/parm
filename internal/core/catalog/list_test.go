@@ -123,7 +123,9 @@ func TestGetAllPkgManifest_SkipInvalid(t *testing.T) {
 		Executables: []string{"bin/app"},
 		LastUpdated: "2025-01-01 12:00:00",
 	}
-	m1.Write(validDir)
+	if err := m1.Write(validDir); err != nil {
+		t.Fatalf("failed to write manifest: %v", err)
+	}
 
 	// Create directory without manifest
 	invalidDir := filepath.Join(tmpDir, "owner2", "repo2")
