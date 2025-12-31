@@ -20,12 +20,12 @@ func TestSymlinkBinToPath(t *testing.T) {
 		binName += ".exe"
 	}
 	binPath := filepath.Join(tempDir, binName)
-	
+
 	// Minimal ELF/Mach-O/PE header or just a file that IsBinaryExecutable will accept
 	// Actually, IsBinaryExecutable uses filetype.Match which checks magic numbers.
 	// For simplicity, let's just use a real small binary or mock the check if we could.
 	// But IsValidBinaryExecutable is hard to mock without changing the code.
-	
+
 	// Let's create a file that looks like a binary.
 	// ELF magic: \x7fELF
 	var content []byte
@@ -75,7 +75,7 @@ func TestSymlinkBinToPath(t *testing.T) {
 			t.Errorf("Expected symlink, got %v", fi.Mode())
 		}
 	}
-	
+
 	// Test update (remove existing and re-link)
 	err = SymlinkBinToPath(binPath, destPath)
 	if err != nil {

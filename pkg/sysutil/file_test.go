@@ -68,4 +68,3 @@ func TestCleanBinaryName(t *testing.T) {
 		})
 	}
 }
-
