@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -102,58 +103,56 @@ func CleanBinaryName(name string) string {
 		return name
 	}
 
-	// Common platform identifiers to strip (order matters - check longer patterns first)
-	platforms := []string{
-		// Combined long patterns first
-		"x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl",
-		"x86_64-apple-darwin", "aarch64-apple-darwin",
-		"x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu",
-		"unknown-linux-gnu", "unknown-linux-musl",
-		"apple-darwin", "pc-windows",
-		// Architecture names
-		"amd64", "x86_64", "x64", "arm64", "aarch64", "386", "i386", "x86", "armv7", "armv6", "armhf",
-		// OS names
-		"linux", "darwin", "macos", "mac", "osx", "windows", "win", "win64", "win32",
-	}
+	var (
+		osPattern      = `(?i)[-_](darwin|macos|linux|windows|win|freebsd|openbsd|netbsd|dragonfly|solaris|sunos|aix)`
+		archPattern    = `(?i)[-_](arm64|aarch64|armv7|armv6|amd64|x86_64|x64|386|i386|i686|ppc64|ppc64le|s390x|riscv64)`
+		abiPattern     = `(?i)[-_](gnu|musl|mingw|msvc|apple|unknown)`
+		versionPattern = `(?i)[-_]v?[0-9]+\.[0-9]+(\.[0-9]+)?`
+	)
 
 	result := name
-
-	// Remove file extension first if present (but not for extensionless binaries)
 	ext := filepath.Ext(result)
-	if ext == ".exe" {
+	if strings.ToLower(ext) == ".exe" {
 		result = strings.TrimSuffix(result, ext)
 	}
 
-	// Keep stripping platform suffixes until no more can be removed
+	reVersionOSArch := regexp.MustCompile(versionPattern + osPattern + archPattern + `.*$`)
+	reOSArch := regexp.MustCompile(osPattern + archPattern + `.*$`)
+	reArchABI := regexp.MustCompile(archPattern + "(" + abiPattern + ")?$")
+	reOSABI := regexp.MustCompile(osPattern + "(" + abiPattern + ")?$")
+	reArch := regexp.MustCompile(archPattern + "$")
+	reOS := regexp.MustCompile(osPattern + "$")
+	reABI := regexp.MustCompile(abiPattern + "$")
+
 	changed := true
 	for changed {
 		changed = false
-		for _, p := range platforms {
-			// Match patterns like -linux-amd64, _linux_amd64, -linux, _amd64, etc.
-			suffixes := []string{
-				"-" + p,
-				"_" + p,
-				"." + p,
-			}
-			for _, suffix := range suffixes {
-				if strings.HasSuffix(strings.ToLower(result), strings.ToLower(suffix)) {
-					newResult := result[:len(result)-len(suffix)]
-					if newResult != "" { // Don't strip if it would result in empty string
-						result = newResult
-						changed = true
-					}
-				}
-			}
+		old := result
+
+		// Strip patterns iteratively
+		result = reVersionOSArch.ReplaceAllString(result, "")
+		result = reOSArch.ReplaceAllString(result, "")
+		result = reArchABI.ReplaceAllString(result, "")
+		result = reOSABI.ReplaceAllString(result, "")
+		result = reArch.ReplaceAllString(result, "")
+		result = reOS.ReplaceAllString(result, "")
+		result = reABI.ReplaceAllString(result, "")
+
+		// Strip trailing separators
+		result = strings.TrimRight(result, "-_")
+
+		if result != old && result != "" {
+			changed = true
 		}
 	}
 
-	// If we stripped everything or result is empty, return original
 	if result == "" {
-		return name
+		// Fallback to original if stripping made it empty (minus extension)
+		result = strings.TrimSuffix(name, ext)
 	}
 
-	// Restore .exe extension on Windows
-	if runtime.GOOS == "windows" && ext == ".exe" {
+	// Restore .exe extension on Windows if it was originally there
+	if runtime.GOOS == "windows" && strings.ToLower(ext) == ".exe" {
 		result += ext
 	}
 
