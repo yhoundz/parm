@@ -35,11 +35,11 @@ func TestInit_CreatesConfigDir(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Set config home to temp dir
-	os.Setenv("XDG_CONFIG_HOME", tmpDir)
+	_ = os.Setenv("XDG_CONFIG_HOME", tmpDir)
 	if origConfigDir != "" {
-		defer os.Setenv("XDG_CONFIG_HOME", origConfigDir)
+		defer func() { _ = os.Setenv("XDG_CONFIG_HOME", origConfigDir) }()
 	} else {
-		defer os.Unsetenv("XDG_CONFIG_HOME")
+		defer func() { _ = os.Unsetenv("XDG_CONFIG_HOME") }()
 	}
 
 	// Reset viper
@@ -70,12 +70,12 @@ func TestInit_CreatesConfigFile(t *testing.T) {
 
 	// Set config home to temp dir
 	origXDG := os.Getenv("XDG_CONFIG_HOME")
-	os.Setenv("XDG_CONFIG_HOME", tmpDir)
+	_ = os.Setenv("XDG_CONFIG_HOME", tmpDir)
 	defer func() {
 		if origXDG != "" {
-			os.Setenv("XDG_CONFIG_HOME", origXDG)
+			_ = os.Setenv("XDG_CONFIG_HOME", origXDG)
 		} else {
-			os.Unsetenv("XDG_CONFIG_HOME")
+			_ = os.Unsetenv("XDG_CONFIG_HOME")
 		}
 	}()
 
@@ -98,8 +98,8 @@ func TestSetEnvVars(t *testing.T) {
 
 	// Set a test token
 	testToken := "test_token_123"
-	os.Setenv("GITHUB_TOKEN", testToken)
-	defer os.Unsetenv("GITHUB_TOKEN")
+	_ = os.Setenv("GITHUB_TOKEN", testToken)
+	defer func() { _ = os.Unsetenv("GITHUB_TOKEN") }()
 
 	setEnvVars(v)
 

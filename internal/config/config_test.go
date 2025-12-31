@@ -10,7 +10,7 @@ import (
 func TestGetDefaultPrefixDir(t *testing.T) {
 	// Save original env vars
 	origXDG := os.Getenv("XDG_DATA_HOME")
-	defer os.Setenv("XDG_DATA_HOME", origXDG)
+	defer func() { _ = os.Setenv("XDG_DATA_HOME", origXDG) }()
 
 	tests := []struct {
 		name          string
@@ -39,9 +39,9 @@ func TestGetDefaultPrefixDir(t *testing.T) {
 			}
 
 			if tt.xdgDataHome != "" {
-				os.Setenv("XDG_DATA_HOME", tt.xdgDataHome)
+				_ = os.Setenv("XDG_DATA_HOME", tt.xdgDataHome)
 			} else {
-				os.Unsetenv("XDG_DATA_HOME")
+				_ = os.Unsetenv("XDG_DATA_HOME")
 			}
 
 			path, err := GetDefaultPrefixDir()
