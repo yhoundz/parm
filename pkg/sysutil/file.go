@@ -184,8 +184,14 @@ func SymlinkBinToPath(binPath, destPath string) error {
 		return fmt.Errorf("failed to check destination path: \n%w", err)
 	}
 
-	if err := os.Symlink(binPath, destPath); err != nil {
-		return err
+	if runtime.GOOS == "windows" {
+		if err := os.Link(binPath, destPath); err != nil {
+			return err
+		}
+	} else {
+		if err := os.Symlink(binPath, destPath); err != nil {
+			return err
+		}
 	}
 
 	return nil
