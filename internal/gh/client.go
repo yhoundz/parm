@@ -66,17 +66,38 @@ func GetStoredApiKey(v *viper.Viper) (string, error) {
 	return tok, nil
 }
 
-// IsRepositoryPublic checks if a repository is public by attempting to access it without authentication
-func IsRepositoryPublic(ctx context.Context, client *github.RepositoriesService, owner, repo string) (bool, error) {
+// RepositoryVisibility represents the visibility state of a repository
+type RepositoryVisibility int
+
+const (
+	RepoPublic RepositoryVisibility = iota
+	RepoPrivate
+	RepoNotFound
+)
+
+// CheckRepositoryVisibility checks if a repository is public, private, or doesn't exist
+func CheckRepositoryVisibility(ctx context.Context, client *github.RepositoriesService, owner, repo string) (RepositoryVisibility, error) {
 	repo_obj, resp, err := client.Get(ctx, owner, repo)
 	if err != nil {
-		// If we get a 404, the repo doesn't exist or is private
+		// If we get a 404, the repo doesn't exist or is private (can't tell without auth)
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return false, nil
+			return RepoNotFound, nil
 		}
-		return false, err
+		return RepoNotFound, err
 	}
 
-	// Check if the repository is private
-	return !repo_obj.GetPrivate(), nil
+	if repo_obj.GetPrivate() {
+		return RepoPrivate, nil
+	}
+	return RepoPublic, nil
+}
+
+// IsRepositoryPublic checks if a repository is public by attempting to access it without authentication
+// Deprecated: Use CheckRepositoryVisibility for better error handling
+func IsRepositoryPublic(ctx context.Context, client *github.RepositoriesService, owner, repo string) (bool, error) {
+	visibility, err := CheckRepositoryVisibility(ctx, client, owner, repo)
+	if err != nil {
+		return false, err
+	}
+	return visibility == RepoPublic, nil
 }

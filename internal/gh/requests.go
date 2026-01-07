@@ -74,7 +74,7 @@ func ResolvePreRelease(ctx context.Context, client *github.RepositoriesService, 
 		return nil, fmt.Errorf("err: cannot resolve pre-release on %s/%s: \n%w", owner, repo, err)
 	}
 	if !valid {
-		return nil, fmt.Errorf("error: no valid pre-release found for %s/%s\n\nIf this is a private repository, set a GitHub token:\n  export GITHUB_TOKEN=$(gh auth token)", owner, repo)
+		return nil, fmt.Errorf("error: no pre-release found for %s/%s", owner, repo)
 	}
 
 	return rel, nil
@@ -96,7 +96,7 @@ func ResolveReleaseByTag(ctx context.Context, client *github.RepositoriesService
 		if err != nil {
 			var ghErr *github.ErrorResponse
 			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
-				return nil, fmt.Errorf("error: no stable release found for %s/%s\n\nIf this is a private repository, set a GitHub token:\n  export GITHUB_TOKEN=$(gh auth token)", owner, repo)
+				return nil, fmt.Errorf("error: no stable release found for %s/%s", owner, repo)
 			}
 			return nil, fmt.Errorf("error: could not fetch latest release: \n%w", err)
 		}

@@ -90,14 +90,27 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 
 			// Create a temporary client to check if repo is public
 			tempClient := f.Provider(ctx, "").Repos()
-			isPublic, err := gh.IsRepositoryPublic(ctx, tempClient, owner, repo)
+			visibility, err := gh.CheckRepositoryVisibility(ctx, tempClient, owner, repo)
 			if err != nil {
 				return fmt.Errorf("error: cannot determine repository visibility: %w", err)
 			}
 
-			// If repo is private and we don't have a token, fail
-			if !isPublic && token == "" {
-				return fmt.Errorf("error: api key not found\n\nThis repository is private. Set a GitHub token:\n  export GITHUB_TOKEN=$(gh auth token)")
+			switch visibility {
+			case gh.RepoNotFound:
+				if token == "" {
+					// Could be private or non-existent, suggest token first
+					return fmt.Errorf("error: repository '%s/%s' not found\n\nThis could mean:\n  - The repository doesn't exist\n  - The repository is private (set a GitHub token to access it):\n    export GITHUB_TOKEN=$(gh auth token)", owner, repo)
+				}
+				// Has token but still not found - check with auth
+				authClient := f.Provider(ctx, token).Repos()
+				authVisibility, _ := gh.CheckRepositoryVisibility(ctx, authClient, owner, repo)
+				if authVisibility == gh.RepoNotFound {
+					return fmt.Errorf("error: repository '%s/%s' not found", owner, repo)
+				}
+			case gh.RepoPrivate:
+				if token == "" {
+					return fmt.Errorf("error: repository '%s/%s' is private\n\nSet a GitHub token to access it:\n  export GITHUB_TOKEN=$(gh auth token)", owner, repo)
+				}
 			}
 
 			client := f.Provider(ctx, token).Repos()
