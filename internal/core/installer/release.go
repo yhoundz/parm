@@ -156,7 +156,7 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 
 	for i := range scoredMatches {
 		a := &scoredMatches[i]
-		name := a.asset.GetName()
+		name := strings.ToLower(a.asset.GetName())
 		if containsAny(name, gooses[goos]) {
 			a.score += goosMatch
 		}
