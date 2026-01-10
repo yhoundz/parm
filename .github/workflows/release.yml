@@ -6,8 +6,6 @@ on:
 
 jobs:
   build:
-    permissions:
-      contents: write
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -48,18 +46,29 @@ jobs:
           VERSION: ${{ github.ref_name }}
         run: make ${{ matrix.make_target }}
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-${{ matrix.name }}
+          path: bin/*
+          if-no-files-found: error
+
   release:
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           fetch-tags: true
 
-      - uses: actions/setup-go@v5
+      - uses: actions/download-artifact@v4
         with:
-          go-version-file: go.mod
+          pattern: artifacts-*
+          path: bin
+          merge-multiple: true
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
