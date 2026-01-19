@@ -25,6 +25,16 @@ command -v go >/dev/null 2>&1 || error "go is required"
 command -v git >/dev/null 2>&1 || error "git is required"
 command -v gh >/dev/null 2>&1 || error "gh (GitHub CLI) is required. Install: https://cli.github.com/"
 
+# Auto-detect repository
+REPO_FULL=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || git remote get-url origin | sed 's/.*github.com[:\/]//;s/\.git$//' || echo "aleister1102/parm")
+OWNER=$(echo "$REPO_FULL" | cut -d/ -f1)
+REPO=$(echo "$REPO_FULL" | cut -d/ -f2)
+
+log "Injecting $OWNER/$REPO into scripts/install.sh..."
+sed -i.bak "s/{{OWNER}}/$OWNER/g" scripts/install.sh
+sed -i.bak "s/{{REPO}}/$REPO/g" scripts/install.sh
+rm scripts/install.sh.bak
+
 # Get version from argument or prompt
 VERSION="${1:-}"
 if [[ -z "$VERSION" ]]; then
@@ -85,15 +95,15 @@ RELEASE_NOTES="Release $VERSION
 
 ## Installation
 \`\`\`sh
-curl -fsSL https://raw.githubusercontent.com/aleister1102/parm/master/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/${OWNER}/${REPO}/master/scripts/install.sh | sh
 \`\`\`
 "
 
 gh release create "$VERSION" \
     "${ARTIFACTS[@]}" \
-    --repo aleister1102/parm \
+    --repo "${OWNER}/${REPO}" \
     --title "$VERSION" \
     --notes "$RELEASE_NOTES"
 
 log "Release $VERSION published successfully!"
-log "View at: https://github.com/aleister1102/parm/releases/tag/$VERSION"
+log "View at: https://github.com/${OWNER}/${REPO}/releases/tag/$VERSION"

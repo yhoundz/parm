@@ -14,11 +14,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// TODO: don't retrive package info from GitHub if it doesn't have any releases.
-// doing this would be very api-expensive though still.
-
-// TODO: don't error out if trying to retrieve package info locally if the package doesn't exist.
-
 func NewInfoCmd(f *cmdutil.Factory) *cobra.Command {
 	var getUpstream bool
 	var infoCmd = &cobra.Command{
@@ -28,12 +23,10 @@ func NewInfoCmd(f *cmdutil.Factory) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			pkg := args[0]
-			token, err := gh.GetStoredApiKey(viper.GetViper())
-			if err != nil {
-				fmt.Printf("%s\ncontinuing without api key", err)
-			}
+			token, _ := gh.GetStoredApiKey(viper.GetViper())
 			client := f.Provider(ctx, token).Repos()
 			var owner, repo string
+			var err error
 
 			owner, repo, err = cmdparser.ParseRepoRef(pkg)
 			if err != nil {

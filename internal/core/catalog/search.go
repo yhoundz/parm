@@ -3,6 +3,7 @@ package catalog
 import (
 	"context"
 	"fmt"
+	"parm/internal/gh"
 
 	"github.com/google/go-github/v74/github"
 )
@@ -13,7 +14,9 @@ type RepoSearchOptions struct {
 	Query *string
 }
 
-func SearchRepo(ctx context.Context, search *github.SearchService, opts RepoSearchOptions) (*github.RepositoriesSearchResult, error) {
+func SearchRepo(ctx context.Context, provider gh.Provider, opts RepoSearchOptions) (*github.RepositoriesSearchResult, error) {
+	search := provider.Search()
+	repos := provider.Repos()
 	ghOpts := github.SearchOptions{
 		Sort:  "stars",
 		Order: "desc",
@@ -33,11 +36,28 @@ func SearchRepo(ctx context.Context, search *github.SearchService, opts RepoSear
 		return nil, fmt.Errorf("error: could not search repositories:\n%q", err)
 	}
 
-	// TODO: filter for only repos that have releases
-	// var repos [][2]string
-	//
-	// for _, repo := range res.Repositories {
-	// }
+	// Filter for only repos that have releases
+	var filteredRepos []*github.Repository
+	// Limit to top 10 results to avoid excessive API calls
+	maxToProcess := len(res.Repositories)
+	if maxToProcess > 10 {
+		maxToProcess = 10
+	}
+
+	for i := 0; i < maxToProcess; i++ {
+		repo := res.Repositories[i]
+		owner := repo.GetOwner().GetLogin()
+		name := repo.GetName()
+
+		// Check for at least one release
+		rel, _, err := repos.GetLatestRelease(ctx, owner, name)
+		if err == nil && rel != nil {
+			filteredRepos = append(filteredRepos, repo)
+		}
+	}
+
+	res.Repositories = filteredRepos
+	res.Total = github.Ptr(len(filteredRepos))
 
 	return res, nil
 }

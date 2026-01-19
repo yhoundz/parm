@@ -118,9 +118,13 @@ func TestGetPackageInfo_DownstreamNotInstalled(t *testing.T) {
 	config.Cfg.ParmPkgPath = tmpDir
 
 	ctx := context.Background()
-	_, err := GetPackageInfo(ctx, nil, "owner", "nonexistent", false)
-	if err == nil {
-		t.Error("GetPackageInfo() should return error for non-existent package")
+	info, err := GetPackageInfo(ctx, nil, "owner", "nonexistent", false)
+	if err != nil {
+		t.Errorf("GetPackageInfo() should not return error for non-existent local package, got: %v", err)
+	}
+
+	if info.DownstreamInfo != nil {
+		t.Error("DownstreamInfo should be nil for non-existent local package")
 	}
 }
 

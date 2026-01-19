@@ -17,6 +17,8 @@ import (
 	"parm/pkg/progress"
 	"parm/pkg/sysutil"
 	"path/filepath"
+	"runtime"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -219,8 +221,12 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 			binPaths := man.GetFullExecPaths()
 
 			for _, execPath := range binPaths {
-				cleanName := sysutil.CleanBinaryName(filepath.Base(execPath))
-				pathToSymLinkTo := parmutil.GetBinDir(cleanName)
+				binName := filepath.Base(execPath)
+				destName := binName
+				if runtime.GOOS == "windows" {
+					destName = strings.TrimSuffix(binName, filepath.Ext(binName)) + ".cmd"
+				}
+				pathToSymLinkTo := parmutil.GetBinDir(destName)
 
 				// TODO: use shims for windows instead?
 				err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)

@@ -1,6 +1,6 @@
 module parm
 
-go 1.24.5
+go 1.25
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
@@ -8,11 +8,17 @@ require (
 	github.com/google/go-github/v74 v74.0.0
 	github.com/h2non/filetype v1.1.3
 	github.com/migueleliasweb/go-github-mock v1.4.0
+	github.com/minio/selfupdate v0.6.0
 	github.com/shirou/gopsutil/v4 v4.25.7
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/vbauerster/mpb/v8 v8.11.2
 	golang.org/x/oauth2 v0.30.0
+)
+
+require (
+	aead.dev/minisign v0.2.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
 )
 
 require (

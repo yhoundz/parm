@@ -10,6 +10,9 @@ set -eu
 need_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "error: need $1" >&2; exit 1; }; }
 need_cmd uname
 
+OWNER="{{OWNER}}"
+REPO="{{REPO}}"
+
 OS="$(uname -s)"
 ARCH="$(uname -m)"
 
@@ -114,7 +117,7 @@ http_download() {
   fi
 }
 
-latest_tag="$(http_get "https://api.github.com/repos/aleister1102/parm/releases/latest" \
+latest_tag="$(http_get "https://api.github.com/repos/${OWNER}/${REPO}/releases/latest" \
   | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
 [ -n "$latest_tag" ] || { echo "error: could not resolve latest version" >&2; exit 1; }
 
@@ -128,8 +131,8 @@ archive="$tmpdir/parm.tar.gz"
 
 # macOS: try arm64 first; if 404, try amd64 (Rosetta)
 if [ "$os" = "darwin" ] && [ "$arch" = "arm64" ]; then
-  url_arm64="https://github.com/aleister1102/parm/releases/download/${latest_tag}/parm-darwin-arm64.tar.gz"
-  url_amd64="https://github.com/aleister1102/parm/releases/download/${latest_tag}/parm-darwin-amd64.tar.gz"
+  url_arm64="https://github.com/$(echo "${OWNER}/${REPO}" | sed 's/\/$//')/releases/download/${latest_tag}/${REPO}-darwin-arm64.tar.gz"
+  url_amd64="https://github.com/$(echo "${OWNER}/${REPO}" | sed 's/\/$//')/releases/download/${latest_tag}/${REPO}-darwin-amd64.tar.gz"
   if try_url "$url_arm64" "$archive"; then
     :
   elif try_url "$url_amd64" "$archive"; then
@@ -139,8 +142,8 @@ if [ "$os" = "darwin" ] && [ "$arch" = "arm64" ]; then
     exit 1
   fi
 else
-  asset="parm-${os}-${arch}.tar.gz"
-  url="https://github.com/aleister1102/parm/releases/download/${latest_tag}/${asset}"
+  asset="${REPO}-${os}-${arch}.tar.gz"
+  url="https://github.com/${OWNER}/${REPO}/releases/download/${latest_tag}/${asset}"
   http_download "$url" "$archive" || { echo "error: download failed" >&2; exit 1; }
 fi
 

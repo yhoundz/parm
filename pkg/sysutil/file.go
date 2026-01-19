@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 
@@ -96,69 +95,6 @@ func IsBinaryExecutable(path string) (bool, *types.Type, error) {
 	return false, nil, nil
 }
 
-// CleanBinaryName strips common platform/architecture suffixes from binary names
-// e.g., "nuclei-linux-amd64" -> "nuclei", "tool_darwin_arm64" -> "tool"
-func CleanBinaryName(name string) string {
-	if name == "" {
-		return name
-	}
-
-	var (
-		osPattern      = `(?i)[-_](darwin|macos|linux|windows|win|freebsd|openbsd|netbsd|dragonfly|solaris|sunos|aix)`
-		archPattern    = `(?i)[-_](arm64|aarch64|armv7|armv6|amd64|x86_64|x64|386|i386|i686|ppc64|ppc64le|s390x|riscv64)`
-		abiPattern     = `(?i)[-_](gnu|musl|mingw|msvc|apple|unknown)`
-		versionPattern = `(?i)[-_]v?[0-9]+\.[0-9]+(\.[0-9]+)?`
-	)
-
-	result := name
-	ext := filepath.Ext(result)
-	if strings.ToLower(ext) == ".exe" {
-		result = strings.TrimSuffix(result, ext)
-	}
-
-	reVersionOSArch := regexp.MustCompile(versionPattern + osPattern + archPattern + `.*$`)
-	reOSArch := regexp.MustCompile(osPattern + archPattern + `.*$`)
-	reArchABI := regexp.MustCompile(archPattern + "(" + abiPattern + ")?$")
-	reOSABI := regexp.MustCompile(osPattern + "(" + abiPattern + ")?$")
-	reArch := regexp.MustCompile(archPattern + "$")
-	reOS := regexp.MustCompile(osPattern + "$")
-	reABI := regexp.MustCompile(abiPattern + "$")
-
-	changed := true
-	for changed {
-		changed = false
-		old := result
-
-		// Strip patterns iteratively
-		result = reVersionOSArch.ReplaceAllString(result, "")
-		result = reOSArch.ReplaceAllString(result, "")
-		result = reArchABI.ReplaceAllString(result, "")
-		result = reOSABI.ReplaceAllString(result, "")
-		result = reArch.ReplaceAllString(result, "")
-		result = reOS.ReplaceAllString(result, "")
-		result = reABI.ReplaceAllString(result, "")
-
-		// Strip trailing separators
-		result = strings.TrimRight(result, "-_")
-
-		if result != old && result != "" {
-			changed = true
-		}
-	}
-
-	if result == "" {
-		// Fallback to original if stripping made it empty (minus extension)
-		result = strings.TrimSuffix(name, ext)
-	}
-
-	// Restore .exe extension on Windows if it was originally there
-	if runtime.GOOS == "windows" && strings.ToLower(ext) == ".exe" {
-		result += ext
-	}
-
-	return result
-}
-
 func SymlinkBinToPath(binPath, destPath string) error {
 	isBin, err := IsValidBinaryExecutable(binPath)
 	if err != nil {
@@ -184,8 +120,9 @@ func SymlinkBinToPath(binPath, destPath string) error {
 	}
 
 	if runtime.GOOS == "windows" {
-		if err := os.Link(binPath, destPath); err != nil {
-			return err
+		shimContent := fmt.Sprintf("@echo off\n\"%s\" %%*\n", binPath)
+		if err := os.WriteFile(destPath, []byte(shimContent), 0o755); err != nil {
+			return fmt.Errorf("failed to create windows shim at %s\n%w", destPath, err)
 		}
 	} else {
 		if err := os.Symlink(binPath, destPath); err != nil {

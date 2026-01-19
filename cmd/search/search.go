@@ -45,7 +45,7 @@ func NewSearchCmd(f *cmdutil.Factory) *cobra.Command {
 				opts.Key = &args[0]
 			}
 			// TODO: finish this up
-			_, _ = catalog.SearchRepo(ctx, client.Search(), opts)
+			_, _ = catalog.SearchRepo(ctx, client, opts)
 			return nil
 		},
 	}

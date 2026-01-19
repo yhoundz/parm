@@ -96,7 +96,7 @@ func ResolveReleaseByTag(ctx context.Context, client *github.RepositoriesService
 		if err != nil {
 			var ghErr *github.ErrorResponse
 			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
-				return nil, fmt.Errorf("error: no stable release found for %s/%s", owner, repo)
+				return nil, fmt.Errorf("error: no releases found for %s/%s", owner, repo)
 			}
 			return nil, fmt.Errorf("error: could not fetch latest release: \n%w", err)
 		}
