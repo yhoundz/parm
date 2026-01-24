@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 Alexander Wang
+Copyright © 2025 yhoundz
 */
 
 package parmver
