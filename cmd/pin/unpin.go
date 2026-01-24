@@ -12,7 +12,7 @@ import (
 func NewUnpinCmd(f *cmdutil.Factory) *cobra.Command {
 	var unpinCmd = &cobra.Command{
 		Use:   "unpin <owner>/<repo>",
-		Short: "Unpins a package to reallow updates.",
+		Short: "Unpins a package to allow updates.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, pkg := range args {
 				owner, repo, err := cmdparser.ParseRepoRef(pkg)
@@ -21,11 +21,6 @@ func NewUnpinCmd(f *cmdutil.Factory) *cobra.Command {
 					if err != nil {
 						return err
 					}
-				}
-
-				if err != nil {
-					fmt.Printf("cannot read manifest for %s/%s", owner, repo)
-					continue
 				}
 
 				err = updater.ChangePinnedStatus(owner, repo, false)

@@ -10,8 +10,8 @@ set -eu
 need_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "error: need $1" >&2; exit 1; }; }
 need_cmd uname
 
-OWNER="{{OWNER}}"
-REPO="{{REPO}}"
+OWNER="${OWNER:-yhoundz}"
+REPO="${REPO:-parm}"
 
 OS="$(uname -s)"
 ARCH="$(uname -m)"
@@ -59,27 +59,10 @@ case "$ARCH" in
   *) echo "error: unsupported arch: $ARCH" >&2; exit 1 ;;
 esac
 
-# Resolve config dir: $XDG_CONFIG_HOME/parm or ~/.config/parm
+cfg_dir="${HOME}/.config/parm"
 if [ -n "${XDG_CONFIG_HOME:-}" ]; then
   cfg_dir="${XDG_CONFIG_HOME%/}/parm"
-else
-  cfg_dir="${HOME}/.config/parm"
 fi
-
-# Resolve data prefix (install prefix) per config.go
-case "$OS" in
-  Linux)
-    if [ -n "${XDG_DATA_HOME:-}" ]; then
-      prefix="${XDG_DATA_HOME%/}/parm"
-    else
-      prefix="${HOME}/.local/share/parm"
-    fi
-    ;;
-  Darwin)
-    prefix="${HOME}/Library/Application Support/parm"
-    ;;
-esac
-
 bin_dir="${prefix}/bin"
 
 mkdir -p "$cfg_dir" "$bin_dir"

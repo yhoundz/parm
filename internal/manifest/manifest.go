@@ -83,7 +83,18 @@ func Read(installDir string) (*Manifest, error) {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, err
 	}
-	migrate(&raw)
+	changed := migrate(&raw)
+
+	if changed {
+		updated, err := json.MarshalIndent(raw, "", "  ")
+		if err != nil {
+			return nil, err
+		}
+		if err := os.WriteFile(path, updated, 0o644); err != nil {
+			return nil, err
+		}
+		data = updated
+	}
 
 	var m Manifest
 	err = json.Unmarshal(data, &m)
@@ -91,13 +102,17 @@ func Read(installDir string) (*Manifest, error) {
 }
 
 // INFO: should modify the raw param
-func migrate(raw *(map[string]any)) {
+func migrate(raw *(map[string]any)) bool {
 	version, _ := (*raw)["schema_version"].(float64)
+	changed := false
 
 	if version < float64(CurrentSchemaVersion) {
 		(*raw)["schema_version"] = CurrentSchemaVersion
 		(*raw)["pinned"] = false
+		changed = true
 	}
+
+	return changed
 }
 
 // TODO: move this out of here? shouldn't really be here

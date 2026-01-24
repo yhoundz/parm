@@ -18,6 +18,8 @@ NEXT_MINOR := v$(MAJOR).$(shell echo $$(($(MINOR)+1))).0
 NEXT_MAJOR := v$(shell echo $$(($(MAJOR)+1))).0.0
 
 LDFLAGS = -X 'parm/parmver.StringVersion=$(CURRENT_TAG)' -X 'parm/parmver.Owner=$(OWNER)' -X 'parm/parmver.Repo=$(REPO)' -s -w
+RELEASE_VERSION := $(if $(TAG),$(TAG),$(VERSION))
+RELEASE_LDFLAGS := -X 'parm/parmver.StringVersion=$(RELEASE_VERSION)' -X 'parm/parmver.Owner=$(OWNER)' -X 'parm/parmver.Repo=$(REPO)' -s -w
 
 .DEFAULT_GOAL := help
 
@@ -57,27 +59,54 @@ uninstall:
 	rm -f $(INSTALL_PATH)/$(BINARY_NAME)
 	@echo "Removed $(BINARY_NAME) from $(INSTALL_PATH)"
 
-release: ## Release new version (usage: make release TAG=v1.0.0)
-	@if [ -z "$(TAG)" ]; then echo "Usage: make release TAG=v1.0.0"; exit 1; fi
-	@echo "Releasing $(TAG) to $(OWNER)/$(REPO)..."
-	@sed -i.bak "s/{{OWNER}}/$(OWNER)/g" scripts/install.sh && sed -i.bak "s/{{REPO}}/$(REPO)/g" scripts/install.sh && rm scripts/install.sh.bak
-	@go test ./...
-	@rm -rf $(BUILD_DIR) && mkdir -p $(BUILD_DIR)
-	@echo "Building binaries..."
-	@GOOS=linux GOARCH=amd64 go build -ldflags "-X 'parm/parmver.StringVersion=$(TAG)' -X 'parm/parmver.Owner=$(OWNER)' -X 'parm/parmver.Repo=$(REPO)' -s -w" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 main.go
-	@GOOS=linux GOARCH=arm64 go build -ldflags "-X 'parm/parmver.StringVersion=$(TAG)' -X 'parm/parmver.Owner=$(OWNER)' -X 'parm/parmver.Repo=$(REPO)' -s -w" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 main.go
-	@GOOS=darwin GOARCH=amd64 go build -ldflags "-X 'parm/parmver.StringVersion=$(TAG)' -X 'parm/parmver.Owner=$(OWNER)' -X 'parm/parmver.Repo=$(REPO)' -s -w" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 main.go
-	@GOOS=darwin GOARCH=arm64 go build -ldflags "-X 'parm/parmver.StringVersion=$(TAG)' -X 'parm/parmver.Owner=$(OWNER)' -X 'parm/parmver.Repo=$(REPO)' -s -w" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 main.go
-	@GOOS=windows GOARCH=amd64 go build -ldflags "-X 'parm/parmver.StringVersion=$(TAG)' -X 'parm/parmver.Owner=$(OWNER)' -X 'parm/parmver.Repo=$(REPO)' -s -w" -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe main.go
-	@GOOS=windows GOARCH=arm64 go build -ldflags "-X 'parm/parmver.StringVersion=$(TAG)' -X 'parm/parmver.Owner=$(OWNER)' -X 'parm/parmver.Repo=$(REPO)' -s -w" -o $(BUILD_DIR)/$(BINARY_NAME)-windows-arm64.exe main.go
-	@cd $(BUILD_DIR) && shasum -a 256 * > checksums.txt
-	@echo "Creating GitHub release..."
-	@if ! git rev-parse $(TAG) >/dev/null 2>&1; then \
-		git tag -a $(TAG) -m "Release $(TAG)"; \
+define _release_version_check
+	@if [ -z "$(RELEASE_VERSION)" ]; then \
+		echo "Usage: make release TAG=v1.0.0 or VERSION=v1.0.0"; \
+		exit 1; \
 	fi
-	@git push origin $(TAG)
-	@echo "Done: $(TAG)"
-	@echo "Binaries are available in $(BUILD_DIR)"
+endef
+
+release: ## Release new version (usage: make release TAG=v1.0.0)
+	$(call _release_version_check)
+	@echo "Releasing $(RELEASE_VERSION) to $(OWNER)/$(REPO)..."
+	@mkdir -p $(BIN_DIR)
+	@rm -f \
+		$(BIN_DIR)/$(BINARY_NAME)-linux-*.tar.gz \
+		$(BIN_DIR)/$(BINARY_NAME)-darwin-*.tar.gz \
+		$(BIN_DIR)/$(BINARY_NAME)-windows-*.zip
+	@$(MAKE) release-linux release-darwin release-windows \
+		TAG="$(RELEASE_VERSION)" VERSION="$(RELEASE_VERSION)"
+	@echo "Artifacts are available under $(BIN_DIR)/"
+
+release-linux:
+	$(call _release_version_check)
+	@mkdir -p $(BIN_DIR)
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "$(RELEASE_LDFLAGS)" -o $(BIN_DIR)/$(BINARY_NAME) main.go
+	@tar -czf $(BIN_DIR)/$(BINARY_NAME)-linux-amd64.tar.gz -C $(BIN_DIR) $(BINARY_NAME)
+	@rm -f $(BIN_DIR)/$(BINARY_NAME)
+	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "$(RELEASE_LDFLAGS)" -o $(BIN_DIR)/$(BINARY_NAME) main.go
+	@tar -czf $(BIN_DIR)/$(BINARY_NAME)-linux-arm64.tar.gz -C $(BIN_DIR) $(BINARY_NAME)
+	@rm -f $(BIN_DIR)/$(BINARY_NAME)
+
+release-darwin:
+	$(call _release_version_check)
+	@mkdir -p $(BIN_DIR)
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "$(RELEASE_LDFLAGS)" -o $(BIN_DIR)/$(BINARY_NAME) main.go
+	@tar -czf $(BIN_DIR)/$(BINARY_NAME)-darwin-amd64.tar.gz -C $(BIN_DIR) $(BINARY_NAME)
+	@rm -f $(BIN_DIR)/$(BINARY_NAME)
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags "$(RELEASE_LDFLAGS)" -o $(BIN_DIR)/$(BINARY_NAME) main.go
+	@tar -czf $(BIN_DIR)/$(BINARY_NAME)-darwin-arm64.tar.gz -C $(BIN_DIR) $(BINARY_NAME)
+	@rm -f $(BIN_DIR)/$(BINARY_NAME)
+
+release-windows:
+	$(call _release_version_check)
+	@mkdir -p $(BIN_DIR)
+	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags "$(RELEASE_LDFLAGS)" -o $(BIN_DIR)/$(BINARY_NAME).exe main.go
+	@zip -j $(BIN_DIR)/$(BINARY_NAME)-windows-amd64.zip $(BIN_DIR)/$(BINARY_NAME).exe
+	@rm -f $(BIN_DIR)/$(BINARY_NAME).exe
+	@CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -ldflags "$(RELEASE_LDFLAGS)" -o $(BIN_DIR)/$(BINARY_NAME).exe main.go
+	@zip -j $(BIN_DIR)/$(BINARY_NAME)-windows-arm64.zip $(BIN_DIR)/$(BINARY_NAME).exe
+	@rm -f $(BIN_DIR)/$(BINARY_NAME).exe
 
 bump-patch: ## Release next patch version
 	@$(MAKE) release TAG=$(NEXT_PATCH)

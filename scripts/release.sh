@@ -30,11 +30,6 @@ REPO_FULL=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || g
 OWNER=$(echo "$REPO_FULL" | cut -d/ -f1)
 REPO=$(echo "$REPO_FULL" | cut -d/ -f2)
 
-log "Injecting $OWNER/$REPO into scripts/install.sh..."
-sed -i.bak "s/{{OWNER}}/$OWNER/g" scripts/install.sh
-sed -i.bak "s/{{REPO}}/$REPO/g" scripts/install.sh
-rm scripts/install.sh.bak
-
 # Get version from argument or prompt
 VERSION="${1:-}"
 if [[ -z "$VERSION" ]]; then
@@ -50,7 +45,7 @@ fi
 
 log "Releasing version: $VERSION"
 
-# Check for uncommitted changes
+# Check for uncommitted changes before touching files
 if [[ -n "$(git status --porcelain)" ]]; then
     error "You have uncommitted changes. Please commit or stash them first."
 fi
@@ -66,9 +61,9 @@ git tag -a "$VERSION" -m "Release $VERSION"
 git push origin "$VERSION"
 
 # Build all platforms
-log "Building release artifacts..."
+# Build release artifacts through Makefile
 make clean
-VERSION="$VERSION" make release
+TAG="$VERSION" VERSION="$VERSION" make release
 
 # Verify artifacts exist
 ARTIFACTS=(
@@ -77,6 +72,7 @@ ARTIFACTS=(
     "bin/parm-darwin-amd64.tar.gz"
     "bin/parm-darwin-arm64.tar.gz"
     "bin/parm-windows-amd64.zip"
+    "bin/parm-windows-arm64.zip"
 )
 
 for artifact in "${ARTIFACTS[@]}"; do

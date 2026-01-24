@@ -13,6 +13,8 @@ import (
 	"runtime"
 	"strings"
 
+	"parm/pkg/sysutil"
+
 	"github.com/google/go-github/v74/github"
 	"github.com/minio/selfupdate"
 )
@@ -46,7 +48,11 @@ func Update(ctx context.Context, cfg Config, stdout, stderr io.Writer) error {
 	}
 
 	downloadURL := asset.GetBrowserDownloadURL()
-	resp, err := http.Get(downloadURL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request for asset download: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to download asset: %w", err)
 	}
@@ -215,7 +221,10 @@ func extractTarGz(srcPath, destPath string) error {
 			return err
 		}
 
-		target := filepath.Join(destPath, hdr.Name)
+		target, err := sysutil.SafeJoin(destPath, hdr.Name)
+		if err != nil {
+			return err
+		}
 		switch hdr.Typeflag {
 		case tar.TypeDir:
 			if err := os.MkdirAll(target, 0o755); err != nil {
@@ -225,7 +234,11 @@ func extractTarGz(srcPath, destPath string) error {
 			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 				return err
 			}
-			out, err := os.Create(target)
+			mode := os.FileMode(hdr.Mode) & 0o777
+			if mode == 0 {
+				mode = 0o644
+			}
+			out, err := os.OpenFile(target, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)
 			if err != nil {
 				return err
 			}
@@ -233,7 +246,9 @@ func extractTarGz(srcPath, destPath string) error {
 				out.Close()
 				return err
 			}
-			out.Close()
+			if err := out.Close(); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -247,27 +262,39 @@ func extractZip(srcPath, destPath string) error {
 	defer r.Close()
 
 	for _, f := range r.File {
-		rc, err := f.Open()
-		if err != nil {
-			return err
-		}
-		defer rc.Close()
+		if err := func() error {
+			rc, err := f.Open()
+			if err != nil {
+				return err
+			}
+			defer rc.Close()
 
-		fpath := filepath.Join(destPath, f.Name)
-		if f.FileInfo().IsDir() {
-			os.MkdirAll(fpath, 0o755)
-		} else {
+			fpath, err := sysutil.SafeJoin(destPath, f.Name)
+			if err != nil {
+				return err
+			}
+
+			if f.FileInfo().IsDir() {
+				return os.MkdirAll(fpath, 0o755)
+			}
+
 			if err := os.MkdirAll(filepath.Dir(fpath), 0o755); err != nil {
 				return err
 			}
-			outFile, err := os.Create(fpath)
+			mode := f.Mode() & 0o777
+			if mode == 0 {
+				mode = 0o644
+			}
+			outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
 			if err != nil {
 				return err
 			}
 			defer outFile.Close()
-			if _, err = io.Copy(outFile, rc); err != nil {
-				return err
-			}
+
+			_, err = io.Copy(outFile, rc)
+			return err
+		}(); err != nil {
+			return err
 		}
 	}
 	return nil

@@ -26,11 +26,6 @@ func NewPinCmd(f *cmdutil.Factory) *cobra.Command {
 					}
 				}
 
-				if err != nil {
-					fmt.Printf("cannot read manifest for %s/%s", owner, repo)
-					continue
-				}
-
 				err = updater.ChangePinnedStatus(owner, repo, true)
 				if err != nil {
 					fmt.Printf("unable to update pinned status for %s/%s", owner, repo)

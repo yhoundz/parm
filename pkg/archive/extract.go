@@ -9,7 +9,6 @@ import (
 	"os"
 	"parm/pkg/sysutil"
 	"path/filepath"
-	"strings"
 )
 
 func ExtractTarGz(srcPath, destPath string) error {
@@ -52,10 +51,7 @@ func ExtractTarGz(srcPath, destPath string) error {
 			}
 			// Extract only permission bits from tar header mode
 			mode := fs.FileMode(hdr.Mode) & 0o777
-			// Ensure executables remain executable (at least 0o755 for owner)
-			if mode&0o100 != 0 {
-				mode |= 0o755
-			} else if mode == 0 {
+			if mode == 0 {
 				mode = 0o644
 			}
 			out, err := os.OpenFile(target, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)
@@ -92,49 +88,41 @@ func ExtractZip(srcPath, destPath string) error {
 	defer r.Close()
 
 	for _, f := range r.File {
-		name := f.Name
+		if err := func() error {
+			name := f.Name
 
-		rc, err := f.Open()
-		if err != nil {
-			return err
-		}
-		defer rc.Close()
-
-		fpath, err := sysutil.SafeJoin(destPath, name)
-		if err != nil {
-			return err
-		}
-
-		if f.FileInfo().IsDir() {
-			os.MkdirAll(fpath, 0o755)
-		} else {
-			var fdir string
-			if lastIndex := strings.LastIndex(fpath, string(os.PathSeparator)); lastIndex > -1 {
-				fdir = fpath[:lastIndex]
-			}
-
-			err = os.MkdirAll(fdir, 0o755)
+			rc, err := f.Open()
 			if err != nil {
 				return err
 			}
-			// Extract only permission bits and ensure executables remain executable
+			defer rc.Close()
+
+			fpath, err := sysutil.SafeJoin(destPath, name)
+			if err != nil {
+				return err
+			}
+
+			if f.FileInfo().IsDir() {
+				return os.MkdirAll(fpath, 0o755)
+			}
+
+			if err := os.MkdirAll(filepath.Dir(fpath), 0o755); err != nil {
+				return err
+			}
 			mode := f.Mode() & 0o777
-			if mode&0o100 != 0 {
-				mode |= 0o755
-			} else if mode == 0 {
+			if mode == 0 {
 				mode = 0o644
 			}
-			outFile, err := os.OpenFile(
-				fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
+			outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
 			if err != nil {
 				return err
 			}
 			defer outFile.Close()
 
 			_, err = io.Copy(outFile, rc)
-			if err != nil {
-				return err
-			}
+			return err
+		}(); err != nil {
+			return err
 		}
 	}
 	return nil

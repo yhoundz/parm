@@ -71,6 +71,8 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, installPath s
 				rel = relStable
 			}
 		}
+	default:
+		return nil, fmt.Errorf("unsupported install type %q for %s/%s", man.InstallType, owner, repo)
 	}
 
 	newVer := rel.GetTagName()

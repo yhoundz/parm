@@ -1,6 +1,7 @@
 package sysutil
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -48,11 +49,41 @@ func TestSymlinkBinToPath(t *testing.T) {
 	}
 
 	destPath := filepath.Join(tempDir, "dest")
+	if runtime.GOOS == "windows" {
+		destPath += ".cmd"
+	}
 
 	err = SymlinkBinToPath(binPath, destPath)
 	if err != nil {
 		t.Fatalf("SymlinkBinToPath failed: %v", err)
 	}
+
+	verifyDest := func() {
+		fi, err := os.Lstat(destPath)
+		if err != nil {
+			t.Fatalf("Failed to stat destPath: %v", err)
+		}
+
+		if runtime.GOOS == "windows" {
+			if !fi.Mode().IsRegular() {
+				t.Fatalf("Expected regular shim file on Windows, got %v", fi.Mode())
+			}
+			data, err := os.ReadFile(destPath)
+			if err != nil {
+				t.Fatalf("Failed to read shim: %v", err)
+			}
+			expected := fmt.Sprintf("@echo off\n\"%s\" %%*\n", binPath)
+			if string(data) != expected {
+				t.Fatalf("Shim content mismatch:\nexpected:\n%s\nfound:\n%s", expected, string(data))
+			}
+		} else {
+			if fi.Mode()&os.ModeSymlink == 0 {
+				t.Fatalf("Expected symlink on %s, got %v", runtime.GOOS, fi.Mode())
+			}
+		}
+	}
+
+	verifyDest()
 
 	// Verify the link
 	fi, err := os.Lstat(destPath)
@@ -81,4 +112,5 @@ func TestSymlinkBinToPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SymlinkBinToPath failed on update: %v", err)
 	}
+	verifyDest()
 }

@@ -44,6 +44,7 @@ jobs:
       - name: Build ${{ matrix.name }} artifacts
         env:
           VERSION: ${{ github.ref_name }}
+          TAG: ${{ github.ref_name }}
         run: make ${{ matrix.make_target }}
 
       - name: Upload artifacts
@@ -59,12 +60,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: bin
-          merge-multiple: true
-
       - uses: actions/download-artifact@v4
         with:
           pattern: artifacts-*
@@ -80,5 +75,6 @@ jobs:
             bin/parm-darwin-amd64.tar.gz
             bin/parm-darwin-arm64.tar.gz
             bin/parm-windows-amd64.zip
+            bin/parm-windows-arm64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
