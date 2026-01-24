@@ -8,9 +8,6 @@
 	<br>
 </div>
 
-> [!NOTE]
-> This is a fork of [yhoundz/parm](https://github.com/yhoundz/parm) with bug fixes and improvements.
-
 > [!IMPORTANT]
 > Parm is currently in a pre-release state. Expect breaking changes and bugs.
 
@@ -214,8 +211,6 @@ Parm tries its best to adhere to current conventions of open-source software whe
 
 ## Acknowledgements
 Parm was created using the [Go programming language](https://go.dev/) and the [cobra](https://cobra.dev/) CLI framework.
-
-This fork is based on the original [yhoundz/parm](https://github.com/yhoundz/parm) project.
 
 While not the direct inspirations for Parm, here are some projects that helped shape Parm's development:
 - [homebrew](https://brew.sh/)
