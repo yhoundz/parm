@@ -18,13 +18,14 @@
 2. [Quick Start](#quick-start)
 3. [Pre-requisites](#pre-requisites)
 4. [Installation](#install)
-5. [GitHub Personal Access Token](#adding-a-github-personal-access-token)
-6. [Usage/Documentation](#usage)
-7. [Uninstalling Parm](#uninstalling-parm)
-8. [Troubleshooting](#troubleshooting)
-9. [Contributing](#contributing)
-10. [Adding Packages to Parm](#adding-packages-to-parm)
-11. [Acknowledgements](#Acknowledgements)
+5. [Configuration](#configuration)
+6. [GitHub Personal Access Token](#adding-a-github-personal-access-token)
+7. [Usage/Documentation](#usage)
+8. [Uninstalling Parm](#uninstalling-parm)
+9. [Troubleshooting](#troubleshooting)
+10. [Contributing](#contributing)
+11. [Adding Packages to Parm](#adding-packages-to-parm)
+12. [Acknowledgements](#Acknowledgements)
 
 ## Introduction
 
@@ -69,7 +70,7 @@ parm update <owner>/<repo> # to update a package
 ```
 
 For more detailed install instructions, see [Installation](#install).
-For more detailed documentation, go to [Usage](#usage) or the [docs](#/docs/docs.md)
+For more detailed documentation, go to [Usage](#usage) or the [docs](/docs/usage.md)
 
 ## Pre-requisites
 1. *(optional)* Must have `objdump` on Linux or `otool` on macOS installed and added to PATH
@@ -84,7 +85,7 @@ For more detailed documentation, go to [Usage](#usage) or the [docs](#/docs/docs
     ```sh
     which otool
     ```
-2. *(optional)* Must have a **free** GitHub personal access token with access to PUBLIC repositories. Go [here](#adding-a-github-personal-access-token) to find out how to add an access token.
+2. *(optional)* Must have a GitHub personal access token (or `gh` auth) with access to any repositories you want to install (public or private). Go [here](#adding-a-github-personal-access-token) to find out how to add an access token.
 
 ## Install
 To install Parm on Linux/macOS: run the following command:
@@ -106,16 +107,52 @@ Windows is currently not fully supported, but will be coming soon. You can insta
 
 To update parm, just run the install script again. I recommend not setting the `GITHUB_TOKEN` or the `WRITE_TOKEN` options if updated.
 
+You can also self-update an installed `parm` binary:
+```sh
+parm self-update
+parm --update
+```
+
+## Configuration
+Parm uses a TOML config file.
+
+- Location: `$XDG_CONFIG_HOME/parm/config.toml`
+- If `XDG_CONFIG_HOME` is not set, it defaults to the OS config directory:
+  - Linux: `~/.config/parm/config.toml`
+  - macOS: `~/Library/Application Support/parm/config.toml`
+
+To view the current config:
+```sh
+parm config
+```
+
+To set config values:
+```sh
+parm config set parm_pkg_path=/custom/path/parm/pkg parm_bin_path=/custom/path/parm/bin
+```
+
+To reset config values:
+```sh
+parm config reset parm_pkg_path parm_bin_path
+parm config reset --all
+```
+
+Supported keys in this codebase:
+- `parm_pkg_path`: where packages are installed
+- `parm_bin_path`: where symlinked binaries are placed
+- `github_api_token_fallback`: fallback GitHub token (printed by `parm config`)
+
 ## Adding a GitHub Personal Access Token
 > [!IMPORTANT]
 > If you DON'T have/want to use a GitHub personal access token, then you will be limited to 60 requests/hr instead of the 5000+ requests/hr with an API key. 
 > There is nothing I can do about this and this is a limitation of the program's design and the GitHub API.
 
-1. Add a personal access token (classic) by following [this guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
-    - You can use a fine-grained personal access token if you want, but this is not tested properly. Check out the guide for that [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token).
+1. Add a personal access token.
+    - Classic PATs work well for both public and private repos (use `repo` scope).
+    - Fine-grained PATs also work, but they must be explicitly granted access to each private repository you want to use.
 2. Add the API key to your shell environment:
 ```sh
-echo 'export GH_TOKEN=<your_token_here> >> ~/.bashrc'
+echo 'export GH_TOKEN=<your_token_here>' >> ~/.bashrc
 ```
 
 - You can substitute `GH_TOKEN` with `GITHUB_TOKEN` or `PARM_GITHUB_TOKEN`
@@ -180,6 +217,12 @@ export GITHUB_TOKEN=your_token_here
 parm config set github_api_token_fallback=your_token_here
 ```
 
+### Private repos returning 404
+GitHub returns 404 for private repos when your token does not have access.
+
+- If you use a fine-grained token, ensure the token is granted access to the target repo.
+- If you use `gh auth token`, note that exporting `GITHUB_TOKEN=$(gh auth token)` can override your normal `gh` login.
+
 ### Binary not executable
 Some release archives may not preserve execute permissions. Parm automatically sets execute permissions when creating symlinks, but if you encounter issues:
 ```sh
@@ -193,7 +236,7 @@ Before making a contribution, read over the [contributing guidelines](.github/CO
 
 ## Adding Packages to Parm
 If you want to make your Github Repo to be installable via Parm, ensure the following:
-- Your repository is PUBLIC.
+- Your repository is accessible to your users (public, or private with an access token).
 - Your repository has at least ONE release with an associated release tag.
 - Your repository release tag names follow semver (semantic versioning).
 - Your repository is meant to be run on Windows, macOS, or Linux.
