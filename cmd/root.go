@@ -4,23 +4,49 @@ Copyright © 2025 Alexander Wang
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"parm/cmd/configure"
 	"parm/cmd/info"
 	"parm/cmd/install"
 	"parm/cmd/list"
 	"parm/cmd/remove"
-	"parm/cmd/selfupdate"
+	selfupdatecmd "parm/cmd/selfupdate"
 	"parm/cmd/update"
 	"parm/internal/cmdutil"
 	"parm/internal/config"
 	"parm/internal/gh"
+	"parm/internal/selfupdate"
 	"parm/parmver"
 
 	"github.com/spf13/cobra"
 )
 
 func NewRootCmd(f *cmdutil.Factory) *cobra.Command {
+	var updateFlag bool
+
+	selfUpdate := func() error {
+		owner := parmver.Owner
+		if owner == "" {
+			owner = "yhoundz"
+		}
+		repo := parmver.Repo
+		if repo == "" {
+			repo = "parm"
+		}
+
+		if err := selfupdate.Update(context.Background(), selfupdate.Config{
+			Owner:          owner,
+			Repo:           repo,
+			Binary:         "parm",
+			CurrentVersion: parmver.StringVersion,
+		}, os.Stdout, os.Stderr); err != nil {
+			return fmt.Errorf("self-update failed: %w", err)
+		}
+		return nil
+	}
+
 	rootCmd := &cobra.Command{
 		Use:   "parm",
 		Short: "A zero-root, GitHub-native CLI package manager for installing and managing any GitHub-hosted tool.",
@@ -29,12 +55,23 @@ your programs. It has zero dependencies, zero root access, and is truly
 cross-platform on Windows, Linux, and MacOS.`,
 		Version: parmver.AppVersion.String(),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if updateFlag {
+				if cmd != cmd.Root() {
+					return fmt.Errorf("--update cannot be combined with subcommands")
+				}
+				return nil
+			}
 			return config.Init()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if updateFlag {
+				return selfUpdate()
+			}
 			return cmd.Help()
 		},
 	}
+
+	rootCmd.PersistentFlags().BoolVar(&updateFlag, "update", false, "self-update the parm binary to the latest stable release")
 
 	rootCmd.AddCommand(
 		configure.NewConfigureCmd(f),
@@ -43,7 +80,7 @@ cross-platform on Windows, Linux, and MacOS.`,
 		update.NewUpdateCmd(f),
 		list.NewListCmd(f),
 		info.NewInfoCmd(f),
-		selfupdate.NewSelfUpdateCmd(f),
+		selfupdatecmd.NewSelfUpdateCmd(f),
 		// search.NewSearchCmd(f),
 	)
 
