@@ -5,7 +5,7 @@ INSTALL_PATH=$(HOME)/.local/bin
 COMMIT=$(shell git rev-parse --short HEAD)
 DATE=$(shell date +%Y-%m-%d)
 CURRENT_TAG := $(shell git describe --tags --abbrev=0 2>/dev/null || echo v0.0.0)
-REPO_FULL := $(shell git remote get-url origin 2>/dev/null | sed 's/.*github.com[\/:]//;s/\.git//' || echo "aleister1102/parm")
+REPO_FULL := $(shell git remote get-url origin 2>/dev/null | sed 's/.*github.com[\/:]//;s/\.git//' || echo "yhoundz/parm")
 OWNER := $(shell echo $(REPO_FULL) | cut -d/ -f1)
 REPO := $(shell echo $(REPO_FULL) | cut -d/ -f2)
 

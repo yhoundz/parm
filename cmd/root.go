@@ -28,7 +28,7 @@ func NewRootCmd(f *cmdutil.Factory) *cobra.Command {
 	selfUpdate := func() error {
 		owner := parmver.Owner
 		if owner == "" {
-			owner = "aleister1102"
+			owner = "yhoundz"
 		}
 		repo := parmver.Repo
 		if repo == "" {

@@ -26,7 +26,7 @@ command -v git >/dev/null 2>&1 || error "git is required"
 command -v gh >/dev/null 2>&1 || error "gh (GitHub CLI) is required. Install: https://cli.github.com/"
 
 # Auto-detect repository
-REPO_FULL=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || git remote get-url origin | sed 's/.*github.com[:\/]//;s/\.git$//' || echo "aleister1102/parm")
+REPO_FULL=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || git remote get-url origin | sed 's/.*github.com[:\/]//;s/\.git$//' || echo "yhoundz/parm")
 OWNER=$(echo "$REPO_FULL" | cut -d/ -f1)
 REPO=$(echo "$REPO_FULL" | cut -d/ -f2)
 
