@@ -10,7 +10,6 @@ Below are a list of planned features and improvements:
 ## Planned for Completion by v0.2.0
 
 ### Feature Improvements
-- Boostrapping: Allowing the user to update Parm itself without having to rerun the install script again and do it from within the CLI.
 - Switching release channels: Allow the user to switch between the "Release" and "Pre-release" channels, changing how the update command behaves.
 - Add verification levels with the --verify flag
 	- Flags would then be --verify, --no-verify (in v0.1.0) and --sha256

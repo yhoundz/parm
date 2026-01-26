@@ -2,6 +2,7 @@ package gh
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -45,6 +46,17 @@ func TestNew_WithoutToken(t *testing.T) {
 }
 
 func TestGetStoredApiKey_FromFallback(t *testing.T) {
+	// Clear env vars to ensure fallback logic is tested
+	for _, env := range []string{"PARM_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"} {
+		old := os.Getenv(env)
+		os.Unsetenv(env)
+		defer func(k, v string) {
+			if v != "" {
+				os.Setenv(k, v)
+			}
+		}(env, old)
+	}
+
 	v := viper.New()
 
 	testToken := "fallback_token_123"
@@ -61,6 +73,17 @@ func TestGetStoredApiKey_FromFallback(t *testing.T) {
 }
 
 func TestGetStoredApiKey_FromMain(t *testing.T) {
+	// Clear env vars
+	for _, env := range []string{"PARM_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"} {
+		old := os.Getenv(env)
+		os.Unsetenv(env)
+		defer func(k, v string) {
+			if v != "" {
+				os.Setenv(k, v)
+			}
+		}(env, old)
+	}
+
 	v := viper.New()
 
 	mainToken := "main_token_123"
@@ -81,6 +104,17 @@ func TestGetStoredApiKey_FromMain(t *testing.T) {
 }
 
 func TestGetStoredApiKey_NoToken(t *testing.T) {
+	// Clear env vars
+	for _, env := range []string{"PARM_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"} {
+		old := os.Getenv(env)
+		os.Unsetenv(env)
+		defer func(k, v string) {
+			if v != "" {
+				os.Setenv(k, v)
+			}
+		}(env, old)
+	}
+
 	v := viper.New()
 
 	_, err := GetStoredApiKey(v)
@@ -89,14 +123,45 @@ func TestGetStoredApiKey_NoToken(t *testing.T) {
 	}
 }
 
-func TestGetStoredApiKey_EmptyTokens(t *testing.T) {
+func TestGetStoredApiKey_FromEnv(t *testing.T) {
 	v := viper.New()
 
-	v.Set("github_api_token", "")
-	v.Set("github_api_token_fallback", "")
+	envToken := "env_token_abc"
+	os.Setenv("PARM_GITHUB_TOKEN", envToken)
+	defer os.Unsetenv("PARM_GITHUB_TOKEN")
 
-	_, err := GetStoredApiKey(v)
-	if err == nil {
-		t.Error("GetStoredApiKey() should return error for empty tokens")
+	token, err := GetStoredApiKey(v)
+	if err != nil {
+		t.Fatalf("GetStoredApiKey() error: %v", err)
+	}
+
+	if token != envToken {
+		t.Errorf("GetStoredApiKey() = %v, want %v (env token)", token, envToken)
+	}
+}
+
+func TestGetStoredApiKey_Trimmed(t *testing.T) {
+	// Clear env vars
+	for _, env := range []string{"PARM_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"} {
+		old := os.Getenv(env)
+		os.Unsetenv(env)
+		defer func(k, v string) {
+			if v != "" {
+				os.Setenv(k, v)
+			}
+		}(env, old)
+	}
+
+	v := viper.New()
+
+	v.Set("github_api_token", "  token_with_spaces  ")
+
+	token, err := GetStoredApiKey(v)
+	if err != nil {
+		t.Fatalf("GetStoredApiKey() error: %v", err)
+	}
+
+	if token != "token_with_spaces" {
+		t.Errorf("GetStoredApiKey() = %v, want token_with_spaces", token)
 	}
 }

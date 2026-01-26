@@ -5,6 +5,7 @@ package update
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"parm/internal/cmdutil"
 	"parm/internal/core/catalog"
@@ -15,7 +16,10 @@ import (
 	"parm/internal/parmutil"
 	"parm/pkg/cmdparser"
 	"parm/pkg/sysutil"
+	"strings"
+	"time"
 
+	"github.com/google/go-github/v74/github"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -80,10 +84,7 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 			ctx := cmd.Context()
 			args, _ := ctx.Value(aKey).([]string)
 
-			token, err := gh.GetStoredApiKey(viper.GetViper())
-			if err != nil {
-				fmt.Printf("%s\ncontinuing without api key.\n", err)
-			}
+			token, tokenErr := gh.GetStoredApiKey(viper.GetViper())
 			client := f.Provider(ctx, token).Repos()
 			inst := installer.New(client, token)
 			up := updater.New(client, inst)
@@ -91,7 +92,26 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 				Strict: strict,
 			}
 
+			stats := struct {
+				total       int
+				updated     int
+				upToDate    int
+				skipped     int
+				pinned      int
+				noRelease   int
+				failed      int
+				rateLimited int
+			}{}
+
+			type failure struct {
+				pkg string
+				err error
+			}
+			var failures []failure
+			var rateLimitErr *github.RateLimitError
+
 			for _, pkg := range args {
+				stats.total++
 				// guaranteed to work now
 				owner, repo, _ := cmdparser.ParseRepoRef(pkg)
 
@@ -100,19 +120,44 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 
 				man, err := manifest.Read(installPath)
 				if err != nil {
-					fmt.Printf("error: package %s/%s not installed correctly, skipping...\n", owner, repo)
+					fmt.Printf("! skipped %s/%s: not installed correctly\n", owner, repo)
+					stats.skipped++
 					continue
 				}
 
 				if man.Pinned {
-					// don't update if pinned
+					fmt.Printf("- %s/%s is pinned to %s\n", owner, repo, man.Version)
+					stats.pinned++
 					continue
 				}
 
 				res, err := up.Update(ctx, owner, repo, installPath, man, &flags, nil)
 				if err != nil {
 					_ = parmutil.Cleanup(parentDir)
-					fmt.Printf("error: failed to update %s/%s:\n\t%q \n", owner, repo, err)
+					stats.failed++
+
+					if errors.As(err, &rateLimitErr) {
+						stats.rateLimited++
+						fmt.Printf("x failed %s/%s: rate limited\n", owner, repo)
+					} else {
+						fmt.Printf("x failed %s/%s\n", owner, repo)
+					}
+					failures = append(failures, failure{pkg: pkg, err: err})
+					continue
+				}
+
+				switch res.Status {
+				case updater.StatusUpToDate:
+					fmt.Printf("✓ %s/%s is already up to date (%s)\n", owner, repo, man.Version)
+					stats.upToDate++
+					continue
+				case updater.StatusNoRelease:
+					fmt.Printf("? %s/%s: no releases found\n", owner, repo)
+					stats.noRelease++
+					continue
+				case updater.StatusSkipped:
+					fmt.Printf("! skipped %s/%s\n", owner, repo)
+					stats.skipped++
 					continue
 				}
 
@@ -142,7 +187,55 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 						continue
 					}
 				}
-				fmt.Printf("* Updated %s/%s: %s -> %s.\n", owner, repo, old.Version, res.Version)
+				fmt.Printf("* updated %s/%s: %s -> %s\n", owner, repo, old.Version, res.Version)
+				stats.updated++
+			}
+
+			if len(failures) > 0 {
+				fmt.Println("\nFailures:")
+				if stats.rateLimited > 0 {
+					fmt.Printf("  - %d packages failed due to GitHub rate limiting", stats.rateLimited)
+					if rateLimitErr != nil {
+						fmt.Printf(" (reset in %v)", time.Until(rateLimitErr.Rate.Reset.Time))
+					}
+					fmt.Println()
+					if tokenErr != nil {
+						fmt.Println("    Tip: Set GITHUB_TOKEN to increase your rate limit.")
+					} else {
+						fmt.Println("    Tip: Your current token might be hitting limits or lacks necessary scopes.")
+					}
+				}
+
+				for _, f := range failures {
+					if !errors.As(f.err, &rateLimitErr) {
+						if strings.Contains(f.err.Error(), "not found or private") {
+							if tokenErr != nil {
+								fmt.Printf("  - %s: %v (Tip: Try setting GITHUB_TOKEN for private repo access)\n", f.pkg, f.err)
+							} else {
+								fmt.Printf("  - %s: %v (Tip: Ensure your token is granted access to this repo; fine-grained tokens must explicitly include it)\n", f.pkg, f.err)
+							}
+						} else {
+							fmt.Printf("  - %s: %v\n", f.pkg, f.err)
+						}
+					}
+				}
+			}
+
+			if stats.total > 0 {
+				fmt.Printf("\nSummary: %d total, %d updated, %d up-to-date", stats.total, stats.updated, stats.upToDate)
+				if stats.pinned > 0 {
+					fmt.Printf(", %d pinned", stats.pinned)
+				}
+				if stats.noRelease > 0 {
+					fmt.Printf(", %d no release", stats.noRelease)
+				}
+				if stats.failed > 0 {
+					fmt.Printf(", %d failed", stats.failed)
+				}
+				if stats.skipped > 0 {
+					fmt.Printf(", %d skipped", stats.skipped)
+				}
+				fmt.Println()
 			}
 			return nil
 		},

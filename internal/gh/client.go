@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/google/go-github/v74/github"
 	"github.com/spf13/viper"
@@ -54,13 +56,21 @@ func New(ctx context.Context, token string, opts ...Option) Provider {
 
 // returns the current API key, or nil if there is none
 func GetStoredApiKey(v *viper.Viper) (string, error) {
+	for _, env := range []string{"PARM_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"} {
+		if val, ok := os.LookupEnv(env); ok && val != "" {
+			return strings.TrimSpace(val), nil
+		}
+	}
+
 	var tok string
 	tok = v.GetString("github_api_token")
 	if tok == "" {
 		tok = v.GetString("github_api_token_fallback")
-		if tok == "" {
-			return "", fmt.Errorf("error: api key not found")
-		}
+	}
+
+	tok = strings.TrimSpace(tok)
+	if tok == "" {
+		return "", fmt.Errorf("error: api key not found")
 	}
 
 	return tok, nil

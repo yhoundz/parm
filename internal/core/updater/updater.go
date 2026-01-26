@@ -2,7 +2,9 @@ package updater
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"parm/internal/core/installer"
 	"parm/internal/gh"
 	"parm/internal/manifest"
@@ -20,9 +22,19 @@ type Updater struct {
 	installer installer.Installer
 }
 
+type UpdateStatus string
+
+const (
+	StatusUpdated   UpdateStatus = "updated"
+	StatusUpToDate  UpdateStatus = "up-to-date"
+	StatusNoRelease UpdateStatus = "no-release"
+	StatusSkipped   UpdateStatus = "skipped"
+)
+
 type UpdateResult struct {
 	OldManifest *manifest.Manifest
 	*installer.InstallResult
+	Status UpdateStatus
 }
 
 type UpdateFlags struct {
@@ -49,26 +61,56 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, installPath s
 	case manifest.Release:
 		rel, _, err = up.client.GetLatestRelease(ctx, owner, repo)
 		if err != nil {
+			var ghErr *github.ErrorResponse
+			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
+				// Distinguish between "repo not found" and "no releases found"
+				visibility, vErr := gh.CheckRepositoryVisibility(ctx, up.client, owner, repo)
+				if vErr != nil {
+					return nil, err // Return original error if we can't check visibility
+				}
+				if visibility == gh.RepoNotFound {
+					return nil, fmt.Errorf("repository %s/%s not found or private", owner, repo)
+				}
+				return &UpdateResult{Status: StatusNoRelease, OldManifest: man}, nil
+			}
 			return nil, err
 		}
 	case manifest.PreRelease:
 		rel, err = gh.GetLatestPreRelease(ctx, up.client, owner, repo)
 		if err != nil {
+			var ghErr *github.ErrorResponse
+			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
+				visibility, vErr := gh.CheckRepositoryVisibility(ctx, up.client, owner, repo)
+				if vErr == nil && visibility == gh.RepoNotFound {
+					return nil, fmt.Errorf("repository %s/%s not found or private", owner, repo)
+				}
+				return &UpdateResult{Status: StatusNoRelease, OldManifest: man}, nil
+			}
 			return nil, err
+		}
+		if rel == nil {
+			return &UpdateResult{Status: StatusNoRelease, OldManifest: man}, nil
 		}
 		// TODO: DRY @installer.go
 		if !flags.Strict {
 			// expensive!
 			relStable, _, err := up.client.GetLatestRelease(ctx, owner, repo)
 			if err != nil {
-				return nil, err
+				var ghErr *github.ErrorResponse
+				if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
+					// No stable release found, stick with pre-release
+				} else {
+					return nil, err
+				}
 			}
 
-			// TODO: abstract elsewhere cuz it's similar to updater.NeedsUpdate?
-			currVer, _ := semver.NewVersion(rel.GetTagName())
-			stableVer, _ := semver.NewVersion(relStable.GetTagName())
-			if stableVer.GreaterThan(currVer) {
-				rel = relStable
+			if relStable != nil {
+				// TODO: abstract elsewhere cuz it's similar to updater.NeedsUpdate?
+				currVer, _ := semver.NewVersion(rel.GetTagName())
+				stableVer, _ := semver.NewVersion(relStable.GetTagName())
+				if stableVer.GreaterThan(currVer) {
+					rel = relStable
+				}
 			}
 		}
 	default:
@@ -79,7 +121,7 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, installPath s
 
 	// only need to check for equality
 	if man.Version == newVer {
-		return nil, fmt.Errorf("%s/%s is already up to date (ver %s)", owner, repo, man.Version)
+		return &UpdateResult{Status: StatusUpToDate, OldManifest: man}, nil
 	}
 
 	if err != nil {
@@ -101,6 +143,7 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, installPath s
 	actual := UpdateResult{
 		OldManifest:   man,
 		InstallResult: res,
+		Status:        StatusUpdated,
 	}
 	return &actual, nil
 }

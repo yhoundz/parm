@@ -139,9 +139,57 @@ func TestUpdate_AlreadyUpToDate(t *testing.T) {
 		Strict: false,
 	}
 
-	_, err := updater.Update(ctx, "owner", "repo", installPath, m, flags, nil)
-	if err == nil {
-		t.Error("Update() should return error when already up to date")
+	result, err := updater.Update(ctx, "owner", "repo", installPath, m, flags, nil)
+	if err != nil {
+		t.Errorf("Update() error = %v, want nil for up-to-date", err)
+	}
+	if result.Status != StatusUpToDate {
+		t.Errorf("Status = %v, want StatusUpToDate", result.Status)
+	}
+}
+
+func TestUpdate_NoRelease(t *testing.T) {
+	tmpDir := t.TempDir()
+	config.Cfg.ParmPkgPath = tmpDir
+
+	pkgDir := filepath.Join(tmpDir, "owner", "repo")
+	os.MkdirAll(pkgDir, 0755)
+
+	m := &manifest.Manifest{
+		Owner:       "owner",
+		Repo:        "repo",
+		Version:     "v1.0.0",
+		InstallType: manifest.Release,
+	}
+	m.Write(pkgDir)
+
+	mockedHTTPClient := mock.NewMockedHTTPClient(
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesLatestByOwnerByRepo,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+			}),
+		),
+		mock.WithRequestMatch(
+			mock.GetReposByOwnerByRepo,
+			&github.Repository{
+				Owner: &github.User{Login: github.Ptr("owner")},
+				Name:  github.Ptr("repo"),
+			},
+		),
+	)
+
+	client := github.NewClient(mockedHTTPClient)
+	inst := installer.New(client.Repositories, "")
+	updater := New(client.Repositories, inst)
+
+	ctx := context.Background()
+	result, err := updater.Update(ctx, "owner", "repo", pkgDir, m, &UpdateFlags{}, nil)
+	if err != nil {
+		t.Errorf("Update() error = %v, want nil for no-release", err)
+	}
+	if result.Status != StatusNoRelease {
+		t.Errorf("Status = %v, want StatusNoRelease", result.Status)
 	}
 }
 
