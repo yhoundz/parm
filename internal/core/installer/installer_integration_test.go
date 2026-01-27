@@ -53,7 +53,7 @@ func TestInstall_FullWorkflow_Release(t *testing.T) {
 	)
 
 	client := github.NewClient(mockedHTTPClient)
-	installer := New(client.Repositories)
+	installer := New(client.Repositories, "")
 
 	ctx := context.Background()
 	installPath := filepath.Join(tmpDir, "owner", "repo")
@@ -128,7 +128,7 @@ func TestInstall_PreRelease(t *testing.T) {
 	)
 
 	client := github.NewClient(mockedHTTPClient)
-	installer := New(client.Repositories)
+	installer := New(client.Repositories, "")
 
 	ctx := context.Background()
 	installPath := filepath.Join(tmpDir, "owner", "repo")
@@ -182,7 +182,7 @@ func TestInstall_SpecificAsset(t *testing.T) {
 	)
 
 	client := github.NewClient(mockedHTTPClient)
-	installer := New(client.Repositories)
+	installer := New(client.Repositories, "")
 
 	ctx := context.Background()
 	installPath := filepath.Join(tmpDir, "owner", "repo")
@@ -221,7 +221,7 @@ func TestDownloadTo(t *testing.T) {
 	ctx := context.Background()
 	destPath := filepath.Join(tmpDir, "downloaded.txt")
 
-	err := downloadTo(ctx, destPath, server.URL, nil)
+	err := downloadTo(ctx, destPath, server.URL, "", nil)
 	if err != nil {
 		t.Fatalf("downloadTo() error: %v", err)
 	}
@@ -248,7 +248,7 @@ func TestDownloadTo_404(t *testing.T) {
 	ctx := context.Background()
 	destPath := filepath.Join(tmpDir, "downloaded.txt")
 
-	err := downloadTo(ctx, destPath, server.URL, nil)
+	err := downloadTo(ctx, destPath, server.URL, "", nil)
 	if err == nil {
 		t.Error("downloadTo() should return error for 404")
 	}
@@ -404,4 +404,67 @@ func createTestZipWithBinary(t *testing.T, baseDir string) string {
 	}
 
 	return archivePath
+}
+
+func TestDownloadTo_WithAuth(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	testContent := []byte("private repo content")
+	expectedToken := "test-token-123"
+
+	// Create HTTP server that requires authentication
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if auth != "Bearer "+expectedToken {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		accept := r.Header.Get("Accept")
+		if accept != "application/octet-stream" {
+			t.Errorf("Expected Accept header 'application/octet-stream', got %q", accept)
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(testContent)
+	}))
+	defer server.Close()
+
+	ctx := context.Background()
+	destPath := filepath.Join(tmpDir, "downloaded.txt")
+
+	err := downloadTo(ctx, destPath, server.URL, expectedToken, nil)
+	if err != nil {
+		t.Fatalf("downloadTo() with auth error: %v", err)
+	}
+
+	content, err := os.ReadFile(destPath)
+	if err != nil {
+		t.Fatalf("Failed to read downloaded file: %v", err)
+	}
+
+	if string(content) != string(testContent) {
+		t.Errorf("Downloaded content = %q, want %q", content, testContent)
+	}
+}
+
+func TestDownloadTo_WithAuth_Unauthorized(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create HTTP server that requires authentication
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if auth != "Bearer correct-token" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	ctx := context.Background()
+	destPath := filepath.Join(tmpDir, "downloaded.txt")
+
+	err := downloadTo(ctx, destPath, server.URL, "wrong-token", nil)
+	if err == nil {
+		t.Error("downloadTo() should return error for unauthorized request")
+	}
 }

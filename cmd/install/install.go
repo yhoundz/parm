@@ -17,6 +17,8 @@ import (
 	"parm/pkg/progress"
 	"parm/pkg/sysutil"
 	"path/filepath"
+	"runtime"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -52,12 +54,12 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 						return fmt.Errorf("cannot use @version shorthand with the --%s flag", flag)
 					}
 				}
-				cmd.Flags().Set("release", tag)
+				_ = cmd.Flags().Set("release", tag)
 				args[0] = owner + "/" + repo
 			}
 
 			if !cmd.Flags().Changed("release") && !cmd.Flags().Changed("pre-release") {
-				cmd.Flags().Set("release", "")
+				_ = cmd.Flags().Set("release", "")
 			}
 
 			if err := cmdx.MarkFlagsRequireFlag(cmd, "release", "asset"); err != nil {
@@ -73,10 +75,6 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 			pkg := args[0]
 
 			ctx := cmd.Context()
-			token, _ := gh.GetStoredApiKey(viper.GetViper())
-			client := f.Provider(ctx, token).Repos()
-
-			inst := installer.New(client)
 
 			var owner, repo string
 			var err error
@@ -88,6 +86,38 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 					return err
 				}
 			}
+
+			// Try to get API key, but don't fail if it's not available
+			token, _ := gh.GetStoredApiKey(viper.GetViper())
+
+			// Create a temporary client to check if repo is public
+			tempClient := f.Provider(ctx, "").Repos()
+			visibility, err := gh.CheckRepositoryVisibility(ctx, tempClient, owner, repo)
+			if err != nil {
+				return fmt.Errorf("error: cannot determine repository visibility: %w", err)
+			}
+
+			switch visibility {
+			case gh.RepoNotFound:
+				if token == "" {
+					// Could be private or non-existent, suggest token first
+					return fmt.Errorf("error: repository '%s/%s' not found\n\nThis could mean:\n  - The repository doesn't exist\n  - The repository is private (set a GitHub token to access it):\n    export GITHUB_TOKEN=$(gh auth token)", owner, repo)
+				}
+				// Has token but still not found - check with auth
+				authClient := f.Provider(ctx, token).Repos()
+				authVisibility, _ := gh.CheckRepositoryVisibility(ctx, authClient, owner, repo)
+				if authVisibility == gh.RepoNotFound {
+					return fmt.Errorf("error: repository '%s/%s' not found", owner, repo)
+				}
+			case gh.RepoPrivate:
+				if token == "" {
+					return fmt.Errorf("error: repository '%s/%s' is private\n\nSet a GitHub token to access it:\n  export GITHUB_TOKEN=$(gh auth token)", owner, repo)
+				}
+			}
+
+			client := f.Provider(ctx, token).Repos()
+
+			inst := installer.New(client, token)
 
 			var insType manifest.InstallType
 			var version *string
@@ -191,7 +221,12 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 			binPaths := man.GetFullExecPaths()
 
 			for _, execPath := range binPaths {
-				pathToSymLinkTo := parmutil.GetBinDir(filepath.Base(execPath))
+				binName := filepath.Base(execPath)
+				destName := binName
+				if runtime.GOOS == "windows" {
+					destName = strings.TrimSuffix(binName, filepath.Ext(binName)) + ".cmd"
+				}
+				pathToSymLinkTo := parmutil.GetBinDir(destName)
 
 				// TODO: use shims for windows instead?
 				err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)

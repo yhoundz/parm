@@ -50,7 +50,17 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 	defer os.RemoveAll(tmpDir)
 
 	archivePath := filepath.Join(tmpDir, ass.GetName()) // download destination
-	if err := downloadTo(ctx, archivePath, ass.GetBrowserDownloadURL(), hooks); err != nil {
+
+	// Use API URL for authenticated downloads (required for private repos)
+	// Format: https://api.github.com/repos/{owner}/{repo}/releases/assets/{asset_id}
+	downloadURL := ass.GetBrowserDownloadURL()
+	token := in.token
+	if token != "" {
+		// For private repos, use the API endpoint instead of browser download URL
+		downloadURL = ass.GetURL()
+	}
+
+	if err := downloadTo(ctx, archivePath, downloadURL, token, hooks); err != nil {
 		return nil, fmt.Errorf("error: failed to download asset: \n%w", err)
 	}
 
@@ -129,7 +139,7 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 		"arm":   {"armv7", "armv6", "armhf", "armv7l"},
 	}
 
-	extPref := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".AppImage"}
+	extPref := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".appimage"}
 	if goos == "windows" {
 		extPref = []string{".zip", ".exe", ".msi", ".bin"}
 	}
@@ -156,24 +166,26 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 
 	for i := range scoredMatches {
 		a := &scoredMatches[i]
-		name := strings.ToLower(a.asset.GetName())
-		if containsAny(name, gooses[goos]) {
+		name := a.asset.GetName()
+		lowerName := strings.ToLower(name)
+
+		if containsAny(lowerName, gooses[goos]) {
 			a.score += goosMatch
 		}
-		if containsAny(name, goarchs[goarch]) {
+		if containsAny(lowerName, goarchs[goarch]) {
 			a.score += goarchMatch
 		}
 
 		for j, ext := range extPref {
 			var mult = float64(prefMatch) * float64((len(extPref) - j))
 			var multRounded = int(math.Round(mult))
-			if strings.HasSuffix(name, ext) {
+			if strings.HasSuffix(lowerName, ext) {
 				a.score += multRounded
 			}
 		}
 
 		for j, m := range scoreMods {
-			if strings.Contains(name, j) {
+			if strings.Contains(lowerName, j) {
 				a.score += m
 			}
 		}
