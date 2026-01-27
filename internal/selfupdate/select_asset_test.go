@@ -3,10 +3,12 @@ package selfupdate
 import (
 	"testing"
 
+	"parm/internal/core/installer"
+
 	"github.com/google/go-github/v74/github"
 )
 
-func TestSelectAsset(t *testing.T) {
+func TestSelectReleaseAsset(t *testing.T) {
 	tests := []struct {
 		name     string
 		assets   []string
@@ -116,22 +118,22 @@ func TestSelectAsset(t *testing.T) {
 			wantName: "parm-linux-amd64-debian.tar.gz", // Both match equally in score (10+5), first one wins
 		},
 		{
-			name: "No match - OS mismatch",
+			name: "Extension preference - OS mismatch still matches",
 			assets: []string{
 				"parm-windows-amd64.zip",
 			},
-			goos:    "linux",
-			goarch:  "amd64",
-			wantErr: true,
+			goos:     "linux",
+			goarch:   "amd64",
+			wantName: "parm-windows-amd64.zip",
 		},
 		{
-			name: "No match - Arch mismatch",
+			name: "Extension preference - Arch mismatch still matches",
 			assets: []string{
 				"parm-linux-arm64.tar.gz",
 			},
-			goos:    "linux",
-			goarch:  "amd64",
-			wantErr: true,
+			goos:     "linux",
+			goarch:   "amd64",
+			wantName: "parm-linux-arm64.tar.gz",
 		},
 	}
 
@@ -145,14 +147,21 @@ func TestSelectAsset(t *testing.T) {
 				})
 			}
 
-			got, err := selectAsset(assets, tt.goos, tt.goarch)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("selectAsset() error = %v, wantErr %v", err, tt.wantErr)
+			got, err := installer.SelectReleaseAsset(assets, tt.goos, tt.goarch)
+			if err != nil {
+				t.Fatalf("SelectReleaseAsset() unexpected error = %v", err)
 			}
 
-			if !tt.wantErr {
-				if got.GetName() != tt.wantName {
-					t.Errorf("selectAsset() got = %v, want %v", got.GetName(), tt.wantName)
+			if tt.wantErr {
+				if len(got) != 0 {
+					t.Errorf("SelectReleaseAsset() expected no matches, got %d", len(got))
+				}
+			} else {
+				if len(got) == 0 {
+					t.Fatalf("SelectReleaseAsset() returned no matches")
+				}
+				if got[0].GetName() != tt.wantName {
+					t.Errorf("SelectReleaseAsset() got = %v, want %v", got[0].GetName(), tt.wantName)
 				}
 			}
 		})

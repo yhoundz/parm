@@ -22,7 +22,7 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 	var ass *github.ReleaseAsset
 	var err error
 	if opts.Asset == nil {
-		matches, err := selectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
+		matches, err := SelectReleaseAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
 		if err != nil {
 			return nil, err
 		}
@@ -121,7 +121,7 @@ func getAssetByName(rel *github.RepositoryRelease, name string) (*github.Release
 }
 
 // infers the proper release asset based on the name of the asset
-func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*github.ReleaseAsset, error) {
+func SelectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*github.ReleaseAsset, error) {
 	type match struct {
 		asset *github.ReleaseAsset
 		score int
@@ -202,15 +202,11 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 		return 0
 	})
 
-	minMatch := scoredMatches[0].score
-	// if minMatch < minScoreMatch {
-	// 	fmt.Println("warning: selected release asset may not be completely accurate")
-	// }
-
 	// find top candidate(s)
 	var candidates []*github.ReleaseAsset
+	maxScore := scoredMatches[0].score
 	for _, m := range scoredMatches {
-		if m.score == minMatch {
+		if m.score == maxScore {
 			candidates = append(candidates, m.asset)
 			continue
 		}
