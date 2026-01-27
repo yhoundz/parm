@@ -3,6 +3,7 @@ package gh
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/google/go-github/v74/github"
@@ -198,6 +199,60 @@ func TestResolveReleaseByTag_NonExistentTag(t *testing.T) {
 	_, err := ResolveReleaseByTag(ctx, client.Repositories, "owner", "repo", &tag)
 	if err == nil {
 		t.Error("ResolveReleaseByTag() should return error for non-existent tag")
+	}
+}
+
+func TestResolveReleaseByTag_LatestRelease_NoReleases(t *testing.T) {
+	mockedHTTPClient := mock.NewMockedHTTPClient(
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesLatestByOwnerByRepo,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte(`{"message": "Not Found"}`))
+			}),
+		),
+		mock.WithRequestMatch(
+			mock.GetReposByOwnerByRepo,
+			&github.Repository{
+				Name:    github.Ptr("repo"),
+				Private: github.Ptr(false),
+			},
+		),
+	)
+
+	client := github.NewClient(mockedHTTPClient)
+	ctx := context.Background()
+
+	_, err := ResolveReleaseByTag(ctx, client.Repositories, "owner", "repo", nil)
+	if err == nil || !strings.Contains(err.Error(), "release not found") {
+		t.Errorf("ResolveReleaseByTag() error = %v, want release not found", err)
+	}
+}
+
+func TestResolveReleaseByTag_LatestRelease_RepoNotFound(t *testing.T) {
+	mockedHTTPClient := mock.NewMockedHTTPClient(
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesLatestByOwnerByRepo,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte(`{"message": "Not Found"}`))
+			}),
+		),
+		mock.WithRequestMatchHandler(
+			mock.GetReposByOwnerByRepo,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte(`{"message": "Not Found"}`))
+			}),
+		),
+	)
+
+	client := github.NewClient(mockedHTTPClient)
+	ctx := context.Background()
+
+	_, err := ResolveReleaseByTag(ctx, client.Repositories, "owner", "repo", nil)
+	if err == nil || !strings.Contains(err.Error(), "repo is private or not found") {
+		t.Errorf("ResolveReleaseByTag() error = %v, want repo is private or not found", err)
 	}
 }
 

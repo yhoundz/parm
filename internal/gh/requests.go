@@ -82,24 +82,42 @@ func ResolvePreRelease(ctx context.Context, client *github.RepositoriesService, 
 
 // Retrieves a GitHub RepositoryRelease. If provided version string is nil, then return the latest stable release
 func ResolveReleaseByTag(ctx context.Context, client *github.RepositoriesService, owner, repo string, version *string) (*github.RepositoryRelease, error) {
-	if version != nil {
-		valid, rel, err := validateRelease(ctx, client, owner, repo, *version)
-		if err != nil {
-			return nil, fmt.Errorf("error: Cannot resolve release %s on %s/%s", *version, owner, repo)
-		}
-		if !valid {
-			return nil, fmt.Errorf("error: Release %s not valid", *version)
-		}
-		return rel, nil
-	} else {
-		rel, _, err := client.GetLatestRelease(ctx, owner, repo)
-		if err != nil {
-			var ghErr *github.ErrorResponse
-			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
-				return nil, fmt.Errorf("error: no releases found for %s/%s", owner, repo)
-			}
-			return nil, fmt.Errorf("error: could not fetch latest release: \n%w", err)
-		}
+	if version == nil {
+		return resolveLatestRelease(ctx, client, owner, repo)
+	}
+
+	return resolveReleaseByTag(ctx, client, owner, repo, *version)
+}
+
+func resolveReleaseByTag(ctx context.Context, client *github.RepositoriesService, owner, repo, version string) (*github.RepositoryRelease, error) {
+	valid, rel, err := validateRelease(ctx, client, owner, repo, version)
+	if err != nil {
+		return nil, fmt.Errorf("error: Cannot resolve release %s on %s/%s", version, owner, repo)
+	}
+	if !valid {
+		return nil, fmt.Errorf("error: Release %s not valid", version)
+	}
+	return rel, nil
+}
+
+func resolveLatestRelease(ctx context.Context, client *github.RepositoriesService, owner, repo string) (*github.RepositoryRelease, error) {
+	rel, _, err := client.GetLatestRelease(ctx, owner, repo)
+	if err == nil {
 		return rel, nil
 	}
+
+	var ghErr *github.ErrorResponse
+	if !errors.As(err, &ghErr) || ghErr.Response.StatusCode != http.StatusNotFound {
+		return nil, fmt.Errorf("error: could not fetch latest release: \n%w", err)
+	}
+
+	_, resp, repoErr := client.Get(ctx, owner, repo)
+	if repoErr != nil {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return nil, fmt.Errorf("error: repo is private or not found: %s/%s", owner, repo)
+		}
+		return nil, fmt.Errorf("error: could not verify repository: \n%w", repoErr)
+	}
+
+	return nil, fmt.Errorf("error: release not found for %s/%s", owner, repo)
 }
