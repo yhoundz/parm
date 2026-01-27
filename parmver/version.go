@@ -26,6 +26,8 @@ type Version struct {
 }
 
 var StringVersion string
+var Owner string
+var Repo string
 var AppVersion Version
 
 func init() {
