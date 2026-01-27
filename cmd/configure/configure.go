@@ -17,7 +17,7 @@ import (
 func NewConfigureCmd(f *cmdutil.Factory) *cobra.Command {
 	var configCmd = &cobra.Command{
 		Use:     "config",
-		Aliases: []string{"configure, cfg"},
+		Aliases: []string{"configure", "cfg"},
 		Short:   "Configures parm.",
 		Long:    `Prints the current configuration settings to your console.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
