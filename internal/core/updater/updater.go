@@ -41,6 +41,10 @@ func (up *Updater) Update(ctx context.Context, owner, repo string, installPath s
 	var rel *github.RepositoryRelease
 	var err error
 
+	if man == nil {
+		return nil, fmt.Errorf("cannot fetch manifest for %s/%s", owner, repo)
+	}
+
 	switch man.InstallType {
 	case manifest.Release:
 		rel, _, err = up.client.GetLatestRelease(ctx, owner, repo)
