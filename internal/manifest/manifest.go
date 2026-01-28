@@ -10,6 +10,7 @@ import (
 )
 
 const ManifestFileName string = ".curdfile.json"
+const CurrentSchemaVersion int = 2
 
 type InstallType string
 
@@ -19,23 +20,27 @@ const (
 )
 
 type Manifest struct {
-	Owner       string      `json:"owner"`
-	Repo        string      `json:"repo"`
-	LastUpdated string      `json:"last_updated"`
-	Executables []string    `json:"executables"`
-	InstallType InstallType `json:"install_type"`
-	Version     string      `json:"version"`
+	SchemaVersion int         `json:"schema_version"`
+	Owner         string      `json:"owner"`
+	Repo          string      `json:"repo"`
+	LastUpdated   string      `json:"last_updated"`
+	Executables   []string    `json:"executables"`
+	InstallType   InstallType `json:"install_type"`
+	Version       string      `json:"version"`
+	Pinned        bool        `json:"pinned"`
 }
 
 // TODO: create manifest options struct??
 func New(owner, repo, version string, installType InstallType, installDir string) (*Manifest, error) {
 	m := &Manifest{
-		Owner:       owner,
-		Repo:        repo,
-		LastUpdated: time.Now().UTC().Format(time.DateTime),
-		Executables: []string{},
-		InstallType: installType,
-		Version:     version,
+		SchemaVersion: CurrentSchemaVersion,
+		Owner:         owner,
+		Repo:          repo,
+		LastUpdated:   time.Now().UTC().Format(time.DateTime),
+		Executables:   []string{},
+		InstallType:   installType,
+		Version:       version,
+		Pinned:        false,
 	}
 
 	binM, err := getBinExecutables(installDir)
@@ -73,11 +78,29 @@ func Read(installDir string) (*Manifest, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	var raw map[string]any
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, err
+	}
+	migrate(&raw)
+
 	var m Manifest
 	err = json.Unmarshal(data, &m)
 	return &m, err
 }
 
+// INFO: should modify the raw param
+func migrate(raw *(map[string]any)) {
+	version, _ := (*raw)["schema_version"].(float64)
+
+	if version < float64(CurrentSchemaVersion) {
+		(*raw)["schema_version"] = CurrentSchemaVersion
+		(*raw)["pinned"] = false
+	}
+}
+
+// TODO: move this out of here? shouldn't really be here
 func getBinExecutables(installDir string) ([]string, error) {
 	var paths []string
 	scanDir := installDir

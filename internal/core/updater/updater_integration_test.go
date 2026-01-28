@@ -82,7 +82,12 @@ func TestUpdate_Success(t *testing.T) {
 		Strict: false,
 	}
 
-	result, err := updater.Update(ctx, "owner", "repo", installPath, flags, nil)
+	man, err := manifest.Read(installPath)
+	if err != nil {
+		t.Fatalf("Update() error: %v", err)
+	}
+	result, err := updater.Update(ctx, "owner", "repo", installPath, man, flags, nil)
+
 	if err != nil {
 		t.Fatalf("Update() error: %v", err)
 	}
@@ -139,7 +144,12 @@ func TestUpdate_AlreadyUpToDate(t *testing.T) {
 		Strict: false,
 	}
 
-	_, err := updater.Update(ctx, "owner", "repo", installPath, flags, nil)
+	man, err := manifest.Read(installPath)
+	if err != nil {
+		t.Fatalf("Update() error: %v", err)
+	}
+	_, err = updater.Update(ctx, "owner", "repo", installPath, man, flags, nil)
+
 	if err == nil {
 		t.Error("Update() should return error when already up to date")
 	}
@@ -161,7 +171,11 @@ func TestUpdate_PackageNotInstalled(t *testing.T) {
 		Strict: false,
 	}
 
-	_, err := updater.Update(ctx, "owner", "nonexistent", installPath, flags, nil)
+	man, err := manifest.Read(installPath)
+	if err == nil {
+		t.Error("Update() should return an error since the manifest doesn't exist.")
+	}
+	_, err = updater.Update(ctx, "owner", "nonexistent", installPath, man, flags, nil)
 	if err == nil {
 		t.Error("Update() should return error for non-installed package")
 	}
@@ -241,7 +255,11 @@ func TestUpdate_PreReleaseChannel(t *testing.T) {
 		Strict: false,
 	}
 
-	result, err := updater.Update(ctx, "owner", "repo", installPath, flags, nil)
+	man, err := manifest.Read(installPath)
+	if err != nil {
+		t.Fatalf("Update() error: %v", err)
+	}
+	result, err := updater.Update(ctx, "owner", "repo", installPath, man, flags, nil)
 	if err != nil {
 		t.Fatalf("Update() error: %v", err)
 	}
@@ -309,7 +327,11 @@ func TestUpdate_StrictPreRelease(t *testing.T) {
 		Strict: true,
 	}
 
-	result, err := updater.Update(ctx, "owner", "repo", installPath, flags, nil)
+	man, err := manifest.Read(installPath)
+	if err != nil {
+		t.Fatalf("Update() error: %v", err)
+	}
+	result, err := updater.Update(ctx, "owner", "repo", installPath, man, flags, nil)
 	if err != nil {
 		t.Fatalf("Update() error: %v", err)
 	}
