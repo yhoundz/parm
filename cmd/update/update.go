@@ -100,6 +100,11 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 
 				man, err := manifest.Read(installPath)
 
+				if err != nil {
+					fmt.Printf("error: cannot read manifest file for %s/%s\n\t%q\n", owner, repo, err)
+					continue
+				}
+
 				if man.Pinned {
 					// don't update if pinned
 					continue
