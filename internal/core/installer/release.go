@@ -129,7 +129,7 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 		"arm":   {"armv7", "armv6", "armhf", "armv7l"},
 	}
 
-	extPref := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".AppImage"}
+	extPref := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".appimage"}
 	if goos == "windows" {
 		extPref = []string{".zip", ".exe", ".msi", ".bin"}
 	}
