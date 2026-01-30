@@ -1,9 +1,6 @@
 package selfupdate
 
 import (
-	"archive/tar"
-	"archive/zip"
-	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
@@ -13,7 +10,8 @@ import (
 	"runtime"
 	"strings"
 
-	"parm/pkg/sysutil"
+	"parm/parmver"
+	"parm/pkg/archive"
 
 	"github.com/google/go-github/v74/github"
 	"github.com/minio/selfupdate"
@@ -24,6 +22,23 @@ type Config struct {
 	Repo           string
 	Binary         string
 	CurrentVersion string
+}
+
+func Run(stdout, stderr io.Writer) error {
+	owner := parmver.Owner
+	if owner == "" {
+		owner = "yhoundz"
+	}
+	repo := parmver.Repo
+	if repo == "" {
+		repo = "parm"
+	}
+	return Update(context.Background(), Config{
+		Owner:          owner,
+		Repo:           repo,
+		Binary:         "parm",
+		CurrentVersion: parmver.StringVersion,
+	}, stdout, stderr)
 }
 
 func Update(ctx context.Context, cfg Config, stdout, stderr io.Writer) error {
@@ -85,11 +100,11 @@ func Update(ctx context.Context, cfg Config, stdout, stderr io.Writer) error {
 		f.Close()
 
 		if strings.HasSuffix(name, ".zip") {
-			if err := extractZip(archivePath, tmpDir); err != nil {
+			if err := archive.ExtractZip(archivePath, tmpDir); err != nil {
 				return err
 			}
 		} else {
-			if err := extractTarGz(archivePath, tmpDir); err != nil {
+			if err := archive.ExtractTarGz(archivePath, tmpDir); err != nil {
 				return err
 			}
 		}
@@ -107,7 +122,7 @@ func Update(ctx context.Context, cfg Config, stdout, stderr io.Writer) error {
 			}
 			if !info.IsDir() && info.Name() == binaryName {
 				binaryPath = path
-				return filepath.SkipDir
+				return filepath.SkipAll
 			}
 			return nil
 		})
@@ -196,106 +211,4 @@ func selectAsset(assets []*github.ReleaseAsset, goos, goarch string) (*github.Re
 	}
 
 	return bestMatch, nil
-}
-
-func extractTarGz(srcPath, destPath string) error {
-	file, err := os.Open(srcPath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	gz, err := gzip.NewReader(file)
-	if err != nil {
-		return err
-	}
-	defer gz.Close()
-
-	tr := tar.NewReader(gz)
-	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-
-		target, err := sysutil.SafeJoin(destPath, hdr.Name)
-		if err != nil {
-			return err
-		}
-		switch hdr.Typeflag {
-		case tar.TypeDir:
-			if err := os.MkdirAll(target, 0o755); err != nil {
-				return err
-			}
-		case tar.TypeReg:
-			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-				return err
-			}
-			mode := os.FileMode(hdr.Mode) & 0o777
-			if mode == 0 {
-				mode = 0o644
-			}
-			out, err := os.OpenFile(target, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)
-			if err != nil {
-				return err
-			}
-			if _, err := io.Copy(out, tr); err != nil {
-				out.Close()
-				return err
-			}
-			if err := out.Close(); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func extractZip(srcPath, destPath string) error {
-	r, err := zip.OpenReader(srcPath)
-	if err != nil {
-		return err
-	}
-	defer r.Close()
-
-	for _, f := range r.File {
-		if err := func() error {
-			rc, err := f.Open()
-			if err != nil {
-				return err
-			}
-			defer rc.Close()
-
-			fpath, err := sysutil.SafeJoin(destPath, f.Name)
-			if err != nil {
-				return err
-			}
-
-			if f.FileInfo().IsDir() {
-				return os.MkdirAll(fpath, 0o755)
-			}
-
-			if err := os.MkdirAll(filepath.Dir(fpath), 0o755); err != nil {
-				return err
-			}
-			mode := f.Mode() & 0o777
-			if mode == 0 {
-				mode = 0o644
-			}
-			outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
-			if err != nil {
-				return err
-			}
-			defer outFile.Close()
-
-			_, err = io.Copy(outFile, rc)
-			return err
-		}(); err != nil {
-			return err
-		}
-	}
-	return nil
 }
