@@ -4,7 +4,6 @@ Copyright © 2025 Alexander Wang
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"parm/cmd/configure"
@@ -27,21 +26,7 @@ func NewRootCmd(f *cmdutil.Factory) *cobra.Command {
 	var updateFlag bool
 
 	selfUpdate := func() error {
-		owner := parmver.Owner
-		if owner == "" {
-			owner = "yhoundz"
-		}
-		repo := parmver.Repo
-		if repo == "" {
-			repo = "parm"
-		}
-
-		if err := selfupdate.Update(context.Background(), selfupdate.Config{
-			Owner:          owner,
-			Repo:           repo,
-			Binary:         "parm",
-			CurrentVersion: parmver.StringVersion,
-		}, os.Stdout, os.Stderr); err != nil {
+		if err := selfupdate.Run(os.Stdout, os.Stderr); err != nil {
 			return fmt.Errorf("self-update failed: %w", err)
 		}
 		return nil
