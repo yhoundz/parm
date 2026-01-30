@@ -6,6 +6,7 @@ package install
 import (
 	"fmt"
 	"io"
+	"os"
 	"parm/internal/cmdutil"
 	"parm/internal/core/installer"
 	"parm/internal/gh"
@@ -105,7 +106,10 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 				}
 				// Has token but still not found - check with auth
 				authClient := f.Provider(ctx, token).Repos()
-				authVisibility, _ := gh.CheckRepositoryVisibility(ctx, authClient, owner, repo)
+				authVisibility, err := gh.CheckRepositoryVisibility(ctx, authClient, owner, repo)
+				if err != nil {
+					return fmt.Errorf("error: cannot verify repository with token: %w", err)
+				}
 				if authVisibility == gh.RepoNotFound {
 					return fmt.Errorf("error: repository '%s/%s' not found", owner, repo)
 				}
@@ -222,16 +226,27 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 
 			for _, execPath := range binPaths {
 				binName := filepath.Base(execPath)
-				destName := binName
 				if runtime.GOOS == "windows" {
-					destName = strings.TrimSuffix(binName, filepath.Ext(binName)) + ".cmd"
-				}
-				pathToSymLinkTo := parmutil.GetBinDir(destName)
-
-				// TODO: use shims for windows instead?
-				err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)
-				if err != nil {
-					return err
+					// Create a .cmd shim script instead of symlink
+					cmdName := strings.TrimSuffix(binName, filepath.Ext(binName)) + ".cmd"
+					cmdPath := parmutil.GetBinDir(cmdName)
+					// Use absolute path for execPath to ensure it works from any directory
+					absExecPath, err := filepath.Abs(execPath)
+					if err != nil {
+						return fmt.Errorf("error: failed to get absolute path for %s: %w", execPath, err)
+					}
+					// Windows batch script that calls the executable with all arguments
+					cmdContent := fmt.Sprintf("@echo off\n\"%s\" %%*\n", absExecPath)
+					err = os.WriteFile(cmdPath, []byte(cmdContent), 0755)
+					if err != nil {
+						return fmt.Errorf("error: failed to create Windows shim: %w", err)
+					}
+				} else {
+					pathToSymLinkTo := parmutil.GetBinDir(binName)
+					err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)
+					if err != nil {
+						return err
+					}
 				}
 				deps, err := deps.GetMissingLibs(ctx, execPath)
 				if err != nil {

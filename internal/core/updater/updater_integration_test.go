@@ -72,7 +72,7 @@ func TestUpdate_Success(t *testing.T) {
 	)
 
 	client := github.NewClient(mockedHTTPClient)
-	inst := installer.New(client.Repositories)
+	inst := installer.New(client.Repositories, "")
 	updater := New(client.Repositories, inst)
 
 	ctx := context.Background()
@@ -129,7 +129,7 @@ func TestUpdate_AlreadyUpToDate(t *testing.T) {
 	)
 
 	client := github.NewClient(mockedHTTPClient)
-	inst := installer.New(client.Repositories)
+	inst := installer.New(client.Repositories, "")
 	updater := New(client.Repositories, inst)
 
 	ctx := context.Background()
@@ -151,7 +151,7 @@ func TestUpdate_PackageNotInstalled(t *testing.T) {
 
 	mockedHTTPClient := mock.NewMockedHTTPClient()
 	client := github.NewClient(mockedHTTPClient)
-	inst := installer.New(client.Repositories)
+	inst := installer.New(client.Repositories, "")
 	updater := New(client.Repositories, inst)
 
 	ctx := context.Background()
@@ -231,7 +231,7 @@ func TestUpdate_PreReleaseChannel(t *testing.T) {
 	)
 
 	client := github.NewClient(mockedHTTPClient)
-	inst := installer.New(client.Repositories)
+	inst := installer.New(client.Repositories, "")
 	updater := New(client.Repositories, inst)
 
 	ctx := context.Background()
@@ -299,7 +299,7 @@ func TestUpdate_StrictPreRelease(t *testing.T) {
 	)
 
 	client := github.NewClient(mockedHTTPClient)
-	inst := installer.New(client.Repositories)
+	inst := installer.New(client.Repositories, "")
 	updater := New(client.Repositories, inst)
 
 	ctx := context.Background()

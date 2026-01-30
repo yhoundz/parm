@@ -87,7 +87,7 @@ const (
 
 // CheckRepositoryVisibility checks if a repository is public, private, or doesn't exist
 func CheckRepositoryVisibility(ctx context.Context, client *github.RepositoriesService, owner, repo string) (RepositoryVisibility, error) {
-	repo_obj, resp, err := client.Get(ctx, owner, repo)
+	repoObj, resp, err := client.Get(ctx, owner, repo)
 	if err != nil {
 		// If we get a 404, the repo doesn't exist or is private (can't tell without auth)
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
@@ -96,7 +96,7 @@ func CheckRepositoryVisibility(ctx context.Context, client *github.RepositoriesS
 		return RepoNotFound, err
 	}
 
-	if repo_obj.GetPrivate() {
+	if repoObj.GetPrivate() {
 		return RepoPrivate, nil
 	}
 	return RepoPublic, nil
