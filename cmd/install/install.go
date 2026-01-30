@@ -6,6 +6,7 @@ package install
 import (
 	"fmt"
 	"io"
+	"os"
 	"parm/internal/cmdutil"
 	"parm/internal/core/installer"
 	"parm/internal/gh"
@@ -17,6 +18,8 @@ import (
 	"parm/pkg/progress"
 	"parm/pkg/sysutil"
 	"path/filepath"
+	"runtime"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -52,12 +55,12 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 						return fmt.Errorf("cannot use @version shorthand with the --%s flag", flag)
 					}
 				}
-				cmd.Flags().Set("release", tag)
+				_ = cmd.Flags().Set("release", tag)
 				args[0] = owner + "/" + repo
 			}
 
 			if !cmd.Flags().Changed("release") && !cmd.Flags().Changed("pre-release") {
-				cmd.Flags().Set("release", "")
+				_ = cmd.Flags().Set("release", "")
 			}
 
 			if err := cmdx.MarkFlagsRequireFlag(cmd, "release", "asset"); err != nil {
@@ -73,10 +76,6 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 			pkg := args[0]
 
 			ctx := cmd.Context()
-			token, _ := gh.GetStoredApiKey(viper.GetViper())
-			client := f.Provider(ctx, token).Repos()
-
-			inst := installer.New(client)
 
 			var owner, repo string
 			var err error
@@ -88,6 +87,41 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 					return err
 				}
 			}
+
+			// Try to get API key, but don't fail if it's not available
+			token, _ := gh.GetStoredApiKey(viper.GetViper())
+
+			// Create a temporary client to check if repo is public
+			tempClient := f.Provider(ctx, "").Repos()
+			visibility, err := gh.CheckRepositoryVisibility(ctx, tempClient, owner, repo)
+			if err != nil {
+				return fmt.Errorf("error: cannot determine repository visibility: %w", err)
+			}
+
+			switch visibility {
+			case gh.RepoNotFound:
+				if token == "" {
+					// Could be private or non-existent, suggest token first
+					return fmt.Errorf("error: repository '%s/%s' not found\n\nThis could mean:\n  - The repository doesn't exist\n  - The repository is private (set a GitHub token to access it):\n    export GITHUB_TOKEN=$(gh auth token)", owner, repo)
+				}
+				// Has token but still not found - check with auth
+				authClient := f.Provider(ctx, token).Repos()
+				authVisibility, err := gh.CheckRepositoryVisibility(ctx, authClient, owner, repo)
+				if err != nil {
+					return fmt.Errorf("error: cannot verify repository with token: %w", err)
+				}
+				if authVisibility == gh.RepoNotFound {
+					return fmt.Errorf("error: repository '%s/%s' not found", owner, repo)
+				}
+			case gh.RepoPrivate:
+				if token == "" {
+					return fmt.Errorf("error: repository '%s/%s' is private\n\nSet a GitHub token to access it:\n  export GITHUB_TOKEN=$(gh auth token)", owner, repo)
+				}
+			}
+
+			client := f.Provider(ctx, token).Repos()
+
+			inst := installer.New(client, token)
 
 			var insType manifest.InstallType
 			var version *string
@@ -191,12 +225,28 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 			binPaths := man.GetFullExecPaths()
 
 			for _, execPath := range binPaths {
-				pathToSymLinkTo := parmutil.GetBinDir(filepath.Base(execPath))
-
-				// TODO: use shims for windows instead?
-				err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)
-				if err != nil {
-					return err
+				binName := filepath.Base(execPath)
+				if runtime.GOOS == "windows" {
+					// Create a .cmd shim script instead of symlink
+					cmdName := strings.TrimSuffix(binName, filepath.Ext(binName)) + ".cmd"
+					cmdPath := parmutil.GetBinDir(cmdName)
+					// Use absolute path for execPath to ensure it works from any directory
+					absExecPath, err := filepath.Abs(execPath)
+					if err != nil {
+						return fmt.Errorf("error: failed to get absolute path for %s: %w", execPath, err)
+					}
+					// Windows batch script that calls the executable with all arguments
+					cmdContent := fmt.Sprintf("@echo off\n\"%s\" %%*\n", absExecPath)
+					err = os.WriteFile(cmdPath, []byte(cmdContent), 0755)
+					if err != nil {
+						return fmt.Errorf("error: failed to create Windows shim: %w", err)
+					}
+				} else {
+					pathToSymLinkTo := parmutil.GetBinDir(binName)
+					err = sysutil.SymlinkBinToPath(execPath, pathToSymLinkTo)
+					if err != nil {
+						return err
+					}
 				}
 				deps, err := deps.GetMissingLibs(ctx, execPath)
 				if err != nil {

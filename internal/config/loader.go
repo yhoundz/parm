@@ -11,6 +11,12 @@ import (
 var Cfg Config
 
 func GetParmConfigDir() (string, error) {
+	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
+		return filepath.Join(dir, "parm"), nil
+	}
+	if dir := os.Getenv("APPDATA"); dir != "" {
+		return filepath.Join(dir, "parm"), nil
+	}
 	cfgDir, err := os.UserConfigDir()
 	if err != nil {
 		return "", fmt.Errorf("error: cannot find XDG_CONFIG_HOME or APPDATA: \n%w", err)
