@@ -1,0 +1,6 @@
+/* Fix content shift on scrollbar */
+@supports (scrollbar-gutter: stable) {
+    html {
+        scrollbar-gutter: stable;
+    }
+}

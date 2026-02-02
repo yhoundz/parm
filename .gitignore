@@ -12,6 +12,9 @@
 *.test
 
 # Code coverage profiles and other test artifacts
+dist
+out
+site
 *.out
 coverage.*
 *.coverprofile

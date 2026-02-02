@@ -1,83 +1,186 @@
-name: release
+name: "Release"
+
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
+#  push:
+#    tags:
+#      - "v*"
+
+#env:
+#  formula: parm.rb
+#  tap-owner: cssnr
+#  tap-repo: homebrew-tap
 
 jobs:
   build:
+    name: "Build"
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - name: linux
-            make_target: release-linux
-          - name: windows
-            make_target: release-windows
-          - name: darwin
-            make_target: release-darwin
+    timeout-minutes: 15
 
-    name: build-${{ matrix.name }}
+    permissions:
+      contents: write
+
     steps:
-      - uses: actions/checkout@v4
+      - name: "Checkout"
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          fetch-tags: true
 
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
 
-      - name: Ensure packaging tools
-        shell: bash
-        run: |
-          for tool in zip; do
-            if ! command -v "$tool" >/dev/null 2>&1; then
-              need_install=1
-            fi
-          done
-          if [ "${need_install:-}" = "1" ]; then
-            sudo apt-get update
-            sudo apt-get install -y zip
-          fi
-
-      - name: Build ${{ matrix.name }} artifacts
-        env:
-          VERSION: ${{ github.ref_name }}
-        run: make ${{ matrix.make_target }}
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifacts-${{ matrix.name }}
-          path: bin/*
-          if-no-files-found: error
-
-  release:
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: artifacts-*
-          path: bin
-          merge-multiple: true
-
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            bin/parm-linux-amd64.tar.gz
-            bin/parm-linux-arm64.tar.gz
-            bin/parm-darwin-amd64.tar.gz
-            bin/parm-darwin-arm64.tar.gz
-            bin/parm-windows-amd64.zip
+      - name: "GoReleaser"
+        id: go
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+
+      - name: "Upload Artifact"
+        uses: actions/upload-artifact@v6
+        with:
+          name: client
+          path: dist/client
+
+  windows:
+    name: "Windows Installer"
+    runs-on: windows-latest
+    timeout-minutes: 15
+    needs: [build]
+
+    env:
+      output: "out"
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v6
+
+      - name: "Download Artifact"
+        uses: actions/download-artifact@v7
+        with:
+          name: client
+          path: dist/client
+
+      - name: "Download PathMgr"
+        uses: robinraju/release-downloader@daf26c55d821e836577a15f77d86ddc078948b05 # v1.12
+        with:
+          repository: Bill-Stewart/PathMgr
+          fileName: PathMgr-2.0.0.zip
+          out-file-path: dist/PathMgr
+          extract: true
+          tag: v2.0.0
+
+      - name: "Debug Artifacts"
+        run: |
+          ls -Recurse dist
+
+      - name: "Inno Setup"
+        run: |
+          echo "Building Version: ${{ github.ref_name }}"
+          iscc.exe "/DMyAppVersion=${{ github.ref_name }}" installer.iss
+
+      - name: "Debug Output"
+        run: |
+          ls -Recurse "${{ env.output }}"
+
+      - name: "Upload Artifact"
+        uses: actions/upload-artifact@v6
+        with:
+          name: installer
+          path: ${{ env.output }}
+
+      - name: "Upload Release"
+        if: ${{ github.event_name == 'release' }}
+        uses: cssnr/upload-release-action@v1
+        with:
+          globs: "${{ env.output }}/*"
+
+  release:
+    name: "Release"
+    if: ${{ github.event_name == 'release' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [windows]
+
+    permissions:
+      contents: write
+
+    steps:
+      #- name: "Download Artifact"
+      #  if: ${{ !github.event.release.prerelease }}
+      #  uses: actions/download-artifact@v7
+      #  with:
+      #    name: client
+      #    path: dist/client
+
+      #- name: "Debug Artifacts"
+      #  if: ${{ !github.event.release.prerelease }}
+      #  continue-on-error: true
+      #  run: |
+      #    ls -lAhR dist
+
+      #- name: "Create App Token"
+      #  if: ${{ !github.event.release.prerelease }}
+      #  id: app
+      #  uses: actions/create-github-app-token@v2
+      #  with:
+      #    app-id: 146360
+      #    private-key: ${{ secrets.APP_PRIVATE_KEY }}
+      #    owner: ${{ env.tap-owner }}
+      #    repositories: ${{ env.tap-repo }}
+
+      #- name: "Homebrew Action"
+      #  if: ${{ !github.event.release.prerelease && env.formula != '' }}
+      #  uses: cssnr/homebrew-action@master
+      #  with:
+      #    formula: ${{ env.formula }}
+      #    message: Bump ${{ env.formula }} to ${{ github.ref_name }}
+      #    file: dist/client/homebrew/Formula/${{ env.formula }}
+      #    repo: ${{ env.tap-owner }}/${{ env.tap-repo }}
+      #    token: ${{ steps.app.outputs.token }}
+
+      - name: "VirusTotal"
+        uses: cssnr/virustotal-action@master
+        continue-on-error: true
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          collapsed: true
+
+#  check:
+#    name: "Check"
+#    if: ${{ always() }}
+#    runs-on: Ubuntu-latest
+#    timeout-minutes: 5
+#    needs: [release]
+#
+#    permissions:
+#      contents: write
+#
+#    steps:
+#      - name: "Alls Green"
+#        uses: re-actors/alls-green@release/v1
+#        with:
+#          jobs: ${{ toJSON(needs) }}
+#          #allowed-failures: docs, linters
+#          #allowed-skips: non-voting-flaky-job
+#
+#      - name: "Cleanup Release"
+#        if: ${{ failure() }}
+#        env:
+#          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          echo -e "\n## Cleanup Release\n\n" >> "$GITHUB_STEP_SUMMARY"
+#          echo -e "Deleting Release and Tag: \`${{ github.ref_name }}\`\n\n" >> "$GITHUB_STEP_SUMMARY"
+#          if gh release delete "${{ github.ref_name }}" --repo "${{ github.repository }}" --cleanup-tag;then
+#            echo -e "✅ Cleanup Success.\n" >> "$GITHUB_STEP_SUMMARY"
+#          else
+#            echo -e "⛔ Cleanup Failed!\n" >> "$GITHUB_STEP_SUMMARY"
+#          fi
