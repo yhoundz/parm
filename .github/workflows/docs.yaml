@@ -3,7 +3,7 @@ name: "Docs"
 on:
   workflow_dispatch:
   push:
-    branches: [master, updates] # TODO: Remove updates
+    branches: [master]
     paths:
       - ".github/workflows/docs.yaml"
       - "zensical.toml"

@@ -1,3 +1,0 @@
-# TODO: Delete this file
-User-agent: *
-Disallow: /
