@@ -43,6 +43,14 @@ func SelectAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*github.
 		"arm64": {"arm64", "aarch64"},
 		"arm":   {"armv7", "armv6", "armhf", "armv7l"},
 	}
+	goosTokens, ok := gooses[goos]
+	if !ok {
+		return nil, fmt.Errorf("unsupported os %q", goos)
+	}
+	goarchTokens, ok := goarchs[goarch]
+	if !ok {
+		return nil, fmt.Errorf("unsupported arch %q", goarch)
+	}
 
 	extPref := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".appimage"}
 	if goos == "windows" {
@@ -56,9 +64,19 @@ func SelectAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*github.
 		scoreMods = map[string]int{}
 	}
 
-	scoredMatches := make([]match, len(assets))
-	for i, a := range assets {
-		scoredMatches[i] = match{asset: a}
+	scoredMatches := make([]match, 0, len(assets))
+	for _, a := range assets {
+		name := strings.ToLower(a.GetName())
+		if !containsAny(name, goosTokens) {
+			continue
+		}
+		if !containsAny(name, goarchTokens) {
+			continue
+		}
+		scoredMatches = append(scoredMatches, match{asset: a})
+	}
+	if len(scoredMatches) == 0 {
+		return nil, fmt.Errorf("no compatible assets found for %s/%s", goos, goarch)
 	}
 
 	const goosMatch = 11
@@ -69,10 +87,10 @@ func SelectAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*github.
 		entry := &scoredMatches[i]
 		name := strings.ToLower(entry.asset.GetName())
 
-		if containsAny(name, gooses[goos]) {
+		if containsAny(name, goosTokens) {
 			entry.score += goosMatch
 		}
-		if containsAny(name, goarchs[goarch]) {
+		if containsAny(name, goarchTokens) {
 			entry.score += goarchMatch
 		}
 

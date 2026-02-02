@@ -120,13 +120,14 @@ echo 'export GH_TOKEN=<your_token_here> >> ~/.bashrc'
 - You can also substitute `~/.bashrc` with your shell environment of choice (e.g. `~/.zshrc`)
 
 3. Parm will automatically use your token from your shell's environment variable.
-4. If Parm does not detect your token from your shell, you can set a fallback in the `github_api_token_fallback` in your config, which will be in `$XDG_CONFIG_HOME/parm/config.toml`
+4. Parm can also read GitHub credentials from your configured git credential helper (for example `osxkeychain`, `wincred`, or `libsecret`), which enables installing private repos without exporting tokens in your shell.
+5. If Parm does not detect your token from your shell, you can set a fallback in the `github_api_token_fallback` in your config, which will be in `$XDG_CONFIG_HOME/parm/config.toml`
 
 To use the `github_api_token_fallback` instead, run the following command (with parm installed):
 ```sh
 parm config set github_api_token_fallback=<token>
 ```
-5. If no token is found, it will default to non-authenticated GitHub REST API usage, which defaults to 60 requests/hr.
+6. If no token is found, it will default to non-authenticated GitHub REST API usage, which defaults to 60 requests/hr.
 
 ## Usage
 

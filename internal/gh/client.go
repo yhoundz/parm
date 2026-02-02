@@ -77,7 +77,7 @@ func GetStoredApiKey(v *viper.Viper) (string, error) {
 		if tok = getTokenFromGitCredential(); tok != "" {
 			return tok, nil
 		}
-		return "", fmt.Errorf("error: api key not found")
+		return "", fmt.Errorf("error: api key not found (set PARM_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN, github_api_token_fallback, or a git credential helper)")
 	}
 
 	return tok, nil

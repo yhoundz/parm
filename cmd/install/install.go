@@ -226,8 +226,8 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 					if err != nil {
 						return fmt.Errorf("error: failed to get absolute path for %s: %w", execPath, err)
 					}
-					// Windows batch script that forwards all arguments safely
-					cmdContent := fmt.Sprintf("@echo off\r\nsetlocal EnableDelayedExpansion\r\nset args=\r\n:loop\r\nif \"%%~1\"==\"\" goto afterloop\r\nset args=!args! \"%%~1\"\r\nshift\r\ngoto loop\r\n:afterloop\r\n\"%s\" !args!\r\nendlocal\r\n", absExecPath)
+					// Windows batch script that forwards all arguments as-is.
+					cmdContent := fmt.Sprintf("@echo off\r\n\"%s\" %%*\r\n", absExecPath)
 					err = os.WriteFile(cmdPath, []byte(cmdContent), 0644)
 					if err != nil {
 						return fmt.Errorf("error: failed to create Windows shim: %w", err)
