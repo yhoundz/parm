@@ -15,6 +15,7 @@
 dist
 out
 site
+.*cache
 *.out
 coverage.*
 *.coverprofile

@@ -52,12 +52,3 @@ tasks:
       mkdir -p dist
       wget https://github.com/Bill-Stewart/PathMgr/releases/download/v2.0.0/PathMgr-2.0.0.zip -O dist/pathmgr.zip
       unzip dist/pathmgr.zip -d dist/PathMgr
-
-  test:
-    if: test ! -d dist/PathMgr
-    #preconditions:
-    #  - sh: test ! -d dist/PathMgr
-    #    msg: "Already downloaded to: dist/PathMgr"
-    desc: Test Command
-    cmd: |
-      echo "Taskfile.yaml test Successful (no test was run)..."

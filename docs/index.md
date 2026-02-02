@@ -17,20 +17,6 @@ icon: fontawesome/solid/cheese
 
     Parm is currently in a pre-release state. Expect breaking changes and bugs.
 
-**Table of Contents:**
-
-1. [Introduction](#introduction)
-   - [What is Parm?](#what-is-parm)
-   - [Disclaimers](#disclaimers)
-2. [Quick Start](#quick-start)
-3. [Pre-requisites](#pre-requisites)
-4. [Installation](#install)
-5. [GitHub Personal Access Token](#adding-a-github-personal-access-token)
-6. [Usage/Documentation](#usage)
-7. [Contributing](#contributing)
-8. [Adding Packages to Parm](#adding-packages-to-parm)
-9. [Acknowledgements](#Acknowledgements)
-
 ## Introduction
 
 ### What is Parm?
