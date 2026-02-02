@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/google/go-github/v74/github"
@@ -57,8 +58,11 @@ func New(ctx context.Context, token string, opts ...Option) Provider {
 // returns the current API key, or nil if there is none
 func GetStoredApiKey(v *viper.Viper) (string, error) {
 	for _, env := range []string{"PARM_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"} {
-		if val, ok := os.LookupEnv(env); ok && val != "" {
-			return strings.TrimSpace(val), nil
+		if val, ok := os.LookupEnv(env); ok {
+			val = strings.TrimSpace(val)
+			if val != "" {
+				return val, nil
+			}
 		}
 	}
 
@@ -70,44 +74,36 @@ func GetStoredApiKey(v *viper.Viper) (string, error) {
 
 	tok = strings.TrimSpace(tok)
 	if tok == "" {
+		if tok = getTokenFromGitCredential(); tok != "" {
+			return tok, nil
+		}
 		return "", fmt.Errorf("error: api key not found")
 	}
 
 	return tok, nil
 }
 
-// RepositoryVisibility represents the visibility state of a repository
-type RepositoryVisibility int
+var gitCredentialRunner = runGitCredentialFill
 
-const (
-	RepoPublic RepositoryVisibility = iota
-	RepoPrivate
-	RepoNotFound
-)
-
-// CheckRepositoryVisibility checks if a repository is public, private, or doesn't exist
-func CheckRepositoryVisibility(ctx context.Context, client *github.RepositoriesService, owner, repo string) (RepositoryVisibility, error) {
-	repoObj, resp, err := client.Get(ctx, owner, repo)
+func runGitCredentialFill() (string, error) {
+	cmd := exec.Command("git", "credential", "fill")
+	cmd.Stdin = strings.NewReader("protocol=https\nhost=github.com\n")
+	out, err := cmd.Output()
 	if err != nil {
-		// If we get a 404, the repo doesn't exist or is private (can't tell without auth)
-		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return RepoNotFound, nil
-		}
-		return RepoNotFound, err
+		return "", err
 	}
-
-	if repoObj.GetPrivate() {
-		return RepoPrivate, nil
-	}
-	return RepoPublic, nil
+	return string(out), nil
 }
 
-// IsRepositoryPublic checks if a repository is public by attempting to access it without authentication
-// Deprecated: Use CheckRepositoryVisibility for better error handling
-func IsRepositoryPublic(ctx context.Context, client *github.RepositoriesService, owner, repo string) (bool, error) {
-	visibility, err := CheckRepositoryVisibility(ctx, client, owner, repo)
+func getTokenFromGitCredential() string {
+	out, err := gitCredentialRunner()
 	if err != nil {
-		return false, err
+		return ""
 	}
-	return visibility == RepoPublic, nil
+	for _, line := range strings.Split(out, "\n") {
+		if strings.HasPrefix(line, "password=") {
+			return strings.TrimPrefix(line, "password=")
+		}
+	}
+	return ""
 }

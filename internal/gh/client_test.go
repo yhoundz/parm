@@ -2,11 +2,9 @@ package gh
 
 import (
 	"context"
-	"net/http"
+	"errors"
 	"testing"
 
-	"github.com/google/go-github/v74/github"
-	"github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/spf13/viper"
 )
 
@@ -99,11 +97,45 @@ func TestGetStoredApiKey_NoToken(t *testing.T) {
 		t.Setenv(env, "")
 	}
 
+	originalRunner := gitCredentialRunner
+	gitCredentialRunner = func() (string, error) {
+		return "", errors.New("no credentials")
+	}
+	defer func() {
+		gitCredentialRunner = originalRunner
+	}()
+
 	v := viper.New()
 
 	_, err := GetStoredApiKey(v)
 	if err == nil {
 		t.Error("GetStoredApiKey() should return error when no token is set")
+	}
+}
+
+func TestGetStoredApiKey_FromGitCredentialHelper(t *testing.T) {
+	// Clear env vars
+	for _, env := range []string{"PARM_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"} {
+		t.Setenv(env, "")
+	}
+
+	v := viper.New()
+
+	originalRunner := gitCredentialRunner
+	gitCredentialRunner = func() (string, error) {
+		return "protocol=https\nhost=github.com\npassword=git-cred-helper\n", nil
+	}
+	defer func() {
+		gitCredentialRunner = originalRunner
+	}()
+
+	token, err := GetStoredApiKey(v)
+	if err != nil {
+		t.Fatalf("GetStoredApiKey() error: %v", err)
+	}
+
+	if token != "git-cred-helper" {
+		t.Errorf("GetStoredApiKey() = %v, want %v (git credential helper)", token, "git-cred-helper")
 	}
 }
 
@@ -144,103 +176,5 @@ func TestGetStoredApiKey_Trimmed(t *testing.T) {
 
 	if token != "token_with_spaces" {
 		t.Errorf("GetStoredApiKey() = %v, want token_with_spaces", token)
-	}
-}
-
-func TestCheckRepositoryVisibility_Public(t *testing.T) {
-	mockedHTTPClient := mock.NewMockedHTTPClient(
-		mock.WithRequestMatch(
-			mock.GetReposByOwnerByRepo,
-			&github.Repository{
-				Name:    github.Ptr("repo"),
-				Owner:   &github.User{Login: github.Ptr("owner")},
-				Private: github.Ptr(false),
-			},
-		),
-	)
-
-	client := github.NewClient(mockedHTTPClient)
-	ctx := context.Background()
-
-	visibility, err := CheckRepositoryVisibility(ctx, client.Repositories, "owner", "repo")
-	if err != nil {
-		t.Fatalf("CheckRepositoryVisibility() error: %v", err)
-	}
-
-	if visibility != RepoPublic {
-		t.Errorf("CheckRepositoryVisibility() = %v, want RepoPublic", visibility)
-	}
-}
-
-func TestCheckRepositoryVisibility_Private(t *testing.T) {
-	mockedHTTPClient := mock.NewMockedHTTPClient(
-		mock.WithRequestMatch(
-			mock.GetReposByOwnerByRepo,
-			&github.Repository{
-				Name:    github.Ptr("repo"),
-				Owner:   &github.User{Login: github.Ptr("owner")},
-				Private: github.Ptr(true),
-			},
-		),
-	)
-
-	client := github.NewClient(mockedHTTPClient)
-	ctx := context.Background()
-
-	visibility, err := CheckRepositoryVisibility(ctx, client.Repositories, "owner", "repo")
-	if err != nil {
-		t.Fatalf("CheckRepositoryVisibility() error: %v", err)
-	}
-
-	if visibility != RepoPrivate {
-		t.Errorf("CheckRepositoryVisibility() = %v, want RepoPrivate", visibility)
-	}
-}
-
-func TestCheckRepositoryVisibility_NotFound(t *testing.T) {
-	mockedHTTPClient := mock.NewMockedHTTPClient(
-		mock.WithRequestMatchHandler(
-			mock.GetReposByOwnerByRepo,
-			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusNotFound)
-				w.Write([]byte(`{"message": "Not Found"}`))
-			}),
-		),
-	)
-
-	client := github.NewClient(mockedHTTPClient)
-	ctx := context.Background()
-
-	visibility, err := CheckRepositoryVisibility(ctx, client.Repositories, "owner", "nonexistent")
-	if err != nil {
-		t.Fatalf("CheckRepositoryVisibility() error: %v", err)
-	}
-
-	if visibility != RepoNotFound {
-		t.Errorf("CheckRepositoryVisibility() = %v, want RepoNotFound", visibility)
-	}
-}
-
-func TestCheckRepositoryVisibility_NetworkError(t *testing.T) {
-	mockedHTTPClient := mock.NewMockedHTTPClient(
-		mock.WithRequestMatchHandler(
-			mock.GetReposByOwnerByRepo,
-			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(`{"message": "Internal Server Error"}`))
-			}),
-		),
-	)
-
-	client := github.NewClient(mockedHTTPClient)
-	ctx := context.Background()
-
-	visibility, err := CheckRepositoryVisibility(ctx, client.Repositories, "owner", "repo")
-	if err == nil {
-		t.Error("CheckRepositoryVisibility() should return error for non-404 errors")
-	}
-
-	if visibility != RepoNotFound {
-		t.Errorf("CheckRepositoryVisibility() = %v, want RepoNotFound on error", visibility)
 	}
 }

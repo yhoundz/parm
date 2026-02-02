@@ -4,8 +4,10 @@ Copyright © 2025 Alexander Wang
 package install
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"parm/internal/cmdutil"
 	"parm/internal/core/installer"
@@ -21,6 +23,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/google/go-github/v74/github"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/vbauerster/mpb/v8"
@@ -55,11 +58,13 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 						return fmt.Errorf("cannot use @version shorthand with the --%s flag", flag)
 					}
 				}
+				// Flag exists and value is valid; errors can only happen if the flag itself is missing.
 				_ = cmd.Flags().Set("release", tag)
 				args[0] = owner + "/" + repo
 			}
 
 			if !cmd.Flags().Changed("release") && !cmd.Flags().Changed("pre-release") {
+				// Flag exists and value is valid; ignore the error for the same reason.
 				_ = cmd.Flags().Set("release", "")
 			}
 
@@ -91,36 +96,7 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 			// Try to get API key, but don't fail if it's not available
 			token, _ := gh.GetStoredApiKey(viper.GetViper())
 
-			// Create a temporary client to check if repo is public
-			tempClient := f.Provider(ctx, "").Repos()
-			visibility, err := gh.CheckRepositoryVisibility(ctx, tempClient, owner, repo)
-			if err != nil {
-				return fmt.Errorf("error: cannot determine repository visibility: %w", err)
-			}
-
-			switch visibility {
-			case gh.RepoNotFound:
-				if token == "" {
-					// Could be private or non-existent, suggest token first
-					return fmt.Errorf("error: repository '%s/%s' not found\n\nThis could mean:\n  - The repository doesn't exist\n  - The repository is private (set a GitHub token to access it):\n    export GITHUB_TOKEN=$(gh auth token)", owner, repo)
-				}
-				// Has token but still not found - check with auth
-				authClient := f.Provider(ctx, token).Repos()
-				authVisibility, err := gh.CheckRepositoryVisibility(ctx, authClient, owner, repo)
-				if err != nil {
-					return fmt.Errorf("error: cannot verify repository with token: %w", err)
-				}
-				if authVisibility == gh.RepoNotFound {
-					return fmt.Errorf("error: repository '%s/%s' not found", owner, repo)
-				}
-			case gh.RepoPrivate:
-				if token == "" {
-					return fmt.Errorf("error: repository '%s/%s' is private\n\nSet a GitHub token to access it:\n  export GITHUB_TOKEN=$(gh auth token)", owner, repo)
-				}
-			}
-
 			client := f.Provider(ctx, token).Repos()
-
 			inst := installer.New(client, token)
 
 			var insType manifest.InstallType
@@ -196,10 +172,25 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 				fmt.Printf("Installing %s/%s::%s\n", owner, repo, *opts.Version)
 			}
 
+			// Try to install a release from the latest tag and handle errors gracefully
 			installPath := parmutil.GetInstallDir(owner, repo)
 			res, err := inst.Install(ctx, owner, repo, installPath, opts, hooks)
 			pb.Wait()
 			if err != nil {
+				var ghErr *github.ErrorResponse
+				if errors.As(err, &ghErr) && ghErr.Response != nil {
+					switch ghErr.Response.StatusCode {
+					case http.StatusNotFound:
+						if token == "" {
+							return fmt.Errorf("error: repository '%s/%s' not found\n\nThis could mean:\n  - The repository doesn't exist\n  - The repository is private (set a GitHub token to access it):\n    export GITHUB_TOKEN=<your-token>", owner, repo)
+						}
+						return fmt.Errorf("error: repository '%s/%s' not found", owner, repo)
+					case http.StatusForbidden:
+						return fmt.Errorf("error: access forbidden for '%s/%s' (rate limit or missing scopes): %w", owner, repo, err)
+					case http.StatusUnauthorized:
+						return fmt.Errorf("error: authentication failed for '%s/%s' (invalid token?): %w", owner, repo, err)
+					}
+				}
 				if res == nil {
 					return err
 				}
@@ -235,9 +226,9 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 					if err != nil {
 						return fmt.Errorf("error: failed to get absolute path for %s: %w", execPath, err)
 					}
-					// Windows batch script that calls the executable with all arguments
-					cmdContent := fmt.Sprintf("@echo off\n\"%s\" %%*\n", absExecPath)
-					err = os.WriteFile(cmdPath, []byte(cmdContent), 0755)
+					// Windows batch script that forwards all arguments safely
+					cmdContent := fmt.Sprintf("@echo off\r\nsetlocal EnableDelayedExpansion\r\nset args=\r\n:loop\r\nif \"%%~1\"==\"\" goto afterloop\r\nset args=!args! \"%%~1\"\r\nshift\r\ngoto loop\r\n:afterloop\r\n\"%s\" !args!\r\nendlocal\r\n", absExecPath)
+					err = os.WriteFile(cmdPath, []byte(cmdContent), 0644)
 					if err != nil {
 						return fmt.Errorf("error: failed to create Windows shim: %w", err)
 					}
