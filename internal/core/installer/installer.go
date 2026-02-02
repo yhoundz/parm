@@ -2,15 +2,11 @@ package installer
 
 import (
 	"context"
-	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"parm/internal/core/uninstaller"
 	"parm/internal/gh"
 	"parm/internal/manifest"
 	"parm/pkg/progress"
-	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v74/github"
@@ -84,66 +80,4 @@ func (in *Installer) Install(ctx context.Context, owner, repo string, installPat
 	}
 
 	return in.installFromRelease(ctx, installPath, owner, repo, rel, opts, hooks)
-}
-
-// downloadTo downloads a file from the given URL to destPath.
-// If token is provided, it will be used for authentication (required for private repos).
-func downloadTo(ctx context.Context, destPath, url, token string, hooks *progress.Hooks) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-
-	// Add authentication header for private repo access
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-		// GitHub API requires Accept header for asset downloads
-		req.Header.Set("Accept", "application/octet-stream")
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("GET %s: %s", url, resp.Status)
-	}
-
-	err = os.MkdirAll(filepath.Dir(destPath), 0o755)
-	if err != nil {
-		return err
-	}
-
-	file, err := os.Create(destPath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	if hooks == nil {
-		_, err = io.Copy(file, resp.Body)
-		return err
-	}
-
-	var r io.Reader = resp.Body
-	var closer io.Closer
-
-	// maybe move hooks out of here?
-	if hooks.Decorator != nil {
-		wr := hooks.Decorator(progress.StageDownload, resp.Body, resp.ContentLength)
-		if rc, ok := wr.(io.ReadCloser); ok {
-			r, closer = rc, rc
-		} else {
-			r = wr
-		}
-	}
-
-	_, err = io.Copy(file, r)
-	if closer != nil {
-		_ = closer.Close()
-	}
-
-	return err
 }

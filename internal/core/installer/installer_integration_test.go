@@ -16,6 +16,7 @@ import (
 
 	"parm/internal/config"
 	"parm/internal/manifest"
+	"parm/internal/release"
 
 	"github.com/google/go-github/v74/github"
 	"github.com/migueleliasweb/go-github-mock/src/mock"
@@ -221,7 +222,7 @@ func TestDownloadTo(t *testing.T) {
 	ctx := context.Background()
 	destPath := filepath.Join(tmpDir, "downloaded.txt")
 
-	err := downloadTo(ctx, destPath, server.URL, "", nil)
+	err := release.DownloadAsset(ctx, server.Client(), server.URL, destPath, "", nil)
 	if err != nil {
 		t.Fatalf("downloadTo() error: %v", err)
 	}
@@ -248,7 +249,7 @@ func TestDownloadTo_404(t *testing.T) {
 	ctx := context.Background()
 	destPath := filepath.Join(tmpDir, "downloaded.txt")
 
-	err := downloadTo(ctx, destPath, server.URL, "", nil)
+	err := release.DownloadAsset(ctx, server.Client(), server.URL, destPath, "", nil)
 	if err == nil {
 		t.Error("downloadTo() should return error for 404")
 	}
@@ -431,7 +432,7 @@ func TestDownloadTo_WithAuth(t *testing.T) {
 	ctx := context.Background()
 	destPath := filepath.Join(tmpDir, "downloaded.txt")
 
-	err := downloadTo(ctx, destPath, server.URL, expectedToken, nil)
+	err := release.DownloadAsset(ctx, server.Client(), server.URL, destPath, expectedToken, nil)
 	if err != nil {
 		t.Fatalf("downloadTo() with auth error: %v", err)
 	}
@@ -463,7 +464,7 @@ func TestDownloadTo_WithAuth_Unauthorized(t *testing.T) {
 	ctx := context.Background()
 	destPath := filepath.Join(tmpDir, "downloaded.txt")
 
-	err := downloadTo(ctx, destPath, server.URL, "wrong-token", nil)
+	err := release.DownloadAsset(ctx, server.Client(), server.URL, destPath, "wrong-token", nil)
 	if err == nil {
 		t.Error("downloadTo() should return error for unauthorized request")
 	}

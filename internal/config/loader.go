@@ -19,7 +19,7 @@ func GetParmConfigDir() (string, error) {
 	}
 	cfgDir, err := os.UserConfigDir()
 	if err != nil {
-		return "", fmt.Errorf("error: cannot find XDG_CONFIG_HOME or APPDATA: \n%w", err)
+		return "", fmt.Errorf("error: cannot determine user config directory: \n%w", err)
 	}
 	cfgPath := filepath.Join(cfgDir, "parm")
 	return cfgPath, nil

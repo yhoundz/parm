@@ -25,8 +25,12 @@ type Version struct {
 	channel Channel
 }
 
-var StringVersion string
-var AppVersion Version
+var (
+	StringVersion string
+	Owner         string = "yhoundz"
+	Repo          string = "parm"
+	AppVersion    Version
+)
 
 func init() {
 	if StringVersion == "" {

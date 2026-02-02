@@ -10,6 +10,7 @@ import (
 	"parm/cmd/install"
 	"parm/cmd/list"
 	"parm/cmd/remove"
+	"parm/cmd/selfupdate"
 	"parm/cmd/update"
 	"parm/internal/cmdutil"
 	"parm/internal/config"
@@ -44,6 +45,7 @@ cross-platform on Windows, Linux, and MacOS.`,
 		update.NewUpdateCmd(f),
 		list.NewListCmd(f),
 		info.NewInfoCmd(f),
+		selfupdate.NewSelfUpdateCmd(f),
 		// search.NewSearchCmd(f),
 	)
 
