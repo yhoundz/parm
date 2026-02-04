@@ -8,7 +8,7 @@ on:
 env:
   tape: scripts/demo.tape
   image: assets/demo.gif
-  branch: images
+  branch: images # create an empty branch
 
 jobs:
   vhs:
@@ -57,22 +57,20 @@ jobs:
 
       - name: "Create VHS"
         run: |
-          vhs ${{ env.tape }}
+          vhs "${{ env.tape }}"
 
       - name: "Debug VHS"
         continue-on-error: true
         run: |
           ls "${{ steps.install.outputs.dir }}"
-          file ${{ env.image }}
+          file "${{ env.image }}"
 
-      - name: "Configure git+lfs"
+      - name: "Push Image"
         run: |
           git lfs install
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: "Push Image"
-        run: |
           mkdir -p "${{ runner.temp }}/${{ steps.install.outputs.dir }}"
           mv "${{ env.image }}" "${{ runner.temp }}/${{ env.image }}"
 
@@ -83,7 +81,7 @@ jobs:
           mv -f "${{ runner.temp }}/${{ env.image }}" "${{ env.image }}" 
 
           git lfs track "${{ env.image }}"
-          git add .gitattributes ${{ env.image }}
+          git add .gitattributes "${{ env.image }}"
           git commit -m "Update ${{ env.image }}"
           git push -f origin ${{ env.branch }}
 
@@ -95,6 +93,7 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       - name: "Web Request"
+        continue-on-error: true
         uses: cssnr/web-request-action@v2
         with:
           url: ${{ secrets.DISCORD_WEBHOOK }}
