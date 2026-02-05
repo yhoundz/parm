@@ -8,7 +8,7 @@ on:
 env:
   tape: scripts/demo.tape
   image: assets/demo.gif
-  branch: images # create an empty branch
+  branch: images
 
 jobs:
   vhs:
@@ -22,6 +22,12 @@ jobs:
     steps:
       - name: "Checkout"
         uses: actions/checkout@v6
+
+      - name: "Release Wait"
+        if: ${{ github.event_name == 'release' }}
+        run: |
+          echo "Sleeping 5 minutes for release asset generation..."
+          sleep 300
 
       - name: "Install Release"
         uses: jaxxstorm/action-install-gh-release@v1.10.0
@@ -57,6 +63,7 @@ jobs:
 
       - name: "Create VHS"
         run: |
+          export PATH="${PATH}:${HOME}/.local/share/parm/bin"
           vhs "${{ env.tape }}"
 
       - name: "Debug VHS"
@@ -64,6 +71,12 @@ jobs:
         run: |
           ls "${{ steps.install.outputs.dir }}"
           file "${{ env.image }}"
+
+      - name: "Upload Artifact"
+        uses: actions/upload-artifact@v6
+        with:
+          name: image
+          path: ${{ env.image }}
 
       - name: "Push Image"
         run: |
@@ -74,8 +87,8 @@ jobs:
           mkdir -p "${{ runner.temp }}/${{ steps.install.outputs.dir }}"
           mv "${{ env.image }}" "${{ runner.temp }}/${{ env.image }}"
 
-          git fetch origin ${{ env.branch }}
-          git checkout ${{ env.branch }}
+          git fetch origin "${{ env.branch }}"
+          git checkout "${{ env.branch }}"
 
           mkdir -p "${{ steps.install.outputs.dir }}"
           mv -f "${{ runner.temp }}/${{ env.image }}" "${{ env.image }}" 
@@ -83,7 +96,7 @@ jobs:
           git lfs track "${{ env.image }}"
           git add .gitattributes "${{ env.image }}"
           git commit -m "Update ${{ env.image }}"
-          git push -f origin ${{ env.branch }}
+          git push -f origin "${{ env.branch }}"
 
       - name: "Set URL"
         id: url
@@ -92,10 +105,11 @@ jobs:
           echo "url: $url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
-      - name: "Web Request"
+      - name: "Job Summary"
         continue-on-error: true
-        uses: cssnr/web-request-action@v2
-        with:
-          url: ${{ secrets.DISCORD_WEBHOOK }}
-          data: |
-            content: "${{ steps.url.outputs.url }}"
+        run: |
+          md="## VHS 📼\n\n"
+          md+="<${{ steps.url.outputs.url }}>\n\n"
+          md+="\`\`\`text\n${{ steps.url.outputs.url }}\n\`\`\`\n\n"
+          md+="[![URL](${{ steps.url.outputs.url }})](${{ steps.url.outputs.url }})\n\n"
+          echo -e "${md}" >> "$GITHUB_STEP_SUMMARY"
