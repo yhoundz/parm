@@ -287,13 +287,22 @@ func TestInstallFromRelease_TarGz(t *testing.T) {
 		TagName: github.Ptr("v1.0.0"),
 		Assets: []*github.ReleaseAsset{
 			{
-				Name:               github.Ptr(assetName),
-				BrowserDownloadURL: github.Ptr(server.URL + "/asset"),
+				Name: github.Ptr(assetName),
 			},
 		},
 	}
 
-	installer := &Installer{}
+	mockedHTTPClient := mock.NewMockedHTTPClient(
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesAssetsByOwnerByRepoByAssetId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, server.URL+"/asset", http.StatusFound)
+			}),
+		),
+	)
+
+	client := github.NewClient(mockedHTTPClient)
+	installer := New(client.Repositories)
 	ctx := context.Background()
 	pkgPath := filepath.Join(tmpDir, "install")
 
@@ -334,13 +343,22 @@ func TestInstallFromRelease_Zip(t *testing.T) {
 		TagName: github.Ptr("v1.0.0"),
 		Assets: []*github.ReleaseAsset{
 			{
-				Name:               github.Ptr(assetName),
-				BrowserDownloadURL: github.Ptr(server.URL + "/asset"),
+				Name: github.Ptr(assetName),
 			},
 		},
 	}
 
-	installer := &Installer{}
+	mockedHTTPClient := mock.NewMockedHTTPClient(
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesAssetsByOwnerByRepoByAssetId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, server.URL+"/asset", http.StatusFound)
+			}),
+		),
+	)
+
+	client := github.NewClient(mockedHTTPClient)
+	installer := New(client.Repositories)
 	ctx := context.Background()
 	pkgPath := filepath.Join(tmpDir, "install")
 
