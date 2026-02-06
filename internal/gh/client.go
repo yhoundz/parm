@@ -41,7 +41,7 @@ func New(ctx context.Context, token string, opts ...Option) Provider {
 	}
 
 	hc := cliOpts.hc
-	if hc == nil && token != "" {
+	if hc == nil || token != "" {
 		src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 		hc = oauth2.NewClient(ctx, src)
 	}
@@ -59,7 +59,7 @@ func GetStoredApiKey(v *viper.Viper) (string, error) {
 	if tok == "" {
 		tok = v.GetString("github_api_token_fallback")
 		if tok == "" {
-			return "", fmt.Errorf("error: api key not found")
+			return "", fmt.Errorf("api key not found")
 		}
 	}
 
