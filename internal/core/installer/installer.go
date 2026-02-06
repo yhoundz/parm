@@ -104,8 +104,6 @@ func downloadToFromURL(ctx context.Context, destPath, url string, hooks *progres
 }
 
 func downloadToFromReader(destPath string, r io.ReadCloser, size int64, hooks *progress.Hooks) error {
-	defer r.Close()
-
 	err := os.MkdirAll(filepath.Dir(destPath), 0o755)
 	if err != nil {
 		return err
