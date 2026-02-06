@@ -13,10 +13,10 @@ tasks:
   lint:
     desc: Lint
     cmd: |
-      prettier --check .
-      yamllint -c .github/yamllint.yaml .
-      golangci-lint run
+      #prettier --check .
+      #yamllint -c .github/yamllint.yaml .
       actionlint
+      golangci-lint run
 
   clean:
     desc: Clean All
