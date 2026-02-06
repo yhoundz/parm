@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block site_meta %}
+{{ super() }}
+{% set path='/parm' %}
+
+<meta name="theme-color" content="#0B0C0F" />
+
+<link rel="icon" type="image/svg" href="{{ path }}/assets/images/logo.svg" />
+<link rel="icon" type="image/png" href="{{ path }}/assets/images/logo.png" />
+<link rel="apple-touch-icon" href="{{ path }}/assets/images/logo.png" />
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Parm" />
+<meta property="og:site_name" content="GitHub Package Manager" />
+<meta property="og:description" content="Cross-platform package manager for GitHub Releases." />
+<meta property="og:image" content="{{ path }}/assets/images/logo.png" />
+<meta property="og:image:alt" content="Parm" />
+
+<meta property="twitter:card" content="summary" />
+<meta property="twitter:title" content="Parm" />
+<meta property="twitter:site" content="GitHub Package Manager" />
+<meta property="twitter:description" content="Cross-platform package manager for GitHub Releases." />
+<meta property="twitter:image" content="{{ path }}/assets/images/logo.png" />
+<meta property="twitter:image:alt" content="Parm" />
+
+<meta name="darkreader-lock" />
+
+{% endblock %}

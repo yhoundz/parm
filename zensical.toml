@@ -1,0 +1,216 @@
+[project]
+site_name = "Parm"
+site_description = "Cross-platform package manager for GitHub Releases."
+site_author = "Alex Wang"
+repo_name = "yhoundz/parm"
+repo_url = "https://github.com/yhoundz/parm"
+edit_uri = "blob/master/docs/"
+# https://zensical.org/docs/setup/basics/#site_url
+site_url = "https://yhoundz.github.io/parm/"
+# https://zensical.org/docs/setup/basics/#copyright
+copyright = """
+<a href="https://github.com/yhoundz/parm">Parm</a>
+by <a href="https://github.com/yhoundz">Alex Wang</a>
+<br>
+Built with <a href="https://github.com/zensical/zensical">Zensical</a>
+"""
+# https://zensical.org/docs/setup/navigation/
+nav = [
+  { "Parm" = "index.md" },
+  { "Usage" = "usage.md" },
+  { "Road Map" = "roadmap.md" },
+]
+# https://zensical.org/docs/customization/#additional-css
+extra_css = ["assets/css/extra.css"]
+# https://zensical.org/docs/customization/#additional-javascript
+extra_javascript = ["assets/js/extra.js"]
+
+# ----------------------------------------------------------------------------
+# Section for configuring theme options
+# ----------------------------------------------------------------------------
+
+[project.theme]
+# https://zensical.org/docs/setup/basics/?h=theme#theme-variant
+# variant = "classic"
+
+# https://zensical.org/docs/customization/#extending-the-theme
+custom_dir = "docs/overrides"
+favicon = "assets/images/logo.png"
+logo = "assets/images/logo.png"
+# https://zensical.org/docs/setup/language/
+language = "en"
+features = [
+  # https://zensical.org/docs/setup/header/#announcement-bar
+  "announce.dismiss",
+  # https://zensical.org/docs/setup/repository/#code-actions
+  "content.action.edit",
+  # https://zensical.org/docs/setup/repository/#code-actions
+  # "content.action.view",
+  # https://zensical.org/docs/authoring/code-blocks/#code-annotations
+  "content.code.annotate",
+  # https://zensical.org/docs/authoring/code-blocks/#code-copy-button
+  "content.code.copy",
+  # https://zensical.org/docs/authoring/code-blocks/#code-selection-button
+  # "content.code.select",
+  # https://zensical.org/docs/authoring/footnotes/#footnote-tooltips
+  "content.footnote.tooltips",
+  # https://zensical.org/docs/authoring/content-tabs/#linked-content-tabs
+  "content.tabs.link",
+  # https://zensical.org/docs/authoring/tooltips/#improved-tooltips
+  "content.tooltips",
+  # https://zensical.org/docs/setup/header/#automatic-hiding
+  # "header.autohide",
+  # https://zensical.org/docs/setup/navigation/#navigation-expansion
+  # "navigation.expand",
+  # https://zensical.org/docs/setup/footer/#navigation
+  "navigation.footer",
+  # https://zensical.org/docs/setup/navigation/#section-index-pages
+  "navigation.indexes",
+  # https://zensical.org/docs/setup/navigation/#instant-navigation
+  "navigation.instant",
+  # https://zensical.org/docs/setup/navigation/#instant-prefetching
+  "navigation.instant.prefetch",
+  # https://zensical.org/docs/setup/navigation/#progress-indicator
+  # "navigation.instant.progress",
+  # https://zensical.org/docs/setup/navigation/#navigation-path
+  "navigation.path",
+  # https://zensical.org/docs/setup/navigation/#navigation-pruning
+  # "navigation.prune",
+  # https://zensical.org/docs/setup/navigation/#navigation-sections
+  "navigation.sections",
+  # https://zensical.org/docs/setup/navigation/#navigation-tabs
+  # "navigation.tabs",
+  # https://zensical.org/docs/setup/navigation/#sticky-navigation-tabs
+  # "navigation.tabs.sticky",
+  # https://zensical.org/docs/setup/navigation/#back-to-top-button
+  "navigation.top",
+  # https://zensical.org/docs/setup/navigation/#anchor-tracking
+  "navigation.tracking",
+  # https://zensical.org/docs/setup/search/#search-highlighting
+  "search.highlight",
+  # https://zensical.org/docs/setup/navigation/#anchor-following
+  # "toc.follow",
+  # https://zensical.org/docs/setup/navigation/#navigation-integration
+  "toc.integrate",
+]
+
+# ----------------------------------------------------------------------------
+# In the "palette" subsection you can configure options for the color scheme.
+# You can configure different color # schemes, e.g., to turn on dark mode,
+# that the user can switch between. Each color scheme can be further
+# customized.
+#
+# Read more:
+# - https://zensical.org/docs/setup/colors/
+# ----------------------------------------------------------------------------
+# Palette toggle for automatic mode
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+# Palette toggle for light mode
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "orange"
+accent = "amber"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+# Palette toggle for dark mode
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "amber"
+accent = "orange"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+# ----------------------------------------------------------------------------
+# In the "font" subsection you can configure the fonts used. By default, fonts
+# are loaded from Google Fonts, giving you a wide range of choices from a set
+# of suitably licensed fonts. There are options for a normal text font and for
+# a monospaced font used in code blocks.
+# ----------------------------------------------------------------------------
+# [project.theme.font]
+# text = "Inter"
+# code = "Jetbrains Mono"
+
+# ----------------------------------------------------------------------------
+# Read more:
+# - https://zensical.org/docs/setup/logo-and-icons
+# - https://zensical.org/docs/authoring/icons-emojis/#search
+# ----------------------------------------------------------------------------
+[project.theme.icon]
+repo = "fontawesome/brands/github"
+admonition = { abstract = "lucide/square-terminal" }
+
+# ----------------------------------------------------------------------------
+# The "extra" section contains miscellaneous settings.
+# ----------------------------------------------------------------------------
+
+[project.extra]
+generator = false
+
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/yhoundz/parm"
+name = "Source Code"
+
+[[project.extra.social]]
+icon = "fontawesome/solid/house-laptop"
+link = "https://yhoundz.github.io/"
+name = "Developer Site"
+
+# https://zensical.org/docs/setup/extensions/#default-configuration
+[project.markdown_extensions.abbr]
+
+[project.markdown_extensions.admonition]
+
+[project.markdown_extensions.attr_list]
+
+[project.markdown_extensions.def_list]
+
+[project.markdown_extensions.footnotes]
+
+[project.markdown_extensions.md_in_html]
+
+[project.markdown_extensions.toc]
+permalink = true
+
+[project.markdown_extensions.pymdownx.arithmatex]
+generic = true
+
+[project.markdown_extensions.pymdownx.betterem]
+smart_enable = "all"
+
+[project.markdown_extensions.pymdownx.caret]
+
+[project.markdown_extensions.pymdownx.details]
+
+[project.markdown_extensions.pymdownx.emoji]
+emoji_generator = "zensical.extensions.emoji.to_svg"
+emoji_index = "zensical.extensions.emoji.twemoji"
+
+[project.markdown_extensions.pymdownx.highlight]
+
+[project.markdown_extensions.pymdownx.inlinehilite]
+
+[project.markdown_extensions.pymdownx.keys]
+
+[project.markdown_extensions.pymdownx.mark]
+
+[project.markdown_extensions.pymdownx.smartsymbols]
+
+[project.markdown_extensions.pymdownx.superfences]
+
+[project.markdown_extensions.pymdownx.tabbed]
+alternate_style = true
+
+[project.markdown_extensions.pymdownx.tasklist]
+custom_checkbox = true
+
+[project.markdown_extensions.pymdownx.tilde]
+
+[project.markdown_extensions.pymdownx.snippets]

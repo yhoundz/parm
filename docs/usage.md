@@ -1,11 +1,17 @@
+---
+icon: lucide/terminal
+---
+
 # Installing a Release
 
 To install the latest stable release of a package, run
+
 ```sh
 parm install <owner>/<repo>
 ```
 
 For example:
+
 ```sh
 parm install yhoundz/parm
 ```
@@ -14,22 +20,27 @@ parm install yhoundz/parm
 > Don't actually try to install Parm using Parm. It is unsupported and may or may not work how it was intended. Use the install script in the README instead.
 
 If you want, you can also specify the full https/ssh link for installation:
+
 ```sh
 parm install https://github.com/yhoundz/parm.git
 ```
+
 or
+
 ```sh
 parm install git@github.com:yhoundz/parm.git
 ```
 
 Installing with no flags will automatically install the latest stable release of a package.
 If you want to install a specific version of a package, you can specify with the --release flag:
+
 ```sh
 parm install yhoundz/parm --release v0.1.0
 ```
 
 This will install the specific GitHub release assoicated with the release tag.
 You can also use the "@" keyword as a shorthand, as follows:
+
 ```sh
 parm install yhoundz/parm@v0.1.0
 ```
@@ -55,22 +66,25 @@ More options for checksum verification will be added in later versions.
 ## Installing a Pre-Release
 
 You can install the latest pre-release as follows:
+
 ```sh
 parm install yhoundz/parm --pre-release
 ```
 
 By default, installing a pre-release will actually just install the latest possible release, which may be a stable release. For example, if a GitHub repository has a pre-release labelled "v2.0.0-beta", and the latest possible release is "v2.0.0", then it will install "v2.0.0" instead, even though it isn't a pre-release. "Pre-release" is just an umbrella term for installing the cutting-edge releases.
 
-If you *strictly* want to install pre-releases, use the `--strict` flag. Note that the `--strict` flag only works when using `--pre-release`:
+If you _strictly_ want to install pre-releases, use the `--strict` flag. Note that the `--strict` flag only works when using `--pre-release`:
+
 ```sh
 parm install yhoundz/parm --pre-release --strict
 ```
 
---- 
+---
 
 # Updating a Package
 
 To update a package, you can run the following command:
+
 ```sh
 parm update <owner>/<repo>
 ```
@@ -86,11 +100,13 @@ parm update yhoundz/parm --strict # assuming this is on the pre-release channel
 # Uninstalling a Package
 
 To remove/uninstall a package, you can run the following command:
+
 ```sh
 parm remove <owner1>/<repo1> <owner2>/<repo2> ...
 ```
 
 You can also use the `uninstall` command too if you wish; it is functionally the exact same as the `remove command`:
+
 ```sh
 parm uninstall <owner>/<repo> ...
 ```
@@ -100,6 +116,7 @@ parm uninstall <owner>/<repo> ...
 # Listing Installed Packages
 
 You can list the currently installed packages with:
+
 ```sh
 parm list
 ```
@@ -113,6 +130,7 @@ Due to the current implementation's lack of caching, this will likely be pretty 
 Parm's config file is in `$XDG_CONFIG_HOME/parm/config.toml`. If it can't find the `$XDG_CONFIG_HOME` environment variable, it will default to `$HOME/.config/parm/config.toml`
 
 You can list out the current contents of the config file by running
+
 ```sh
 parm config
 ```
@@ -122,16 +140,19 @@ This will print out the current configuration settings, though it will omit some
 ## Setting Configuration Options
 
 You can set configuration options by running the `config set` subcommand, followed by a `key=value` pair for configuration settings you want to set. Ensure there are no spaces in between `key` and `value` (i.e. `key = value` is wrong).
+
 ```sh
 parm config set key1=value1 key2=value2 ...
 ```
 
 Parm comes with a set of default options. If for some reason you messed up your config, you can reset the config options using the `config reset` subcommand.
+
 ```sh
 parm config reset key1 key2 ...
 ```
 
 If you want to reset all configuration options back to their default, use the `--all` flag. Note this won't allow any additional arguments.
+
 ```sh
 parm config reset --all
 ```
@@ -139,6 +160,7 @@ parm config reset --all
 # Retrieving Package Information
 
 To retrieve certain information about a package, use the `info` command.
+
 ```sh
 parm info yhouhdz/parm
 ```
@@ -156,6 +178,7 @@ InstallPath: /home/user/.local/share/parm/pkg/yhoundz/parm
 This displays most fields written to the manifest file upon installation. The full manifest file for a package, go to `$XDG_DATA_HOME/parm/pkg/<owner>/<repo>/.curdfile.json`
 
 If you want more detailed information on a package, you can instead look at its upstream information by using the `--get-upstream` flag.
+
 ```sh
 parm info yhoundz/parm --upstream
 ```

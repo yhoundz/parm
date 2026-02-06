@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+# https://goreleaser.com/customization/project/
+project_name: parm
+dist: dist/client
+
+before:
+  hooks:
+    - go mod tidy
+
+# https://goreleaser.com/customization/builds/go/
+builds:
+  - env:
+      - CGO_ENABLED=0
+
+# https://goreleaser.com/customization/archive/
+archives:
+  - formats: [tar.gz]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+# https://goreleaser.com/customization/release/
+release:
+  replace_existing_artifacts: true
+
+## https://goreleaser.com/customization/dockers_v2/
+#dockers_v2:
+#  - images:
+#      - "ghcr.io/yhoundz/{{ .ProjectName }}"
+#    tags:
+#      - "{{ if .Prerelease }}prerelease{{ else }}latest{{ end }}"
+#      - "{{ .Version }}"
+#    labels:
+#      "org.opencontainers.image.description": "Cross-platform package manager for GitHub Releases"
+#      "org.opencontainers.image.created": "{{ .Date }}"
+#      "org.opencontainers.image.name": "{{ .ProjectName }}"
+#      "org.opencontainers.image.title": "{{ .ProjectName }}"
+#      "org.opencontainers.image.revision": "{{ .FullCommit }}"
+#      "org.opencontainers.image.version": "{{ .Version }}"
+#      "org.opencontainers.image.source": "{{ .GitURL }}"
+#    disable: "{{ or .IsSnapshot .Prerelease }}"
+
+## https://goreleaser.com/customization/homebrew_formulas/
+#brews:
+#  - repository:
+#      owner: cssnr
+#      name: homebrew-tap
+#      token: "{{ .Env.GITHUB_TOKEN }}"
+#    skip_upload: true
+#    directory: Formula
+#    homepage: "{{ .GitURL }}"
+#    description: "Cross-platform package manager for GitHub Releases"
+#    license: "GPL-3.0-or-later"
+#    test: |
+#      assert_match version.to_s, shell_output("#{bin}/parm -V")

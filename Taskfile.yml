@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+env:
+  CGO_ENABLED: 0
+
+tasks:
+  goup:
+    cmd: |
+      go get -u
+      go mod tidy
+
+  lint:
+    desc: Lint
+    cmd: |
+      #prettier --check .
+      #yamllint -c .github/yamllint.yaml .
+      actionlint
+      golangci-lint run
+
+  clean:
+    desc: Clean All
+    cmd: |
+      rm -rf dist/client
+      rm -rf out
+
+  build:
+    desc: GoReleaser Build
+    cmd: goreleaser build --snapshot --clean
+
+  release:
+    desc: GoReleaser Release
+    cmd: goreleaser release --snapshot --clean
+
+  docs:
+    desc: Zensical Docs
+    cmd: |
+      rm -rf .cache
+      zensical serve --open
+
+  inno:
+    aliases: [setup]
+    desc: Inno Setup
+    cmd: iscc.exe installer.iss
+
+  pathmgr:
+    preconditions:
+      - sh: test ! -d dist/PathMgr
+        msg: "Already downloaded to: dist/PathMgr"
+    desc: Download PathMgr
+    cmd: |
+      mkdir -p dist
+      wget https://github.com/Bill-Stewart/PathMgr/releases/download/v2.0.0/PathMgr-2.0.0.zip -O dist/pathmgr.zip
+      unzip dist/pathmgr.zip -d dist/PathMgr

@@ -1,0 +1,35 @@
+name: "Docs"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/docs.yaml"
+      - "zensical.toml"
+      - "docs/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    name: "Docs"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: docs
+      url: ${{ steps.zensical.outputs.page_url }}
+
+    steps:
+      - name: "Zensical Action"
+        id: zensical
+        uses: cssnr/zensical-action@master
+        with:
+          prepare: 'sed -i "s/>Zensical<\/a>/>Zensical<\/a> v${ZENSICAL_VERSION}/" zensical.toml'
