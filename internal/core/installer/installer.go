@@ -84,7 +84,7 @@ func (in *Installer) Install(ctx context.Context, owner, repo string, installPat
 	return in.installFromRelease(ctx, installPath, owner, repo, rel, opts, hooks)
 }
 
-func downloadTo(ctx context.Context, destPath, url string, hooks *progress.Hooks) error {
+func downloadToFromURL(ctx context.Context, destPath, url string, hooks *progress.Hooks) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -100,7 +100,13 @@ func downloadTo(ctx context.Context, destPath, url string, hooks *progress.Hooks
 		return fmt.Errorf("GET %s: %s", url, resp.Status)
 	}
 
-	err = os.MkdirAll(filepath.Dir(destPath), 0o755)
+	return downloadToFromReader(destPath, resp.Body, resp.ContentLength, hooks)
+}
+
+func downloadToFromReader(destPath string, r io.ReadCloser, size int64, hooks *progress.Hooks) error {
+	defer r.Close()
+
+	err := os.MkdirAll(filepath.Dir(destPath), 0o755)
 	if err != nil {
 		return err
 	}
@@ -112,24 +118,24 @@ func downloadTo(ctx context.Context, destPath, url string, hooks *progress.Hooks
 	defer file.Close()
 
 	if hooks == nil {
-		_, err = io.Copy(file, resp.Body)
+		_, err = io.Copy(file, r)
 		return err
 	}
 
-	var r io.Reader = resp.Body
+	var src io.Reader = r
 	var closer io.Closer
 
 	// maybe move hooks out of here?
 	if hooks.Decorator != nil {
-		wr := hooks.Decorator(progress.StageDownload, resp.Body, resp.ContentLength)
+		wr := hooks.Decorator(progress.StageDownload, r, size)
 		if rc, ok := wr.(io.ReadCloser); ok {
-			r, closer = rc, rc
+			src, closer = rc, rc
 		} else {
-			r = wr
+			src = wr
 		}
 	}
 
-	_, err = io.Copy(file, r)
+	_, err = io.Copy(file, src)
 	if closer != nil {
 		_ = closer.Close()
 	}
