@@ -69,6 +69,12 @@ func TestUpdate_Success(t *testing.T) {
 			mock.GetReposReleasesTagsByOwnerByRepoByTag,
 			releaseResponse,
 		),
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesAssetsByOwnerByRepoByAssetId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, server.URL+"/asset", http.StatusFound)
+			}),
+		),
 	)
 
 	client := github.NewClient(mockedHTTPClient)
@@ -228,6 +234,12 @@ func TestUpdate_PreReleaseChannel(t *testing.T) {
 			stableReleaseResponse,
 			stableReleaseResponse, // Provide twice
 		),
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesAssetsByOwnerByRepoByAssetId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, server.URL+"/asset", http.StatusFound)
+			}),
+		),
 	)
 
 	client := github.NewClient(mockedHTTPClient)
@@ -295,6 +307,12 @@ func TestUpdate_StrictPreRelease(t *testing.T) {
 			mock.GetReposReleasesByOwnerByRepo,
 			preReleaseResponse,
 			preReleaseResponse, // Provide twice in case called multiple times
+		),
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesAssetsByOwnerByRepoByAssetId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, server.URL+"/asset", http.StatusFound)
+			}),
 		),
 	)
 
