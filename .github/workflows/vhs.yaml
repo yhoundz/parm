@@ -2,6 +2,11 @@ name: "VHS Tape"
 
 on:
   workflow_dispatch:
+    inputs:
+      commit:
+        description: Commit Image
+        type: boolean
+        default: true
   release:
     types: [published]
 
@@ -30,13 +35,41 @@ jobs:
           sleep 300
 
       - name: "Install Release"
+        if: ${{ github.event_name == 'release' }}
         uses: jaxxstorm/action-install-gh-release@v1.10.0
         with:
-          repo: yhoundz/parm
+          repo: ${{ github.repository }}
 
       - name: "Debug Release"
+        if: ${{ github.event_name == 'release' }}
         run: |
+          which parm
           parm --version
+
+      - name: "Setup Go"
+        if: ${{ github.event_name != 'release' }}
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: "Go Build"
+        if: ${{ github.event_name != 'release' }}
+        run: |
+          echo "Build and install to a reliable bin path."
+          go build
+          mkdir -p "${{ runner.temp }}/bin"
+          mv parm "${{ runner.temp }}/bin"
+          echo "${{ runner.temp }}/bin" >> "$GITHUB_PATH"
+
+      - name: "Debug"
+        run: |
+          echo "::group::PATH"
+          echo "$PATH"
+          echo "::endgroup::"
+          which parm
+          parm --version
+          parm config
+          echo "${HOME}/.local/share/parm/bin" >> "$GITHUB_PATH"
 
       - name: "Install VHS"
         uses: jaxxstorm/action-install-gh-release@v1.10.0
@@ -62,8 +95,12 @@ jobs:
           echo "dir=$dir" >> "$GITHUB_OUTPUT"
 
       - name: "Create VHS"
+        env:
+          CI: ""
+          TERM: xterm-256color
+          COLORTERM: truecolor
         run: |
-          export PATH="${PATH}:${HOME}/.local/share/parm/bin"
+          #export PATH="${PATH}:${HOME}/.local/share/parm/bin"
           vhs "${{ env.tape }}"
 
       - name: "Debug VHS"
@@ -79,6 +116,7 @@ jobs:
           path: ${{ env.image }}
 
       - name: "Push Image"
+        if: ${{ github.event_name == 'release' || inputs.commit }}
         run: |
           git lfs install
           git config user.name "github-actions[bot]"
@@ -99,6 +137,7 @@ jobs:
           git push -f origin "${{ env.branch }}"
 
       - name: "Set URL"
+        if: ${{ github.event_name == 'release' || inputs.commit }}
         id: url
         run: |
           url="https://media.githubusercontent.com/media/${{ github.repository }}/refs/heads/${{ env.branch }}/${{ env.image }}"
@@ -106,6 +145,7 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       - name: "Job Summary"
+        if: ${{ github.event_name == 'release' || inputs.commit }}
         continue-on-error: true
         run: |
           md="## VHS 📼\n\n"
