@@ -1,19 +1,18 @@
 name: "VHS Tape"
 
 on:
+  workflow_call:
   workflow_dispatch:
     inputs:
       commit:
         description: Commit Image
         type: boolean
         default: true
-  release:
-    types: [published]
 
 env:
   tape: scripts/demo.tape
   image: assets/demo.gif
-  branch: images
+  branch: assets
 
 jobs:
   vhs:
@@ -28,32 +27,20 @@ jobs:
       - name: "Checkout"
         uses: actions/checkout@v6
 
-      - name: "Release Wait"
-        if: ${{ github.event_name == 'release' }}
-        run: |
-          echo "Sleeping 5 minutes for release asset generation..."
-          sleep 300
-
       - name: "Install Release"
-        if: ${{ github.event_name == 'release' }}
+        if: ${{ github.event_name == 'workflow_call' }}
         uses: jaxxstorm/action-install-gh-release@v1.10.0
         with:
           repo: ${{ github.repository }}
 
-      - name: "Debug Release"
-        if: ${{ github.event_name == 'release' }}
-        run: |
-          which parm
-          parm --version
-
       - name: "Setup Go"
-        if: ${{ github.event_name != 'release' }}
+        if: ${{ github.event_name != 'workflow_call' }}
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
 
       - name: "Go Build"
-        if: ${{ github.event_name != 'release' }}
+        if: ${{ github.event_name != 'workflow_call' }}
         run: |
           echo "Build and install to a reliable bin path."
           go build
@@ -61,7 +48,7 @@ jobs:
           mv parm "${{ runner.temp }}/bin"
           echo "${{ runner.temp }}/bin" >> "$GITHUB_PATH"
 
-      - name: "Debug"
+      - name: "Set Path"
         run: |
           echo "::group::PATH"
           echo "$PATH"
@@ -116,7 +103,7 @@ jobs:
           path: ${{ env.image }}
 
       - name: "Push Image"
-        if: ${{ github.event_name == 'release' || inputs.commit }}
+        if: ${{ github.event_name == 'workflow_call' || inputs.commit }}
         run: |
           git lfs install
           git config user.name "github-actions[bot]"
@@ -137,7 +124,7 @@ jobs:
           git push -f origin "${{ env.branch }}"
 
       - name: "Set URL"
-        if: ${{ github.event_name == 'release' || inputs.commit }}
+        if: ${{ github.event_name == 'workflow_call' || inputs.commit }}
         id: url
         run: |
           url="https://media.githubusercontent.com/media/${{ github.repository }}/refs/heads/${{ env.branch }}/${{ env.image }}"
@@ -145,7 +132,7 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       - name: "Job Summary"
-        if: ${{ github.event_name == 'release' || inputs.commit }}
+        if: ${{ github.event_name == 'workflow_call' || inputs.commit }}
         continue-on-error: true
         run: |
           md="## VHS 📼\n\n"
