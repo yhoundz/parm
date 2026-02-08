@@ -1,16 +1,16 @@
 # Roadmap
 
 > [!IMPORTANT]
-> [Here](https://github.com/users/yhoundz/projects/2) is the GitHub Projects related to Parm. I will try to keep this file and the Projects board in sync with each other, but there are no promises regarding that. Assume if that item is *not* on the GitHub Projects, then it is not being worked on, or there are no plans to work on it.
+> [Here](https://github.com/users/alxrw/projects/2) is the GitHub Projects related to Parm. I will try to keep this file and the Projects board in sync with each other, but there are no promises regarding that. Assume if that item is *not* on the GitHub Projects, then it is not being worked on, or there are no plans to work on it.
 
-Parm is still in a very early state, and breaking changes are to be expected. Additionally, a lot of features may not be implemented yet, or working as expected. If you would like to propose a new feature, [create a new issue](https://github.com/yhoundz/parm/issues/new).
+Parm is still in a very early state, and breaking changes are to be expected. Additionally, a lot of features may not be implemented yet, or working as expected. If you would like to propose a new feature, [create a new issue](https://github.com/alxrw/parm/issues/new).
 
 Below are a list of planned features and improvements:
 
 ## Planned Features/Improvements
 
 ### Planned for v0.2.0
-See the milestone [here](https://github.com/yhoundz/parm/issues/43)
+See the milestone [here](https://github.com/alxrw/parm/issues/43)
 
 ### General Improvements
 - Vetting/replacing AI-generated tests with better ones, more test coverage.

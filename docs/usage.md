@@ -7,7 +7,7 @@ parm install <owner>/<repo>
 
 For example:
 ```sh
-parm install yhoundz/parm
+parm install alxrw/parm
 ```
 
 > [!WARNING]
@@ -15,23 +15,23 @@ parm install yhoundz/parm
 
 If you want, you can also specify the full https/ssh link for installation:
 ```sh
-parm install https://github.com/yhoundz/parm.git
+parm install https://github.com/alxrw/parm.git
 ```
 or
 ```sh
-parm install git@github.com:yhoundz/parm.git
+parm install git@github.com:alxrw/parm.git
 ```
 
 Installing with no flags will automatically install the latest stable release of a package.
 If you want to install a specific version of a package, you can specify with the --release flag:
 ```sh
-parm install yhoundz/parm --release v0.1.0
+parm install alxrw/parm --release v0.1.0
 ```
 
 This will install the specific GitHub release assoicated with the release tag.
 You can also use the "@" keyword as a shorthand, as follows:
 ```sh
-parm install yhoundz/parm@v0.1.0
+parm install alxrw/parm@v0.1.0
 ```
 
 Currently, Parm uses a naive text-matching scoring algorithm on asset names to determine which asset to download. However, this algorithm can be inaccurate and may not download the correct asset if the asset name is ambiguous.
@@ -47,7 +47,7 @@ An asset name is ambiguous if the algorithm cannot detect the intended architect
 By default, Parm will also verify the downloaded tarball/zipball once it has been downloaded by generating a sha256 hash from the installed tarball and comparing it to the sha256 hash provided by the release asset upstream. To skip this verification, use the `--no-verify` flag:
 
 ```sh
-parm install yhoundz/parm --no-verify
+parm install alxrw/parm --no-verify
 ```
 
 More options for checksum verification will be added in later versions.
@@ -56,14 +56,14 @@ More options for checksum verification will be added in later versions.
 
 You can install the latest pre-release as follows:
 ```sh
-parm install yhoundz/parm --pre-release
+parm install alxrw/parm --pre-release
 ```
 
 By default, installing a pre-release will actually just install the latest possible release, which may be a stable release. For example, if a GitHub repository has a pre-release labelled "v2.0.0-beta", and the latest possible release is "v2.0.0", then it will install "v2.0.0" instead, even though it isn't a pre-release. "Pre-release" is just an umbrella term for installing the cutting-edge releases.
 
 If you *strictly* want to install pre-releases, use the `--strict` flag. Note that the `--strict` flag only works when using `--pre-release`:
 ```sh
-parm install yhoundz/parm --pre-release --strict
+parm install alxrw/parm --pre-release --strict
 ```
 
 --- 
@@ -78,7 +78,7 @@ parm update <owner>/<repo>
 Like the `install` command, if the package in question is on the pre-release channel, then you can use the `--strict` flag to only install pre-release versions, and not the latest cutting-edge version:
 
 ```sh
-parm update yhoundz/parm --strict # assuming this is on the pre-release channel
+parm update alxrw/parm --strict # assuming this is on the pre-release channel
 ```
 
 ---
@@ -146,24 +146,24 @@ parm info yhouhdz/parm
 Here is a sample output of what it may look like:
 
 ```md
-Owner: yhoundz
+Owner: alxrw
 Repo: parm
 Version: v0.1.0
 LastUpdated: 2025-10-10 04:50:27
-InstallPath: /home/user/.local/share/parm/pkg/yhoundz/parm
+InstallPath: /home/user/.local/share/parm/pkg/alxrw/parm
 ```
 
 This displays most fields written to the manifest file upon installation. The full manifest file for a package, go to `$XDG_DATA_HOME/parm/pkg/<owner>/<repo>/.curdfile.json`
 
 If you want more detailed information on a package, you can instead look at its upstream information by using the `--get-upstream` flag.
 ```sh
-parm info yhoundz/parm --upstream
+parm info alxrw/parm --upstream
 ```
 
 A sample output would look like this:
 
 ```md
-Owner: yhoundz
+Owner: alxrw
 Repo: parm
 Version: v0.1.0
 LastUpdated: 2025-10-03 22:34:28

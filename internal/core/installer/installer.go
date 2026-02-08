@@ -74,7 +74,7 @@ func (in *Installer) Install(ctx context.Context, owner, repo string, installPat
 		}
 
 		// we get to this point if the user installs a pre-release using the --release flag
-		// e.g. if the user runs "parm install yhoundz/parm-e2e --release v1.0.1-beta"
+		// e.g. if the user runs "parm install alxrw/parm-e2e --release v1.0.1-beta"
 		// correct the release channel to use pre-release instead to match user intent
 		if rel.GetPrerelease() {
 			opts.Type = manifest.PreRelease
