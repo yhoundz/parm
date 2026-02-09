@@ -14,6 +14,11 @@ import (
 func SafeJoin(root, name string) (string, error) {
 	cleaned := filepath.Clean(name)
 	target := filepath.Join(root, cleaned)
+	root = filepath.Clean(root)
+
+	if target == root {
+		return target, nil
+	}
 
 	root = filepath.Clean(root) + string(os.PathSeparator)
 	if !strings.HasPrefix(target, root) {
