@@ -71,15 +71,17 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pkg := args[0]
+			var err error
 
 			ctx := cmd.Context()
+
+			// fine if no API key, we can just be unauthenticated
 			token, _ := gh.GetStoredApiKey(viper.GetViper())
 			client := f.Provider(ctx, token).Repos()
 
 			inst := installer.New(client)
 
 			var owner, repo string
-			var err error
 
 			owner, repo, err = cmdparser.ParseRepoRef(pkg)
 			if err != nil {

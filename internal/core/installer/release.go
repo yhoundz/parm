@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"net/http"
 	"os"
 	"parm/internal/core/verify"
 	"parm/internal/parmutil"
@@ -50,7 +51,18 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 	defer os.RemoveAll(tmpDir)
 
 	archivePath := filepath.Join(tmpDir, ass.GetName()) // download destination
-	if err := downloadTo(ctx, archivePath, ass.GetBrowserDownloadURL(), hooks); err != nil {
+	rc, redirURL, err := in.client.DownloadReleaseAsset(ctx, owner, repo, ass.GetID(), http.DefaultClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download asset: \n%w", err)
+	}
+
+	if redirURL != "" {
+		err = downloadToFromURL(ctx, archivePath, redirURL, hooks)
+	} else {
+		err = downloadToFromReader(archivePath, rc, int64(ass.GetSize()), hooks)
+	}
+
+	if err != nil {
 		return nil, fmt.Errorf("failed to download asset: \n%w", err)
 	}
 
@@ -129,7 +141,7 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 		"arm":   {"armv7", "armv6", "armhf", "armv7l"},
 	}
 
-	extPref := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".AppImage"}
+	extPref := []string{".tar.gz", ".tgz", ".tar.xz", ".zip", ".bin", ".appimage"}
 	if goos == "windows" {
 		extPref = []string{".zip", ".exe", ".msi", ".bin"}
 	}
@@ -156,7 +168,7 @@ func selectReleaseAsset(assets []*github.ReleaseAsset, goos, goarch string) ([]*
 
 	for i := range scoredMatches {
 		a := &scoredMatches[i]
-		name := a.asset.GetName()
+		name := strings.ToLower(a.asset.GetName())
 		if containsAny(name, gooses[goos]) {
 			a.score += goosMatch
 		}

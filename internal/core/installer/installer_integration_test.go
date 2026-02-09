@@ -50,6 +50,12 @@ func TestInstall_FullWorkflow_Release(t *testing.T) {
 				},
 			},
 		),
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesAssetsByOwnerByRepoByAssetId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, server.URL+"/asset", http.StatusFound)
+			}),
+		),
 	)
 
 	client := github.NewClient(mockedHTTPClient)
@@ -125,6 +131,12 @@ func TestInstall_PreRelease(t *testing.T) {
 				},
 			},
 		),
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesAssetsByOwnerByRepoByAssetId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, server.URL+"/asset", http.StatusFound)
+			}),
+		),
 	)
 
 	client := github.NewClient(mockedHTTPClient)
@@ -179,6 +191,12 @@ func TestInstall_SpecificAsset(t *testing.T) {
 				},
 			},
 		),
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesAssetsByOwnerByRepoByAssetId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, server.URL+"/asset", http.StatusFound)
+			}),
+		),
 	)
 
 	client := github.NewClient(mockedHTTPClient)
@@ -221,9 +239,9 @@ func TestDownloadTo(t *testing.T) {
 	ctx := context.Background()
 	destPath := filepath.Join(tmpDir, "downloaded.txt")
 
-	err := downloadTo(ctx, destPath, server.URL, nil)
+	err := downloadToFromURL(ctx, destPath, server.URL, nil)
 	if err != nil {
-		t.Fatalf("downloadTo() error: %v", err)
+		t.Fatalf("downloadToFromURL() error: %v", err)
 	}
 
 	// Verify file was created
@@ -248,9 +266,9 @@ func TestDownloadTo_404(t *testing.T) {
 	ctx := context.Background()
 	destPath := filepath.Join(tmpDir, "downloaded.txt")
 
-	err := downloadTo(ctx, destPath, server.URL, nil)
+	err := downloadToFromURL(ctx, destPath, server.URL, nil)
 	if err == nil {
-		t.Error("downloadTo() should return error for 404")
+		t.Error("downloadToFromURL() should return error for 404")
 	}
 }
 
@@ -269,13 +287,22 @@ func TestInstallFromRelease_TarGz(t *testing.T) {
 		TagName: github.Ptr("v1.0.0"),
 		Assets: []*github.ReleaseAsset{
 			{
-				Name:               github.Ptr(assetName),
-				BrowserDownloadURL: github.Ptr(server.URL + "/asset"),
+				Name: github.Ptr(assetName),
 			},
 		},
 	}
 
-	installer := &Installer{}
+	mockedHTTPClient := mock.NewMockedHTTPClient(
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesAssetsByOwnerByRepoByAssetId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, server.URL+"/asset", http.StatusFound)
+			}),
+		),
+	)
+
+	client := github.NewClient(mockedHTTPClient)
+	installer := New(client.Repositories)
 	ctx := context.Background()
 	pkgPath := filepath.Join(tmpDir, "install")
 
@@ -316,13 +343,22 @@ func TestInstallFromRelease_Zip(t *testing.T) {
 		TagName: github.Ptr("v1.0.0"),
 		Assets: []*github.ReleaseAsset{
 			{
-				Name:               github.Ptr(assetName),
-				BrowserDownloadURL: github.Ptr(server.URL + "/asset"),
+				Name: github.Ptr(assetName),
 			},
 		},
 	}
 
-	installer := &Installer{}
+	mockedHTTPClient := mock.NewMockedHTTPClient(
+		mock.WithRequestMatchHandler(
+			mock.GetReposReleasesAssetsByOwnerByRepoByAssetId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, server.URL+"/asset", http.StatusFound)
+			}),
+		),
+	)
+
+	client := github.NewClient(mockedHTTPClient)
+	installer := New(client.Repositories)
 	ctx := context.Background()
 	pkgPath := filepath.Join(tmpDir, "install")
 

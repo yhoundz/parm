@@ -57,6 +57,9 @@ func NewResetCmd(f *cmdutil.Factory) *cobra.Command {
 			if resetAllFlag && len(args) > 0 {
 				return fmt.Errorf("no arguments accepted when using the --all flag")
 			}
+			if !resetAllFlag && len(args) == 0 {
+				return fmt.Errorf("configuration key required (or use --all)")
+			}
 			return nil
 		},
 	}
