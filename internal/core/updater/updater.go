@@ -12,9 +12,6 @@ import (
 	"github.com/google/go-github/v74/github"
 )
 
-// TODO: modify updater to use new symlinking logic
-// 12-21-25 ngl idk what ts means lol
-
 type Updater struct {
 	client    *github.RepositoriesService
 	installer installer.Installer
