@@ -85,10 +85,10 @@ func ResolveReleaseByTag(ctx context.Context, client *github.RepositoriesService
 	if version != nil {
 		valid, rel, err := validateRelease(ctx, client, owner, repo, *version)
 		if err != nil {
-			return nil, fmt.Errorf("Cannot resolve release %s on %s/%s", *version, owner, repo)
+			return nil, fmt.Errorf("cannot resolve release %s on %s/%s", *version, owner, repo)
 		}
 		if !valid {
-			return nil, fmt.Errorf("Release %s not valid", *version)
+			return nil, fmt.Errorf("celease %s not valid", *version)
 		}
 		return rel, nil
 	} else {
