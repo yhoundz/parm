@@ -2,9 +2,9 @@
 	<h1 align="center">🧀 Parm 🧀</h1>
 	<h4 align="center">Install any program from your terminal.</h4>
 	<a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
-	<img alt="GitHub Release" src="https://img.shields.io/github/v/release/yhoundz/parm">
-	<a href="https://github.com/yhoundz/parm/actions/workflows/ci.yml"><img src="https://github.com/yhoundz/parm/actions/workflows/ci.yml/badge.svg?branch=master" alt="ci"></a>
-	<a href="https://github.com/yhoundz/parm/actions/workflows/release.yml"><img src="https://github.com/yhoundz/parm/actions/workflows/release.yml/badge.svg" alt="release"></a>
+	<img alt="GitHub Release" src="https://img.shields.io/github/v/release/alxrw/parm">
+	<a href="https://github.com/alxrw/parm/actions/workflows/ci.yml"><img src="https://github.com/alxrw/parm/actions/workflows/ci.yml/badge.svg?branch=master" alt="ci"></a>
+	<a href="https://github.com/alxrw/parm/actions/workflows/release.yml"><img src="https://github.com/alxrw/parm/actions/workflows/release.yml/badge.svg" alt="release"></a>
 	<br>
 </div>
 
@@ -52,7 +52,7 @@ This means that Parm
 ## Quick Start
 To install Parm on Linux/macOS: run the following command:
 ```sh
-curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/alxrw/parm/master/scripts/install.sh | sh
 ```
 
 Windows is currently not fully supported, but will be coming soon. You can install the binaries manually in the releases tab.
@@ -87,17 +87,17 @@ For more detailed documentation, go to [Usage](#usage) or the [docs](#/docs/docs
 ## Install
 To install Parm on Linux/macOS: run the following command:
 ```sh
-curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/alxrw/parm/master/scripts/install.sh | sh
 ```
 
 You can also set the `GITHUB_TOKEN` option to use your GitHub API Key to bypass rate limits:
 ```sh
-GITHUB_TOKEN=YOUR_TOKEN curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/scripts/install.sh | sh
+GITHUB_TOKEN=YOUR_TOKEN curl -fsSL https://raw.githubusercontent.com/alxrw/parm/master/scripts/install.sh | sh
 ```
 
 In addition, you can also specify that the `GITHUB_TOKEN` you pass in will the same token you want to use for Parm by setting `WRITE_TOKEN=1`
 ```sh
-GITHUB_TOKEN=YOUR_TOKEN WRITE_TOKEN=1 curl -fsSL https://raw.githubusercontent.com/yhoundz/parm/master/scripts/install.sh | sh
+GITHUB_TOKEN=YOUR_TOKEN WRITE_TOKEN=1 curl -fsSL https://raw.githubusercontent.com/alxrw/parm/master/scripts/install.sh | sh
 ```
 
 Windows is currently not fully supported, but will be coming soon. You can install the binaries manually in the releases tab.
@@ -144,7 +144,7 @@ parm config set github_api_token_fallback=<token>
 For more detailed documentation, see the [docs](/docs/usage.md).
 
 ## Contributing
-Parm is in a very early state, so any and all PRs are welcome. If you want to contribute to a new feature not already on the [roadmap](/docs/roadmap.md), please [create an issue](https://github.com/yhoundz/parm/issues/new) first, or check if an issue has already been created for it.
+Parm is in a very early state, so any and all PRs are welcome. If you want to contribute to a new feature not already on the [roadmap](/docs/roadmap.md), please [create an issue](https://github.com/alxrw/parm/issues/new) first, or check if an issue has already been created for it.
 
 Before making a contribution, read over the [contributing guidelines](.github/CONTRIBUTING.md) as well as the [code of conduct](.github/CODE_OF_CONDUCT.md).
 
@@ -164,7 +164,7 @@ That's it! Your program is now compatible with Parm. To ensure maximized compati
 	- This is because Parm's dependency resolution is very weak right now, due to how the program was designed, and how it's quite difficult to find dependencies programmatically without being given them explicitly (like how other package managers do this).
 	- As a rule of thumb, if your program is statically linked, you should be good to go.
 
-Parm tries its best to adhere to current conventions of open-source software when parsing repositories. If there's something I'm missing, please [create an issue](https://github.com/yhoundz/parm/issues/new).
+Parm tries its best to adhere to current conventions of open-source software when parsing repositories. If there's something I'm missing, please [create an issue](https://github.com/alxrw/parm/issues/new).
 
 ## Acknowledgements
 Parm was created using the [Go programming language](https://go.dev/) and the [cobra](https://cobra.dev/) CLI framework.
