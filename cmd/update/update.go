@@ -107,6 +107,7 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 
 				if man.Pinned {
 					// don't update if pinned
+					fmt.Printf("%s/%s is pinned to version %s, skipping update...\n", owner, repo, man.Version)
 					continue
 				}
 
@@ -124,7 +125,7 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 				man.Pinned = old.Pinned
 
 				if err != nil {
-					return fmt.Errorf("error: failed to create manifest: \n%w", err)
+					return fmt.Errorf("failed to create manifest: \n%w", err)
 				}
 				err = man.Write(res.InstallPath)
 				if err != nil {

@@ -37,13 +37,13 @@ func NewResetCmd(f *cmdutil.Factory) *cobra.Command {
 			for _, arg := range args {
 				def, ok := cfgMap[arg]
 				if !ok {
-					return fmt.Errorf("error: %s is not a valid configuration key", arg)
+					return fmt.Errorf("%s is not a valid configuration key", arg)
 				}
 
 				viper.Set(arg, def)
 				fmt.Printf("Reset %s to default value: %v\n", arg, def)
 				if err := viper.WriteConfig(); err != nil {
-					return fmt.Errorf("error: failed to write config file: \n%w", err)
+					return fmt.Errorf("failed to write config file: \n%w", err)
 				}
 			}
 			return nil

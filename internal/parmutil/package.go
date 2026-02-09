@@ -14,7 +14,7 @@ func MakeInstallDir(owner, repo string, perm os.FileMode) (string, error) {
 	path := GetInstallDir(owner, repo)
 	err := os.MkdirAll(path, perm)
 	if err != nil {
-		return "", fmt.Errorf("error: cannot create install dir: \n%w", err)
+		return "", fmt.Errorf("cannot create install dir: \n%w", err)
 	}
 	return path, nil
 }
@@ -48,11 +48,11 @@ func MakeStagingDir(owner, repo string) (string, error) {
 func PromoteStagingDir(final, staging string) (string, error) {
 	if fi, err := os.Stat(final); err == nil && fi.IsDir() {
 		if err := os.RemoveAll(final); err != nil {
-			return "", fmt.Errorf("error: failed removing existing install: %w", err)
+			return "", fmt.Errorf("failed removing existing install: %w", err)
 		}
 	}
 	if err := os.Rename(staging, final); err != nil {
-		return "", fmt.Errorf("error: staging promotion failed: %w", err)
+		return "", fmt.Errorf("staging promotion failed: %w", err)
 	}
 	return final, nil
 }
@@ -74,7 +74,7 @@ func Cleanup(dir string) error {
 		return err
 	}
 	if !fi.IsDir() {
-		return fmt.Errorf("error: %s is not a dir", dir)
+		return fmt.Errorf("%s is not a dir", dir)
 	}
 	dr, err := os.ReadDir(dir)
 	if err != nil {

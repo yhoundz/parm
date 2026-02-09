@@ -105,7 +105,7 @@ func SymlinkBinToPath(binPath, destPath string) error {
 		return err
 	}
 	if !isBin {
-		return fmt.Errorf("error: provided dir is not a binary")
+		return fmt.Errorf("provided dir is not a binary")
 	}
 
 	if _, err := os.Lstat(destPath); err == nil {

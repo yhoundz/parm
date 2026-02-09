@@ -51,17 +51,17 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 
 	archivePath := filepath.Join(tmpDir, ass.GetName()) // download destination
 	if err := downloadTo(ctx, archivePath, ass.GetBrowserDownloadURL(), hooks); err != nil {
-		return nil, fmt.Errorf("error: failed to download asset: \n%w", err)
+		return nil, fmt.Errorf("failed to download asset: \n%w", err)
 	}
 
 	// TODO: change based on actual verify-level
 	if opts.VerifyLevel > 0 {
 		if ass.Digest == nil {
-			return nil, fmt.Errorf("error: no upstream digest available for %q; re-run with --no-verify", ass.GetName())
+			return nil, fmt.Errorf("no upstream digest available for %q; re-run with --no-verify", ass.GetName())
 		}
 		ok, gen, err := verify.VerifyLevel1(archivePath, *ass.Digest)
 		if err != nil {
-			return nil, fmt.Errorf("error: could not verify checksum:\n%q", err)
+			return nil, fmt.Errorf("could not verify checksum:\n%q", err)
 		}
 		if !ok {
 			return nil, fmt.Errorf("fatal: checksum invalid:\n\thad %s\n\twanted %s", *gen, *ass.Digest)
@@ -71,11 +71,11 @@ func (in *Installer) installFromRelease(ctx context.Context, pkgPath, owner, rep
 	switch {
 	case strings.HasSuffix(archivePath, ".tar.gz"), strings.HasSuffix(archivePath, ".tgz"):
 		if err := archive.ExtractTarGz(archivePath, tmpDir); err != nil {
-			return nil, fmt.Errorf("error: failed to extract tarball: \n%w", err)
+			return nil, fmt.Errorf("failed to extract tarball: \n%w", err)
 		}
 	case strings.HasSuffix(archivePath, ".zip"):
 		if err := archive.ExtractZip(archivePath, tmpDir); err != nil {
-			return nil, fmt.Errorf("error: failed to extract zip: \n%w", err)
+			return nil, fmt.Errorf("failed to extract zip: \n%w", err)
 		}
 	default:
 		if runtime.GOOS != "windows" {
@@ -107,7 +107,7 @@ func getAssetByName(rel *github.RepositoryRelease, name string) (*github.Release
 			return ass, nil
 		}
 	}
-	return nil, fmt.Errorf("error: no asset by the name of %s was found in release %s", name, rel)
+	return nil, fmt.Errorf("no asset by the name of %s was found in release %s", name, rel)
 }
 
 // infers the proper release asset based on the name of the asset

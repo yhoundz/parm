@@ -32,7 +32,7 @@ func NewChannelCmd(f *cmdutil.Factory) *cobra.Command {
 			case "pre-release":
 				instType = manifest.PreRelease
 			default:
-				return fmt.Errorf("error: invalid release channel")
+				return fmt.Errorf("invalid release channel")
 			}
 			err := switcher.SwitchChannel(owner, repo, instType)
 			if err != nil {

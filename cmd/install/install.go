@@ -181,7 +181,7 @@ func NewInstallCmd(f *cmdutil.Factory) *cobra.Command {
 
 			man, err := manifest.New(owner, repo, res.Version, opts.Type, res.InstallPath)
 			if err != nil {
-				return fmt.Errorf("error: failed to create manifest: \n%w", err)
+				return fmt.Errorf("failed to create manifest: \n%w", err)
 			}
 			err = man.Write(res.InstallPath)
 			if err != nil {

@@ -59,7 +59,7 @@ func GetStoredApiKey(v *viper.Viper) (string, error) {
 	if tok == "" {
 		tok = v.GetString("github_api_token_fallback")
 		if tok == "" {
-			return "", fmt.Errorf("error: api key not found")
+			return "", fmt.Errorf("api key not found")
 		}
 	}
 

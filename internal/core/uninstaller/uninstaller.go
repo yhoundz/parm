@@ -17,15 +17,15 @@ func Uninstall(ctx context.Context, owner, repo string) error {
 	dir := parmutil.GetInstallDir(owner, repo)
 	fi, err := os.Stat(dir)
 	if err != nil {
-		return fmt.Errorf("error: dir does not exist: \n%w", err)
+		return fmt.Errorf("dir does not exist: \n%w", err)
 	}
 	if !fi.IsDir() {
-		return fmt.Errorf("error: selected item is not a dir: \n%w", err)
+		return fmt.Errorf("selected item is not a dir: \n%w", err)
 	}
 
 	manifest, err := manifest.Read(dir)
 	if err != nil {
-		return fmt.Errorf("error: could not read manifest: \n%w", err)
+		return fmt.Errorf("could not read manifest: \n%w", err)
 	}
 
 	var execPaths []string
@@ -41,12 +41,12 @@ func Uninstall(ctx context.Context, owner, repo string) error {
 			continue
 		}
 		if isRunning {
-			return fmt.Errorf("error: cannot uninstall process %s because it is currently running", filepath.Base(path))
+			return fmt.Errorf("cannot uninstall process %s because it is currently running", filepath.Base(path))
 		}
 	}
 
 	if err = os.RemoveAll(dir); err != nil {
-		return fmt.Errorf("error: Cannot remove dir: %s: \n%w", dir, err)
+		return fmt.Errorf("Cannot remove dir: %s: \n%w", dir, err)
 	}
 
 	parentDir, err := sysutil.GetParentDir(dir)
