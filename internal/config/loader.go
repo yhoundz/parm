@@ -45,14 +45,14 @@ func Init() error {
 				return fmt.Errorf("cannot create config file: \n%w", err)
 			}
 		} else {
-			return fmt.Errorf("Cannot read config file \n%w", err)
+			return fmt.Errorf("cannot read config file \n%w", err)
 		}
 	}
 
 	setEnvVars(v)
 
 	if err := v.Unmarshal(&Cfg); err != nil {
-		return fmt.Errorf("Cannot unmarshal config file \n%w", err)
+		return fmt.Errorf("cannot unmarshal config file \n%w", err)
 	}
 
 	// watch for live reload ??

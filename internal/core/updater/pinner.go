@@ -5,22 +5,22 @@ import (
 	"parm/internal/parmutil"
 )
 
-func ChangePinnedStatus(owner, repo string, value bool) (err error, ver string) {
+func ChangePinnedStatus(owner, repo string, value bool) (ver string, err error) {
 	installDir := parmutil.GetInstallDir(owner, repo)
 	man, err := manifest.Read(installDir)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 
 	if man.Pinned == value {
-		return nil, man.Version
+		return man.Version, nil
 	}
 
 	man.Pinned = value
 	err = man.Write(installDir)
 	if err != nil {
-		return err, man.Version
+		return man.Version, err
 	}
 
-	return nil, man.Version
+	return man.Version, nil
 }

@@ -46,7 +46,7 @@ func Uninstall(ctx context.Context, owner, repo string) error {
 	}
 
 	if err = os.RemoveAll(dir); err != nil {
-		return fmt.Errorf("Cannot remove dir: %s: \n%w", dir, err)
+		return fmt.Errorf("cannot remove dir: %s: \n%w", dir, err)
 	}
 
 	parentDir, err := sysutil.GetParentDir(dir)

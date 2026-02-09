@@ -31,7 +31,7 @@ func NewPinCmd(f *cmdutil.Factory) *cobra.Command {
 					continue
 				}
 
-				err, ver := updater.ChangePinnedStatus(owner, repo, true)
+				ver, err := updater.ChangePinnedStatus(owner, repo, true)
 				if err != nil {
 					fmt.Printf("unable to update pinned status for %s/%s", owner, repo)
 					continue
