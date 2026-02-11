@@ -24,7 +24,7 @@ type binFile interface {
 
 func HasExternalDep(dep string) error {
 	if _, err := exec.LookPath(dep); err != nil {
-		return fmt.Errorf("error: dependency '%q' not found in PATH", dep)
+		return fmt.Errorf("dependency '%q' not found in PATH", dep)
 	}
 	return nil
 }
@@ -193,17 +193,17 @@ func GetBinDeps(path string) ([]string, error) {
 	case "linux":
 		file, err = elf.Open(path)
 	default:
-		return nil, fmt.Errorf("error: unsupported system")
+		return nil, fmt.Errorf("unsupported system")
 	}
 	if err != nil {
-		return nil, fmt.Errorf("error: failed to open binary: '%s': \n%w", path, err)
+		return nil, fmt.Errorf("failed to open binary: '%s': \n%w", path, err)
 	}
 
 	defer file.Close()
 
 	libs, err := file.ImportedLibraries()
 	if err != nil {
-		return nil, fmt.Errorf("error: failed to get imported libs on %s: \n%w", path, err)
+		return nil, fmt.Errorf("failed to get imported libs on %s: \n%w", path, err)
 	}
 
 	return libs, nil

@@ -26,11 +26,11 @@ func SearchRepo(ctx context.Context, search *github.SearchService, opts RepoSear
 		query = *opts.Query
 	} else {
 		// both null, return err
-		return nil, fmt.Errorf("error: query cannot be nil")
+		return nil, fmt.Errorf("query cannot be nil")
 	}
 	res, _, err := search.Repositories(ctx, query, &ghOpts)
 	if err != nil {
-		return nil, fmt.Errorf("error: could not search repositories:\n%q", err)
+		return nil, fmt.Errorf("could not search repositories:\n%q", err)
 	}
 
 	// TODO: filter for only repos that have releases

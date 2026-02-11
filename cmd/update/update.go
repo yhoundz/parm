@@ -98,7 +98,20 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 				installPath := parmutil.GetInstallDir(owner, repo)
 				parentDir, _ := sysutil.GetParentDir(installPath)
 
-				res, err := up.Update(ctx, owner, repo, installPath, &flags, nil)
+				man, err := manifest.Read(installPath)
+
+				if err != nil {
+					fmt.Printf("error: cannot read manifest file for %s/%s\n\t%q\n", owner, repo, err)
+					continue
+				}
+
+				if man.Pinned {
+					// don't update if pinned
+					fmt.Printf("%s/%s is pinned to version %s, skipping update...\n", owner, repo, man.Version)
+					continue
+				}
+
+				res, err := up.Update(ctx, owner, repo, installPath, man, &flags, nil)
 				if err != nil {
 					_ = parmutil.Cleanup(parentDir)
 					fmt.Printf("error: failed to update %s/%s:\n\t%q \n", owner, repo, err)
@@ -107,9 +120,12 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 
 				// Write new manifest
 				old := res.OldManifest
-				man, err := manifest.New(owner, repo, res.Version, old.InstallType, res.InstallPath)
+				man, err = manifest.New(owner, repo, res.Version, old.InstallType, res.InstallPath)
+				// TODO: maybe set this pinned thing somewhere else
+				man.Pinned = old.Pinned
+
 				if err != nil {
-					return fmt.Errorf("error: failed to create manifest: \n%w", err)
+					return fmt.Errorf("failed to create manifest: \n%w", err)
 				}
 				err = man.Write(res.InstallPath)
 				if err != nil {

@@ -72,7 +72,7 @@ func GetDefaultPrefixDir() (string, error) {
 		}
 		return "", err
 	default:
-		return "", fmt.Errorf("error: os not supported")
+		return "", fmt.Errorf("os not supported")
 	}
 }
 

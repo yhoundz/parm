@@ -22,6 +22,9 @@ func GetInstalledPkgInfo() ([]string, PkgListData, error) {
 	var infos []string
 	for _, man := range mans {
 		str := fmt.Sprintf("%s/%s || ver. %s", man.Owner, man.Repo, man.Version)
+		if man.Pinned {
+			str = fmt.Sprintf("%s (pinned)", str)
+		}
 		infos = append(infos, str)
 	}
 
@@ -32,7 +35,7 @@ func GetInstalledPkgInfo() ([]string, PkgListData, error) {
 func GetAllPkgManifest() ([]*manifest.Manifest, error) {
 	pkgDirPath := viper.GetViper().GetString("parm_pkg_path")
 	if pkgDirPath == "" {
-		return nil, fmt.Errorf("error: parm_pkg_path could not be found")
+		return nil, fmt.Errorf("parm_pkg_path could not be found")
 	}
 
 	var mans []*manifest.Manifest
