@@ -24,17 +24,17 @@ func NewUnpinCmd(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				if err != nil {
-					fmt.Printf("cannot read manifest for %s/%s", owner, repo)
+					fmt.Printf("cannot read manifest for %s/%s\n", owner, repo)
 					continue
 				}
 
 				_, err = updater.ChangePinnedStatus(owner, repo, false)
 				if err != nil {
-					fmt.Printf("unable to update pinned status for %s/%s", owner, repo)
+					fmt.Printf("unable to update pinned status for %s/%s\n", owner, repo)
 					continue
 				}
 
-				fmt.Printf("Successfully unpinned %s/%s", owner, repo)
+				fmt.Printf("Successfully unpinned %s/%s\n", owner, repo)
 			}
 			return nil
 		},
