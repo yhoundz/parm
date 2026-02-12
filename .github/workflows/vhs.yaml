@@ -1,0 +1,142 @@
+name: "VHS Tape"
+
+on:
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Commit Image
+        type: boolean
+        default: true
+
+env:
+  tape: scripts/demo.tape
+  image: assets/demo.gif
+  branch: assets
+
+jobs:
+  vhs:
+    name: "VHS"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v6
+
+      - name: "Install Release"
+        if: ${{ github.event_name == 'workflow_call' }}
+        uses: jaxxstorm/action-install-gh-release@v1.10.0
+        with:
+          repo: ${{ github.repository }}
+
+      - name: "Setup Go"
+        if: ${{ github.event_name != 'workflow_call' }}
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: "Go Build"
+        if: ${{ github.event_name != 'workflow_call' }}
+        run: |
+          echo "Build and install to a reliable bin path."
+          go build
+          mkdir -p "${{ runner.temp }}/bin"
+          mv parm "${{ runner.temp }}/bin"
+          echo "${{ runner.temp }}/bin" >> "$GITHUB_PATH"
+
+      - name: "Set Path"
+        run: |
+          echo "::group::PATH"
+          echo "$PATH"
+          echo "::endgroup::"
+          which parm
+          parm --version
+          parm config
+          echo "${HOME}/.local/share/parm/bin" >> "$GITHUB_PATH"
+
+      - name: "Install VHS"
+        uses: jaxxstorm/action-install-gh-release@v1.10.0
+        with:
+          repo: charmbracelet/vhs
+          binaries-location: vhs_0.10.0_Linux_x86_64
+
+      - name: "Install Dependencies"
+        id: install
+        run: |
+          echo "::group::install"
+          sudo apt update
+          sudo apt install -y ffmpeg ttyd
+          echo "::endgroup::"
+
+          ffmpeg -version
+          ttyd --version
+          vhs --version
+
+          dir="$(dirname "${{ env.image }}")"
+          echo "dir: $dir"
+          mkdir -p "$dir"
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+
+      - name: "Create VHS"
+        env:
+          CI: ""
+          TERM: xterm-256color
+          COLORTERM: truecolor
+        run: |
+          #export PATH="${PATH}:${HOME}/.local/share/parm/bin"
+          vhs "${{ env.tape }}"
+
+      - name: "Debug VHS"
+        continue-on-error: true
+        run: |
+          ls "${{ steps.install.outputs.dir }}"
+          file "${{ env.image }}"
+
+      - name: "Upload Artifact"
+        uses: actions/upload-artifact@v6
+        with:
+          name: image
+          path: ${{ env.image }}
+
+      - name: "Push Image"
+        if: ${{ github.event_name == 'workflow_call' || inputs.commit }}
+        run: |
+          git lfs install
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          mkdir -p "${{ runner.temp }}/${{ steps.install.outputs.dir }}"
+          mv "${{ env.image }}" "${{ runner.temp }}/${{ env.image }}"
+
+          git fetch origin "${{ env.branch }}"
+          git checkout "${{ env.branch }}"
+
+          mkdir -p "${{ steps.install.outputs.dir }}"
+          mv -f "${{ runner.temp }}/${{ env.image }}" "${{ env.image }}" 
+
+          git lfs track "${{ env.image }}"
+          git add .gitattributes "${{ env.image }}"
+          git commit -m "Update ${{ env.image }}"
+          git push -f origin "${{ env.branch }}"
+
+      - name: "Set URL"
+        if: ${{ github.event_name == 'workflow_call' || inputs.commit }}
+        id: url
+        run: |
+          url="https://media.githubusercontent.com/media/${{ github.repository }}/refs/heads/${{ env.branch }}/${{ env.image }}"
+          echo "url: $url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: "Job Summary"
+        if: ${{ github.event_name == 'workflow_call' || inputs.commit }}
+        continue-on-error: true
+        run: |
+          md="## VHS 📼\n\n"
+          md+="<${{ steps.url.outputs.url }}>\n\n"
+          md+="\`\`\`text\n${{ steps.url.outputs.url }}\n\`\`\`\n\n"
+          md+="[![URL](${{ steps.url.outputs.url }})](${{ steps.url.outputs.url }})\n\n"
+          echo -e "${md}" >> "$GITHUB_STEP_SUMMARY"
