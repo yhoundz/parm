@@ -33,8 +33,11 @@ Enter
 Wait />$/
 Sleep 0.5s
 
-Type "parm install charmbracelet/crush --asset crush_0.18.5_Linux_x86_64.tar.gz"
+Type "parm install charmbracelet/crush "
 Sleep 0.1s
+Type "--release v0.18.5 "
+Sleep 0.1s
+Type "--asset crush_0.18.5_Linux_x86_64.tar.gz"
 Enter
 Wait />$/
 Sleep 2s
