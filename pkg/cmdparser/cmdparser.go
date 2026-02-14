@@ -12,8 +12,16 @@ var ownerRepoTagPattern = regexp.MustCompile(`(?i)^` + ownerRepoStr + `(?:@(.+))
 var githubUrlPattern = regexp.MustCompile(`(?i)^(?:https://github\.com/|git@github\.com:)` + ownerRepoStr + `(?:\.git)?$`)
 var githubUrlPatternWithRelease = regexp.MustCompile(`(?i)^(?:https://github\.com/|git@github\.com:)` + ownerRepoStr + `(?:\.git)?(?:@(.+))?$`)
 
+// Shorthand pattern for single name without slash (owner == repo)
+var shorthandPattern = regexp.MustCompile(`(?i)^([a-z\d](?:[a-z\d-]{0,38}[a-z\d])*)$`)
+var shorthandTagPattern = regexp.MustCompile(`(?i)^([a-z\d](?:[a-z\d-]{0,38}[a-z\d])*)@(.+)$`)
+
 // general purpose
 func ParseRepoRef(ref string) (owner string, repo string, err error) {
+	// Try shorthand syntax first: "neovim" -> "neovim/neovim"
+	if matches := shorthandPattern.FindStringSubmatch(ref); matches != nil {
+		return matches[1], matches[1], nil
+	}
 	if matches := ownerRepoPattern.FindStringSubmatch(ref); matches != nil {
 		return matches[1], matches[2], nil
 	}
@@ -22,6 +30,10 @@ func ParseRepoRef(ref string) (owner string, repo string, err error) {
 
 // specifically parsing tag args
 func ParseRepoReleaseRef(ref string) (owner string, repo string, release string, err error) {
+	// Try shorthand syntax with tag: "neovim@v0.11.0" -> "neovim/neovim@v0.11.0"
+	if matches := shorthandTagPattern.FindStringSubmatch(ref); matches != nil {
+		return matches[1], matches[1], matches[2], nil
+	}
 	if matches := ownerRepoTagPattern.FindStringSubmatch(ref); matches != nil {
 		return matches[1], matches[2], matches[3], nil
 	}
